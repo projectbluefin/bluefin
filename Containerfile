@@ -8,6 +8,8 @@ FROM ${BASE_IMAGE}:${FEDORA_MAJOR_VERSION} AS bluefin
 ARG IMAGE_NAME="${IMAGE_NAME}"
 ARG FEDORA_MAJOR_VERSION="${FEDORA_MAJOR_VERSION}"
 
+RUN git clone --depth 1 https://gitlab.com/jntesteves/game-devices-udev/ /etc/udev/rules.d/
+
 COPY etc /etc
 COPY usr /usr
 
