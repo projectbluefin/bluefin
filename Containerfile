@@ -1,18 +1,11 @@
 FROM quay.io/fedora/fedora-coreos:stable as bluefin
 
-RUN git clone --depth 1 https://gitlab.com/jntesteves/game-devices-udev/ /etc/udev/rules.d/
-
 COPY etc /etc
 COPY usr /usr
 
-#RUN wget https://copr.fedorainfracloud.org/coprs/kylegospo/gnome-vrr/repo/fedora-"${FEDORA_MAJOR_VERSION}"/kylegospo-gnome-vrr-fedora-"${FEDORA_MAJOR_VERSION}".repo -O /etc/yum.repos.d/_copr_kylegospo-gnome-vrr.repo
-#RUN rpm-ostree override replace --experimental --from repo=copr:copr.fedorainfracloud.org:kylegospo:gnome-vrr mutter gnome-control-center gnome-control-center-filesystem
+RUN rpm-ostree install micro
 
-ADD packages.json /tmp/packages.json
-ADD build.sh /tmp/build.sh
-
-RUN /tmp/build.sh && \
-    pip install --prefix=/usr yafti && \
+RUN pip install --prefix=/usr yafti && \
     systemctl unmask dconf-update.service && \
     systemctl enable dconf-update.service && \
     systemctl enable rpm-ostree-countme.service && \
