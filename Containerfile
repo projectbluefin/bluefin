@@ -1,4 +1,4 @@
-FROM quay.io/fedora/fedora-coreos:stable
+FROM quay.io/fedora/fedora-coreos:stable as bluefin
 
 RUN git clone --depth 1 https://gitlab.com/jntesteves/game-devices-udev/ /etc/udev/rules.d/
 
