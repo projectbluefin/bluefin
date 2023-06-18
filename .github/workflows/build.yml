@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         image_flavor: [main]
-        base_name: [bluefin, bluefin-dx]
+        base_name: [bluefin]
         major_version: [38]
         include:
           - major_version: 38
