@@ -36,7 +36,6 @@ OVERRIDES=(
     "mesa-libEGL"
     "mesa-libGL"
     "mesa-libgbm"
-    "mesa-va-drivers"
     "mesa-vulkan-drivers"
 )
 

@@ -58,7 +58,6 @@ NEGATIVO=(
     libheif
     libva
     mesa-filesystem
-    mesa-va-drivers
     pipewire-libs-extra
     x264-libs
     x265-libs
