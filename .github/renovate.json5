@@ -1,17 +1,16 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:best-practices",
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:best-practices',
   ],
-  "baseBranches": ["testing"],
-
-  "git-submodules": {
-    "enabled": true
+  baseBranchPatterns: [
+    'testing',
+  ],
+  'git-submodules': {
+    enabled: true,
   },
-
-  // Do not rebase when the default branch is updated
-  "rebaseWhen": "never",
-    customManagers: [
+  rebaseWhen: 'never',
+  customManagers: [
     {
       customType: 'regex',
       managerFilePatterns: [
@@ -22,12 +21,6 @@
       ],
       datasourceTemplate: 'docker',
     },
-    // Track GNOME extension submodules that pin to a release tag via the
-    // `branch =` field in .gitmodules. Renovate's git-submodules manager
-    // alone can't see new tags because tags don't move; this rewrites the
-    // `branch =` line and the git-submodules manager then advances the SHA.
-    // Uses github-tags (not github-releases) because some upstreams ship
-    // git tags without publishing GitHub Releases (e.g. caffeine).
     {
       customType: 'regex',
       managerFilePatterns: [
@@ -41,43 +34,69 @@
       versioningTemplate: 'loose',
       depTypeTemplate: 'gnome-extension',
     },
-    ],
-
-  "packageRules": [
+  ],
+  packageRules: [
     {
-      "automerge": true,
-      "matchUpdateTypes": ["pin", "pinDigest"]
+      automerge: true,
+      matchUpdateTypes: [
+        'pin',
+        'pinDigest',
+      ],
     },
     {
-      "automerge": true,
-      "matchManagers": ["dockerfile"],
-      "matchUpdateTypes": ["digest"]
+      automerge: true,
+      matchManagers: [
+        'dockerfile',
+      ],
+      matchUpdateTypes: [
+        'digest',
+      ],
     },
     {
-      "matchUpdateTypes": ["pin", "digest", "pinDigest"],
-      "matchPackageNames": ["quay.io/coreos/chunkah"],
-      "automerge": false
+      matchUpdateTypes: [
+        'pin',
+        'digest',
+        'pinDigest',
+      ],
+      matchPackageNames: [
+        'quay.io/coreos/chunkah',
+      ],
+      automerge: false,
     },
     {
-      "matchUpdateTypes": ["pin", "digest", "pinDigest"],
-      "matchDepNames": ["ghcr.io/projectbluefin/common"],
-      "automerge": false
+      matchUpdateTypes: [
+        'pin',
+        'digest',
+        'pinDigest',
+      ],
+      matchDepNames: [
+        'ghcr.io/projectbluefin/common',
+      ],
+      automerge: false,
     },
     {
-      "automerge": true,
-      "matchUpdateTypes": ["digest"],
-      "matchDepNames": [
-        "ghcr.io/ublue-os/silverblue-main"
-      ]
+      automerge: true,
+      matchUpdateTypes: [
+        'digest',
+      ],
+      matchDepNames: [
+        'ghcr.io/ublue-os/silverblue-main',
+      ],
     },
     {
-      "matchDepTypes": ["gnome-extension"],
-      "matchPackageNames": ["micheleg/dash-to-dock"],
-      "versioning": "regex:^extensions\\.gnome\\.org-v(?<major>\\d+)$"
+      matchDepTypes: [
+        'gnome-extension',
+      ],
+      matchPackageNames: [
+        'micheleg/dash-to-dock',
+      ],
+      versioning: 'regex:^extensions\\.gnome\\.org-v(?<major>\\d+)$',
     },
     {
-      "matchDepTypes": ["gnome-extension"],
-      "groupName": "GNOME extensions"
-    }
-  ]
+      matchDepTypes: [
+        'gnome-extension',
+      ],
+      groupName: 'GNOME extensions',
+    },
+  ],
 }
