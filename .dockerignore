@@ -1,0 +1,19 @@
+# Exclude files that are not needed in the container build context.
+# This reduces the context size sent to the container daemon on each build.
+
+# Version control
+.git
+
+# GitHub configuration and CI workflows
+.github
+
+# Documentation
+docs
+*.md
+LICENSE
+
+# Tooling configuration
+.hadolint.yaml
+.pre-commit-config.yaml
+.devcontainer.json
+.editorconfig
