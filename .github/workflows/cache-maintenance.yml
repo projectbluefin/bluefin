@@ -1,0 +1,138 @@
+name: Cache Maintenance
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Dry run (list caches but do not delete)
+        type: boolean
+        default: true
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cache-audit:
+    name: Audit and prune GitHub Actions caches
+    runs-on: ubuntu-latest
+    steps:
+      - name: List and audit caches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          LIMIT_GB=10
+          LIMIT_BYTES=$((LIMIT_GB * 1024 * 1024 * 1024))
+          WARN_THRESHOLD=80
+          MAX_AGE_DAYS=14
+
+          DRY_RUN=false
+          if [[ "${EVENT_NAME}" == "workflow_dispatch" && "${INPUT_DRY_RUN:-}" == "true" ]]; then
+            DRY_RUN=true
+          fi
+
+          summary() {
+            echo "$1" >> "$GITHUB_STEP_SUMMARY"
+          }
+
+          summary "## GitHub Actions Cache Audit"
+          summary ""
+
+          ALL_CACHES='[]'
+          PAGE=1
+          while true; do
+            RESPONSE=$(gh api \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/${REPO}/actions/caches?per_page=100&page=${PAGE}")
+            BATCH=$(echo "${RESPONSE}" | jq '.actions_caches // []')
+            ALL_CACHES=$(echo "${ALL_CACHES}" "${BATCH}" | jq -s 'add')
+
+            if [[ $(echo "${BATCH}" | jq 'length') -lt 100 ]]; then
+              break
+            fi
+
+            PAGE=$((PAGE + 1))
+          done
+
+          TOTAL_CACHES=$(echo "${ALL_CACHES}" | jq 'length')
+          TOTAL_BYTES=$(echo "${ALL_CACHES}" | jq '[.[].size_in_bytes] | add // 0')
+          TOTAL_GB=$(python3 -c 'import sys; print(f"{int(sys.argv[1]) / 1024 / 1024 / 1024:.2f}")' "${TOTAL_BYTES}")
+          USAGE_PCT=$(python3 -c 'import sys; print((int(sys.argv[1]) * 100) // int(sys.argv[2]))' "${TOTAL_BYTES}" "${LIMIT_BYTES}")
+
+          summary "**Total caches:** ${TOTAL_CACHES}"
+          summary "**Total size:** ${TOTAL_GB} GB / ${LIMIT_GB} GB"
+          summary ""
+
+          if [[ ${USAGE_PCT} -ge ${WARN_THRESHOLD} ]]; then
+            summary "⚠️ **Warning:** Cache usage is at ${USAGE_PCT}% of the ${LIMIT_GB} GB limit"
+          else
+            summary "✅ Cache usage: ${USAGE_PCT}% of ${LIMIT_GB} GB limit"
+          fi
+          summary ""
+
+          summary "### Cache Inventory"
+          summary ""
+          summary "| Key | Size | Branch | Last accessed |"
+          summary "|-----|------|--------|---------------|"
+          if [[ ${TOTAL_CACHES} -eq 0 ]]; then
+            summary "| _No caches found_ | - | - | - |"
+          else
+            echo "${ALL_CACHES}" | jq -r 'sort_by(.size_in_bytes) | reverse | .[] | "| \(.key[0:60]) | \(.size_in_bytes / 1024 / 1024 | floor) MB | \(.ref // \"?\") | \(.last_accessed_at // \"never\") |"' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          ACTIVE_REFS=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${REPO}/branches?per_page=100" \
+            --paginate | jq -r '.[].name | "refs/heads/\(.)"')
+          CUTOFF_DATE=$(date -u -d "${MAX_AGE_DAYS} days ago" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v-"${MAX_AGE_DAYS}"d +%Y-%m-%dT%H:%M:%SZ)
+          PRUNED=0
+          CANDIDATES=0
+
+          summary ""
+          summary "### Pruning Report"
+          if [[ "${DRY_RUN}" == "true" ]]; then
+            summary "**Dry run enabled — no caches were deleted**"
+          fi
+          summary ""
+
+          while IFS= read -r cache; do
+            CACHE_ID=$(echo "${cache}" | jq -r '.id')
+            CACHE_KEY=$(echo "${cache}" | jq -r '.key')
+            CACHE_REF=$(echo "${cache}" | jq -r '.ref // ""')
+            LAST_ACCESSED=$(echo "${cache}" | jq -r '.last_accessed_at // ""')
+            SHOULD_PRUNE=false
+            PRUNE_REASONS=()
+
+            if [[ "${CACHE_REF}" == refs/heads/* ]] && ! grep -qxF "${CACHE_REF}" <<< "${ACTIVE_REFS}"; then
+              SHOULD_PRUNE=true
+              PRUNE_REASONS+=("deleted branch (${CACHE_REF})")
+            fi
+
+            if [[ -n "${LAST_ACCESSED}" && "${LAST_ACCESSED}" < "${CUTOFF_DATE}" ]]; then
+              SHOULD_PRUNE=true
+              PRUNE_REASONS+=("not accessed in ${MAX_AGE_DAYS}+ days (last: ${LAST_ACCESSED})")
+            fi
+
+            if [[ "${SHOULD_PRUNE}" == "true" ]]; then
+              CANDIDATES=$((CANDIDATES + 1))
+              summary "- 🗑️ \`${CACHE_KEY}\` — ${PRUNE_REASONS[*]}"
+              if [[ "${DRY_RUN}" != "true" ]]; then
+                gh api --method DELETE "/repos/${REPO}/actions/caches/${CACHE_ID}" || true
+                PRUNED=$((PRUNED + 1))
+              fi
+            fi
+          done < <(echo "${ALL_CACHES}" | jq -c '.[]')
+
+          if [[ ${CANDIDATES} -eq 0 ]]; then
+            summary "No caches matched pruning rules."
+          elif [[ "${DRY_RUN}" != "true" ]]; then
+            summary ""
+            summary "**Pruned ${PRUNED} cache(s)**"
+          fi
