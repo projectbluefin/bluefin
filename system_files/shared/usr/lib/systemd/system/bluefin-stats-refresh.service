@@ -1,0 +1,16 @@
+[Unit]
+Description=Refresh Bluefin community stats for fastfetch
+Documentation=https://projectbluefin.io
+After=network-online.target
+Wants=network-online.target
+ConditionPathIsReadWrite=/var/cache/bluefin
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/bin/mkdir -p /var/cache/bluefin
+ExecStart=/usr/libexec/bluefin-refresh-stats
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -28,6 +28,9 @@ systemctl enable bootc-unified-storage.service
 # Updater
 systemctl enable uupd.timer
 
+# Refresh community stats (user count, Bazaar downloads) for fastfetch
+systemctl enable bluefin-stats-refresh.timer
+
 #disable the old rpm-ostreed-automatic.timer
 systemctl disable rpm-ostreed-automatic.timer
 
