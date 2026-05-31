@@ -4,36 +4,34 @@
 
 ### I want to submit a fix or feature — what do I do?
 
-PR against the `main` branch. Do not PR directly against `stable` or `latest`. If your change is important and needs to ship immediately, apply the `cherry-pick` label to your PR and explain why in the description.
-
-The `bluefin-backport-bot` will open a backport PR to `stable` automatically after your PR merges into `main`.
-
-### Manual cherry-pick (if the bot is broken)
-
-[The backport action](https://github.com/korthout/backport-action) powers the bot. If it fails, cherry-pick manually:
+**PR against `testing`** — that is the default development branch. Never target `main`, `stable`, or `latest` directly.
 
 ```bash
-# Find the merge commit on main
-git log --oneline main | head -20
-
-git switch stable
-git switch -c backport-my-fix
-git cherry-pick -x <commit-sha>
+gh pr create --repo projectbluefin/bluefin --base testing
 ```
 
-Use the merge commit from `main`, not the PR branch commit, so the origin is traceable.
+### Before you open a PR
 
-### Only `:stable` / `:latest` is broken but `:testing` is not
+```bash
+just check                    # Justfile and script syntax validation
+pre-commit run --all-files    # Lint / format checks
+```
 
-The fix still goes into `main` first. Rare exceptions exist when the feature was removed in `main` and only exists in `stable`.
+Both must pass. The PR template has a checklist — fill it out honestly.
 
-## Promoting `main` to `stable` and `latest`
+### Merge method
+
+Squash merge only. Keep your PR branch tidy; the commit message on the squash is what matters.
+
+## Stream promotion
 
 Every Tuesday at 06:00 UTC the `weekly-testing-promotion` workflow:
-1. Verifies smoke e2e tests have passed on `main` HEAD
+1. Verifies smoke e2e tests have passed on the `testing` HEAD
 2. Runs the full developer + vanilla-gnome e2e suite
-3. Fast-forwards `latest` and `stable` branches to `main`
+3. Fast-forwards `latest` and `stable` branches to `testing`
 4. Triggers the `stable` and `latest` image builds
+
+Changes land in `testing` → promoted to `stable`/`latest` weekly on CI green.
 
 ## Branching for a new Fedora version
 
@@ -46,14 +44,44 @@ Every Tuesday at 06:00 UTC the `weekly-testing-promotion` workflow:
 
 - Wait for the official Fedora release (package freeze lifted)
 - Wait for coreos:stable (~2 weeks post-Fedora) → PR `ublue-os/akmods`
-- Bump workflow and Justfile version references in `main`
+- Bump workflow and Justfile version references in `testing`
 - Create a new `stable-f$N` branch and update branch protection rules
 
 ## Stream reference
 
-| | `:stable` | `:latest` | `:testing` |
+| | `:testing` | `:latest` | `:stable` |
 |---|---|---|---|
-| Built from | `stable` branch | `latest` branch | `main` branch |
-| Kernel | coreos-stable, pinned on regressions | Fedora default, pinned on bad regressions | Fedora default |
-| Published | Weekly promotion + emergency manual trigger | Weekly promotion | On merges to `main` |
-| Who should use it | Regular users | Enthusiasts | Testers, developers |
+| Built from | `testing` branch | `latest` branch | `stable` branch |
+| Kernel | Fedora default | Fedora default, pinned on bad regressions | coreos-stable, pinned on regressions |
+| Published | On every merge to `testing` | Weekly promotion | Weekly promotion + emergency manual |
+| Who should use it | Testers, developers | Enthusiasts | Regular users |
+
+## Conventional commits
+
+Every commit message and PR title must follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
+
+```
+feat(packages): add fzf to base brew
+fix(ci): correct digest variable name in reusable-build
+chore(deps): update ghcr.io/projectbluefin/common digest
+```
+
+## AI-assisted contributions
+
+If you used an AI tool to write any part of this PR, add the attribution footer:
+
+```
+Assisted-by: <Model Name> via <Tool Name>
+```
+
+Check the box in the PR template confirming you take responsibility for the change.
+
+## Issue lifecycle
+
+Issues flow through `filed → approved → queued → claimed → done` via the bonedigger bot.
+
+- Comment `/claim` to take an issue from the queue
+- Comment `/approve` (maintainers only) to move an issue to the queue
+- Comment `/unclaim` to return an issue you can no longer work on
+
+See [docs/workflow.md](docs/workflow.md) for the full lifecycle reference.

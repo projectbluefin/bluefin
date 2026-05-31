@@ -1,0 +1,59 @@
+# Bluefin PR checklist
+
+## All PRs
+
+- [ ] Base branch is `testing`
+- [ ] PR is not marked WIP
+- [ ] No more than 4 open PRs for this agent
+- [ ] `just check` passes
+- [ ] `pre-commit run --all-files` passes
+- [ ] PR title and commits use Conventional Commits (`feat:`, `fix:`, `chore:`, ...)
+- [ ] PR body includes `Closes #NNN` when shipping issue work
+- [ ] AI-authored commits include `Assisted-by: <Model> via <Tool>`
+- [ ] No hardcoded secrets or credentials
+- [ ] If an agent was used, the author accepts responsibility for the PR
+
+> `just check` and `pre-commit run --all-files` are the default gates before every commit.
+
+## Package changes
+
+### RPM / build script changes (`build_files/**`, `system_files/**`)
+
+- [ ] Package edits are limited to the relevant `build_files/base/` or `build_files/dx/` script
+- [ ] COPR packages use `copr_install_isolated()` from `build_files/shared/copr-helpers.sh`
+- [ ] No mixed Fedora/COPR package arrays or ad-hoc repo enablement
+- [ ] Shell changes still pass the PR `shellcheck build_files/**/*.sh` gate
+- [ ] Full image builds are only run when the package change actually needs container-level testing
+
+### Flatpak changes (`flatpaks/**`)
+
+- [ ] The right list was edited (`base` vs `dx`)
+- [ ] Added Flatpaks are appropriate for Bluefin's Flatpak-first model
+- [ ] If behavior changed, note how reviewers can verify it after the next image build
+
+### Brew changes (`brew/**`, shared homebrew files)
+
+- [ ] Formula/cask names are valid for the intended tap
+- [ ] DX-only tools land in DX-specific Brewfiles; shared tools stay shared
+- [ ] If adding a new external tap or cask, explain why Bluefin needs it
+
+## Containerfile changes
+
+- [ ] The change fits the Bluefin Containerfile model (`common`/`brew` inputs, `base` → `dx` targets)
+- [ ] Related build args stay aligned with `Justfile` and `reusable-build.yml`
+- [ ] Local `just build ...` was run only if the change truly affects image assembly
+- [ ] Reviewer notes mention the expected cost: full builds take roughly 30–90 minutes and ~25 GB disk
+- [ ] No unrelated churn in image metadata, labels, or stage ordering
+
+## CI / workflow changes
+
+- [ ] Trigger branches are intentional (`testing` for PR validation; `main`/`stable`/`latest` where the current image workflows expect them)
+- [ ] Action pins stay intact or are updated deliberately
+- [ ] Artifact names, workflow names, and branch filters stay consistent across dependent workflows
+- [ ] If behavior changed, this doc set or `docs/ci.md` was updated too
+
+## Before asking for review
+
+- [ ] Summary explains the user-visible change in plain language
+- [ ] Testing section says exactly what ran locally
+- [ ] Bug-fix PRs include community verification instructions when needed
