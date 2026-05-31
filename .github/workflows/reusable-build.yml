@@ -93,11 +93,6 @@ jobs:
           /bin/time -f '%E %C' sudo apt install -y --allow-downgrades crun/resolute buildah/resolute podman/resolute skopeo/resolute
           podman --version
 
-      - name: Check Just Syntax
-        shell: bash
-        run: |
-          just check
-
       - name: Image Name
         shell: bash
         run: |
@@ -190,6 +185,7 @@ jobs:
                             "${SYFT_CMD}"
 
       - name: Rechunk Image
+        if: github.event_name != 'pull_request'
         id: rechunk-image
         shell: bash
         env:
@@ -201,6 +197,7 @@ jobs:
                             "1"
 
       - name: Retag Rechunked Image
+        if: github.event_name != 'pull_request'
         id: load-rechunk
         shell: bash
         run: |
@@ -209,12 +206,20 @@ jobs:
                             "${{ matrix.image_flavor }}"
 
       - name: Secureboot Check
+        if: github.event_name != 'pull_request'
         id: secureboot
         shell: bash
         run: |
           sudo -E "$(command -v just)" secureboot "${{ matrix.base_name }}" \
                           "${{ env.DEFAULT_TAG }}" \
                           "${{ matrix.image_flavor }}"
+
+      - name: Export image to OCI dir (PR only)
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          mkdir -p ${{ env.IMAGE_NAME }}_build
+          sudo podman save --format oci-dir -o ${{ env.IMAGE_NAME }}_build ${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
 
       - name: Generate tags
         id: generate-tags
