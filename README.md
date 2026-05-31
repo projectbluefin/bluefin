@@ -43,6 +43,7 @@ Bluefin's mission is to provide a robust, cloud-native desktop operating system 
 - **💬 [Discussions](https://community.projectbluefin.io/)** - Community forum (strongly recommended!)
 - **📖 [Documentation](https://docs.projectbluefin.io/)** - Documentation and User Guides
 - **🔧 [Contributing Guide](https://docs.projectbluefin.io/contributing)** - How to contribute to the project
+- **🔒 [Security Policy](SECURITY.md)** - Reporting vulnerabilities
 
 ## Getting Started
 
