@@ -7,6 +7,9 @@ echo "::group:: Copy Files"
 # Speeds up local builds
 dnf config-manager setopt keepcache=1
 
+# Skip weak dependencies for a smaller, faster image
+dnf config-manager setopt install_weak_deps=0
+
 # Keep *-logos in RPM DB for downstream package installations
 # We are not allowed to ship an empty fedora-logos package
 dnf -y swap fedora-logos generic-logos
