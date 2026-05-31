@@ -45,4 +45,4 @@ RUN rm -rf /opt && ln -s /var/opt /opt
 
 CMD ["/sbin/init"]
 
-RUN bootc container lint
+RUN bootc container lint --fatal-warnings
