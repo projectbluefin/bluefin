@@ -1,0 +1,30 @@
+name: Nightly E2E
+
+# Runs the vanilla-gnome baseline suite nightly against :latest.
+# vanilla-gnome tests upstream GNOME behaviour as a comparison baseline:
+#   smoke=fail + vanilla-gnome=pass  → Bluefin-specific regression
+#   smoke=fail + vanilla-gnome=fail  → upstream GNOME issue
+#
+# Also re-runs the full smoke+common suite so nightly catches anything
+# that slips past the per-push gate on low-traffic days.
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # 02:00 UTC daily
+  workflow_dispatch:
+
+permissions: read-all
+
+concurrency:
+  group: nightly-e2e
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    permissions:
+      packages: write
+      contents: read
+    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@969d471323a5aed586ba19371a4d2c74c4fa6823 # main
+    with:
+      image: ghcr.io/${{ github.repository_owner }}/bluefin:latest
+      suites: smoke,common,vanilla-gnome
