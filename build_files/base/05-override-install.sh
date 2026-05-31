@@ -32,7 +32,8 @@ ghcurl "https://raw.githubusercontent.com/coreos/fedora-coreos-config/refs/heads
 chmod +x /usr/lib/systemd/system-generators/coreos-sulogin-force-generator
 
 # Starship Shell Prompt
-ghcurl "https://github.com/starship/starship/releases/latest/download/starship-x86_64-unknown-linux-gnu.tar.gz" --retry 3 -o /tmp/starship.tar.gz
+STARSHIP_VERSION="$(grep -A1 'datasource=github-releases depName=starship/starship' /ctx/image-versions.yml | grep 'starship:' | awk '{print $2}' | tr -d '"')"
+ghcurl "https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-x86_64-unknown-linux-gnu.tar.gz" --retry 3 -o /tmp/starship.tar.gz
 tar -xzf /tmp/starship.tar.gz -C /tmp
 install -c -m 0755 /tmp/starship /usr/bin
 
