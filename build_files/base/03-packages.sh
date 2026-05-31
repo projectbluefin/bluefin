@@ -166,16 +166,16 @@ case "$FEDORA_MAJOR_VERSION" in
         ;;
 esac
 
-# Install all Fedora packages (bulk - safe from COPR injection)
-echo "Installing ${#FEDORA_PACKAGES[@]} packages from Fedora repos..."
-dnf -y install "${FEDORA_PACKAGES[@]}"
-
+# Install Fedora, Tailscale, and multimedia packages together while keeping COPR packages isolated.
+echo "Installing ${#FEDORA_PACKAGES[@]} Fedora packages plus Tailscale and multimedia packages..."
 dnf config-manager addrepo --from-repofile=https://pkgs.tailscale.com/stable/fedora/tailscale.repo
 dnf config-manager setopt tailscale-stable.enabled=0
-dnf -y install --enablerepo='tailscale-stable' tailscale
-
-dnf -y install --enablerepo=fedora-multimedia \
+dnf5 -y install \
+    --enablerepo='tailscale-stable' \
+    --enablerepo='fedora-multimedia' \
     -x PackageKit* \
+    "${FEDORA_PACKAGES[@]}" \
+    tailscale \
     ffmpeg{,-libs} libavcodec @multimedia gstreamer1-plugins-{bad-free,bad-free-libs,good,base} lame{,-libs} libfdk-aac libjxl ffmpegthumbnailer
 
 # From che/nerd-fonts
