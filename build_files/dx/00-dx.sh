@@ -124,15 +124,8 @@ systemctl enable podman.socket
 systemctl enable libvirt-workaround.service
 systemctl enable bluefin-dx-groups.service
 
-sed -i 's@enabled=1@enabled=0@g' /etc/yum.repos.d/fedora-cisco-openh264.repo
-
-sed -i 's@enabled=1@enabled=0@g' /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:ublue-os:akmods.repo
-
-# Disable RPM Fusion repos
-for i in /etc/yum.repos.d/rpmfusion-*.repo; do
-    if [[ -f "$i" ]]; then
-        sed -i 's@enabled=1@enabled=0@g' "$i"
-    fi
-done
+# shellcheck source=build_files/shared/disable-repos.sh
+source /ctx/build_files/shared/disable-repos.sh
+disable_third_party_repos
 
 echo "::endgroup::"
