@@ -169,29 +169,4 @@ jobs:
           git push origin HEAD:refs/heads/latest
           git push origin HEAD:refs/heads/stable
           echo "✅ Promoted main → latest + stable"
-
-  trigger-stable-build:
-    needs: [promote-to-latest-and-stable]
-    if: needs.promote-to-latest-and-stable.outputs.has_diff == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger stable build
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          gh workflow run build-image-stable.yml --ref stable -R ${{ github.repository }}
-          echo "✅ Triggered build-image-stable.yml on stable"
-
-  trigger-latest-build:
-    needs: [promote-to-latest-and-stable]
-    if: needs.promote-to-latest-and-stable.outputs.has_diff == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger latest build
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          gh workflow run build-image-latest-main.yml --ref latest -R ${{ github.repository }}
-          echo "✅ Triggered build-image-latest-main.yml on latest"
+          echo "Push events will trigger stable and latest image builds automatically."
