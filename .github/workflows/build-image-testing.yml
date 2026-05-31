@@ -20,8 +20,49 @@ permissions:
   artifact-metadata: write
 
 jobs:
+  detect-changes:
+    name: Detect changed paths
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      image_flavors: ${{ steps.matrix.outputs.image_flavors }}
+      should_build: ${{ steps.matrix.outputs.should_build }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        id: filter
+        with:
+          filters: |
+            image:
+              - 'Containerfile'
+              - 'build_files/**'
+              - 'system_files/**'
+              - 'image-versions.yml'
+              - 'Justfile'
+            nvidia:
+              - 'build_files/base/04-install-kernel-akmods.sh'
+              - 'Containerfile'
+      - name: Set matrix
+        id: matrix
+        run: |
+          if [[ "${{ steps.filter.outputs.image }}" == "false" ]]; then
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+            echo 'image_flavors=["main"]' >> "$GITHUB_OUTPUT"
+          elif [[ "${{ steps.filter.outputs.nvidia }}" == "true" ]]; then
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo 'image_flavors=["main", "nvidia-open"]' >> "$GITHUB_OUTPUT"
+          else
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo 'image_flavors=["main"]' >> "$GITHUB_OUTPUT"
+          fi
+
   build-image-testing:
     name: Build Testing Images
+    needs: [detect-changes]
+    if: |
+      always() &&
+      (github.event_name != 'pull_request' ||
+       needs.detect-changes.outputs.should_build == 'true')
     uses: ./.github/workflows/reusable-build.yml
     secrets: inherit
     strategy:
@@ -29,6 +70,11 @@ jobs:
       matrix:
         brand_name: ["bluefin"]
     with:
-      image_flavors: '["main", "nvidia-open"]'
+      image_flavors: >-
+        ${{
+          github.event_name == 'pull_request'
+          && needs.detect-changes.outputs.image_flavors
+          || '["main", "nvidia-open"]'
+        }}
       brand_name: ${{ matrix.brand_name }}
       stream_name: testing
