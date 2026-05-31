@@ -96,19 +96,19 @@ If `main` advanced during promotion, the workflow aborts on purpose.
 
 ## Shared actions architecture (projectbluefin/actions)
 
-The project is extracting common CI/CD logic into reusable GitHub Actions in `projectbluefin/actions`. These actions serve bluefin, aurora, bazzite, and any bootc image builder.
+Common CI/CD logic lives in reusable GitHub Actions at **https://github.com/projectbluefin/actions** (current release: `v1`). These actions serve bluefin, aurora, bazzite, and any bootc image builder.
 
-| Action | Purpose |
-|---|---|
-| `bootc-build/setup-runner` | Install modern podman/buildah/skopeo, configure tmpdir, cgroup delegation |
-| `bootc-build/dnf-cache` | DNF metadata + package cache with correct permissions |
-| `bootc-build/preflight` | Validate Containerfile syntax, required labels, base image signatures |
-| `bootc-build/generate-tags` | Produce OCI tags from branch, date, Fedora version |
-| `bootc-build/push-image` | Push multi-arch manifest with retry and rate-limit handling |
-| `bootc-build/sign-and-publish` | Cosign sign (keyless or key-based) + SBOM attach |
-| `bootc-build/rechunk` | rpm-ostree rechunking with delta support |
-| `bootc-build/ghcr-cleanup` | Prune untagged/expired GHCR manifests |
-| `bootc-build/generate-release` | Changelog from RPM diff + SBOM comparison |
+| Action | Status | Purpose |
+|---|---|---|
+| `bootc-build/setup-runner` | ✅ live `@v1` | Update podman from Ubuntu resolute, BTRFS mount, install just/cosign/oras/syft |
+| `bootc-build/dnf-cache` | ✅ live `@v1` | Restore/save buildah cache with chmod 777 workaround |
+| `bootc-build/ghcr-cleanup` | ✅ live `@v1` | Parameterized GHCR image retention |
+| `bootc-build/preflight` | ✅ live `@v1` | Validate registry auth, normalize image refs, check required secrets |
+| `bootc-build/push-image` | ✅ live `@v1` | Push once + skopeo copy for alias tags, digest capture |
+| `bootc-build/sign-and-publish` | ✅ live `@v1` | Cosign sign (keyless or key-based) + Syft SBOM + ORAS attach + attestation |
+| `bootc-build/rechunk` | ✅ live `@v1` | rpm-ostree chunkah rechunking with delta support |
+| `bootc-build/generate-tags` | 🔲 planned | Produce OCI tags from branch, date, Fedora version |
+| `bootc-build/generate-release` | 🔲 planned | Changelog from RPM diff + SBOM comparison |
 
 ### Migration pattern
 
@@ -131,8 +131,30 @@ Replace inline workflow steps with action calls:
 - Each action is independently consumable (no monolithic action bundle)
 - Signing mode is an input (`keyless` or `key-based`), not hardcoded
 - Actions pin to `@v1` semver tags; Renovate tracks updates via `github-actions` manager
-- The `projectbluefin/actions` repo does NOT exist yet — see epic issue 134
+- The `projectbluefin/actions` repo is live at https://github.com/projectbluefin/actions
+- Pin consuming workflows to `@v1`; Renovate tracks updates via `github-actions` manager
+- P2 actions (`generate-tags`, `generate-release`) are tracked in bluefin issue #134
 
 ## Lessons learned
 
-<!-- Add reusable CI/debugging patterns here -->
+### PR rechunk guard requires a PR-only OCI export step (2026-05-31)
+
+When adding `if: github.event_name != 'pull_request'` to the rechunk step, the "Upload OCI dir as Artifact" step breaks on PRs because `${{ env.IMAGE_NAME }}_build` (the rechunk output dir) no longer exists. Fix: add a PR-only step before the upload that exports the un-rechunked image:
+
+```yaml
+- name: Export image to OCI dir (PR only)
+  if: github.event_name == 'pull_request'
+  shell: bash
+  run: |
+    mkdir -p ${{ env.IMAGE_NAME }}_build
+    sudo podman save --format oci-dir -o ${{ env.IMAGE_NAME }}_build \
+      ${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
+```
+
+### skopeo copy for alias tags requires registry login before the push step
+
+`skopeo copy docker://... docker://...` needs the registry to be authenticated. The `Login to GitHub Container Registry` step must run before the push block (it already does in reusable-build.yml). No separate login needed for skopeo — it uses the credential store populated by `podman login`.
+
+### `just check` in build matrix is redundant
+
+`pr-validation.yml` already runs `just check` as a required check before merge. Running it in every matrix cell wastes ~60-120s per build with zero added value. Remove it from `reusable-build.yml`; keep it only in `pr-validation.yml`.
