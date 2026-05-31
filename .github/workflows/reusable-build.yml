@@ -450,10 +450,24 @@ jobs:
 
       - name: Sign container image
         if: github.event_name != 'pull_request'
-        run: |
-          cosign sign -y "${{ steps.registry_case.outputs.lowercase }}/${{ env.IMAGE_NAME }}@${TAGS}"
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: cosign sign -y "${{ steps.registry_case.outputs.lowercase }}/${{ env.IMAGE_NAME }}@${TAGS}"
         env:
           TAGS: ${{ steps.digest.outputs.digest }}
+
+      - name: Verify signature
+        if: github.event_name != 'pull_request'
+        run: |
+          cosign verify \
+            --certificate-identity-regexp="https://github.com/${{ github.repository }}/" \
+            --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+            "${{ steps.registry_case.outputs.lowercase }}/${{ env.IMAGE_NAME }}@${{ steps.digest.outputs.digest }}"
+        env:
+          COSIGN_EXPERIMENTAL: "1"
 
       - name: Install ORAS
         if: github.event_name != 'pull_request'
@@ -487,12 +501,16 @@ jobs:
 
       - name: Sign SBOM OCI Artifact
         if: github.event_name != 'pull_request'
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: cosign sign -y "${LOWERCASE}/${IMAGE_NAME}@${SBOM_DIGEST}"
         env:
           LOWERCASE: ${{ steps.registry_case.outputs.lowercase }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           SBOM_DIGEST: ${{ steps.upload-sbom.outputs.sbom_digest }}
-        run: |
-          cosign sign -y "${LOWERCASE}/${IMAGE_NAME}@${SBOM_DIGEST}"
 
       - name: Attestation
         if: github.event_name != 'pull_request'
