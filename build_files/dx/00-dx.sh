@@ -11,6 +11,7 @@ source /ctx/build_files/shared/copr-helpers.sh
 source /ctx/build_files/shared/package-lib.sh
 
 # DX packages from Fedora repos - common to all versions
+# shellcheck disable=SC2034  # passed by name to install_fedora_packages
 FEDORA_PACKAGES=(
     android-tools
     bcc
@@ -101,6 +102,7 @@ dnf -y install --enablerepo=code \
 
 
 # DX packages to exclude - common to all versions
+# shellcheck disable=SC2034  # passed by name to remove_excluded_packages
 EXCLUDED_PACKAGES=()
 
 # Version-specific package exclusions for DX

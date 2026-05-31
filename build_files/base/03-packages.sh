@@ -189,6 +189,7 @@ copr_install_isolated "ublue-os/packages" \
     "oversteer-udev"
 
 # Packages to exclude - common to all versions
+# shellcheck disable=SC2034  # passed by name to remove_excluded_packages
 EXCLUDED_PACKAGES=(
     default-fonts-cjk-sans
     fedora-bookmarks
