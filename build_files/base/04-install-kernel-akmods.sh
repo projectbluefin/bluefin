@@ -58,7 +58,7 @@ dnf5 -y install \
 
 dnf5 versionlock add kernel kernel-devel kernel-devel-matched kernel-core kernel-modules kernel-modules-core kernel-modules-extra
 
-dnf copr enable -y ublue-os/akmods
+dnf5 copr enable -y ublue-os/akmods
 
 mkdir -p /etc/pki/akmods/certs
 ghcurl "https://github.com/ublue-os/akmods/raw/refs/heads/main/certs/public_key.der" --retry 3 -Lo /etc/pki/akmods/certs/akmods-ublue.der
@@ -170,6 +170,6 @@ if [[ "${AKMODS_FLAVOR}" =~ coreos ]]; then
     echo "zfs" >/usr/lib/modules-load.d/zfs.conf
 fi
 
-dnf copr disable -y ublue-os/akmods
+dnf5 copr disable -y ublue-os/akmods
 
 echo "::endgroup::"

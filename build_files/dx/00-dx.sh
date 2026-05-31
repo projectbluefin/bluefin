@@ -69,16 +69,16 @@ dnf5 -y install "${FEDORA_PACKAGES[@]}"
 
 # rocm doesn't work well on nvidia
 if [[ ! "${IMAGE_NAME}" =~ nvidia ]]; then
-  dnf install -y \
+  dnf5 install -y \
     rocm-hip \
     rocm-opencl \
     rocm-smi \
     rocminfo
 fi
 
-dnf config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo
+dnf5 config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo
 sed -i "s/enabled=.*/enabled=0/g" /etc/yum.repos.d/docker-ce.repo
-dnf -y install --enablerepo=docker-ce-stable \
+dnf5 -y install --enablerepo=docker-ce-stable \
     containerd.io \
     docker-buildx-plugin \
     docker-ce \
@@ -95,7 +95,7 @@ gpgcheck=1
 gpgkey=https://packages.microsoft.com/keys/microsoft.asc
 EOF
 sed -i "s/enabled=.*/enabled=0/g" /etc/yum.repos.d/vscode.repo
-dnf -y install --enablerepo=code \
+dnf5 -y install --enablerepo=code \
     code
 
 

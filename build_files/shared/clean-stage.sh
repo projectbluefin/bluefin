@@ -5,8 +5,8 @@ echo "::group:: ===$(basename "$0")==="
 set -eoux pipefail
 
 # Revert back to upstream defaults
-dnf config-manager setopt keepcache=0
-dnf versionlock clear
+dnf5 config-manager setopt keepcache=0
+dnf5 versionlock clear
 
 # This comes last because we can't *ever* afford to ship fedora flatpaks on the image
 systemctl disable flatpak-add-fedora-repos.service
