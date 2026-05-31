@@ -77,6 +77,17 @@ gh pr merge PR_NUMBER --repo projectbluefin/bluefin --squash
 - Unversioned `renovate` in the validator command is intentional: it validates against the current schema
 - Passing a filename to `renovate-config-validator` can change how the file is interpreted; prefer repo auto-discovery unless you intentionally need another mode
 
+## Shared actions version management
+
+When `projectbluefin/actions` is live, Renovate will track action versions automatically via the `github-actions` manager. The contract:
+
+- Actions are pinned to semver tags: `@v1`, `@v1.2.0`
+- Renovate opens PRs when new versions are published
+- Major version bumps (`v1` → `v2`) require manual review (breaking changes)
+- Patch/minor bumps follow normal automerge rules
+
+No additional Renovate config is needed beyond `config:best-practices` — it already covers `github-actions` pin updates.
+
 ## Lessons learned
 
 <!-- Add reusable Renovate patterns here -->

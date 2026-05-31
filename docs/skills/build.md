@@ -115,6 +115,39 @@ curl -s https://raw.githubusercontent.com/ublue-os/aurora/main/Justfile | grep -
 | build fails with low disk space | stale build artifacts | run `just clean` |
 | workflow shows `startup_failure` with no jobs | unsupported org-only permission scope on the runner/fork | compare permissions block with a working upstream workflow |
 
+## Build pipeline and shared actions
+
+### Pipeline flow
+
+```text
+PR validation (just check + pre-commit + shellcheck)
+  → testing build (Containerfile → GHCR :testing)
+  → e2e smoke test (boot + package assertions)
+  → weekly promotion (fast-forward latest/stable)
+  → stable build + release generation
+```
+
+### Justfile vs GitHub Actions
+
+| Scope | Tool | Why |
+|---|---|---|
+| Local validation | `just check`, `just fix` | Fast, no network needed |
+| Image build | `just build` locally, `reusable-build.yml` in CI | Same Containerfile, different runners |
+| Promotion/signing | GitHub Actions only | Requires OIDC identity, registry access |
+
+### Key shared actions (projectbluefin/actions)
+
+These actions are being extracted to standardize the build across bluefin, aurora, and bazzite:
+
+| Action | Build phase |
+|---|---|
+| `bootc-build/setup-runner` | Runner preparation (podman, cgroups) |
+| `bootc-build/dnf-cache` | Package caching before build |
+| `bootc-build/preflight` | Pre-build validation |
+| `bootc-build/rechunk` | Post-build rpm-ostree rechunking |
+| `bootc-build/push-image` | Registry push with retry |
+| `bootc-build/sign-and-publish` | Signing + SBOM attach |
+
 ## Lessons learned
 
 <!-- Add reusable build/PR patterns here -->
