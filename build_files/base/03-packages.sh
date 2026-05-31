@@ -168,8 +168,8 @@ esac
 
 # Install Fedora, Tailscale, and multimedia packages together while keeping COPR packages isolated.
 echo "Installing ${#FEDORA_PACKAGES[@]} Fedora packages plus Tailscale and multimedia packages..."
-dnf config-manager addrepo --from-repofile=https://pkgs.tailscale.com/stable/fedora/tailscale.repo
-dnf config-manager setopt tailscale-stable.enabled=0
+dnf5 config-manager addrepo --from-repofile=https://pkgs.tailscale.com/stable/fedora/tailscale.repo
+dnf5 config-manager setopt tailscale-stable.enabled=0
 dnf5 -y install \
     --enablerepo='tailscale-stable' \
     --enablerepo='fedora-multimedia' \
