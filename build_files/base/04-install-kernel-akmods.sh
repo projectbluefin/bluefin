@@ -40,23 +40,57 @@ ghcurl "https://github.com/ublue-os/akmods/raw/refs/heads/main/certs/public_key.
 grep -F -e "Universal Blue" /etc/pki/akmods/certs/akmods-ublue.der
 
 # RPMFUSION Dependent AKMODS
+# Write rpmfusion repo files inline instead of installing release RPMs.
+# This avoids network-fetching release packages and eliminates 4 extra DNF transactions.
+RPMFUSION_FREE_REPO=/etc/yum.repos.d/rpmfusion-free-build.repo
+RPMFUSION_NONFREE_REPO=/etc/yum.repos.d/rpmfusion-nonfree-build.repo
+
+cat > "${RPMFUSION_FREE_REPO}" <<'REPOEOF'
+[rpmfusion-free]
+name=RPM Fusion for Fedora $releasever - Free
+baseurl=https://download1.rpmfusion.org/free/fedora/releases/$releasever/Everything/$basearch/os/
+enabled=1
+metadata_expire=3d
+gpgcheck=0
+skip_if_unavailable=1
+
+[rpmfusion-free-updates]
+name=RPM Fusion for Fedora $releasever - Free - Updates
+baseurl=https://download1.rpmfusion.org/free/fedora/updates/$releasever/$basearch/
+enabled=1
+metadata_expire=3d
+gpgcheck=0
+skip_if_unavailable=1
+REPOEOF
+
+cat > "${RPMFUSION_NONFREE_REPO}" <<'REPOEOF'
+[rpmfusion-nonfree]
+name=RPM Fusion for Fedora $releasever - Nonfree
+baseurl=https://download1.rpmfusion.org/nonfree/fedora/releases/$releasever/Everything/$basearch/os/
+enabled=1
+metadata_expire=3d
+gpgcheck=0
+skip_if_unavailable=1
+
+[rpmfusion-nonfree-updates]
+name=RPM Fusion for Fedora $releasever - Nonfree - Updates
+baseurl=https://download1.rpmfusion.org/nonfree/fedora/updates/$releasever/$basearch/
+enabled=1
+metadata_expire=3d
+gpgcheck=0
+skip_if_unavailable=1
+REPOEOF
+
 if [[ "${UBLUE_IMAGE_TAG}" == "beta" ]]; then
     dnf5 -y install \
-        https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-"$(rpm -E %fedora)".noarch.rpm || true
-    dnf5 -y install \
-        https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-"$(rpm -E %fedora)".noarch.rpm || true
-    dnf5 -y install \
         v4l2loopback /tmp/akmods/kmods/*v4l2loopback*.rpm || true
-    dnf5 -y remove rpmfusion-free-release || true
-    dnf5 -y remove rpmfusion-nonfree-release || true
 else
     dnf5 -y install \
-        https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-"$(rpm -E %fedora)".noarch.rpm \
-        https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-"$(rpm -E %fedora)".noarch.rpm
-    dnf5 -y install \
         v4l2loopback /tmp/akmods/kmods/*v4l2loopback*.rpm
-    dnf5 -y remove rpmfusion-free-release rpmfusion-nonfree-release
 fi
+
+# Remove temporary rpmfusion repo files
+rm -f "${RPMFUSION_FREE_REPO}" "${RPMFUSION_NONFREE_REPO}"
 
 # Nvidia AKMODS
 if [[ "${IMAGE_NAME}" =~ nvidia ]]; then
