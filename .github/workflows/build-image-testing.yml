@@ -7,7 +7,6 @@ on:
     paths-ignore:
       - ".github/workflows/*validate*.yml"
       - "**.md"
-      - "flatpaks/**"
       - "system_files/shared/etc/bazaar/**"
   workflow_call:
   workflow_dispatch:
