@@ -70,7 +70,7 @@ jobs:
         uses: ublue-os/remove-unwanted-software@695eb75bc387dbcd9685a8e72d23439d8686cba6 # v10
 
       - name: Install Just
-        uses: taiki-e/install-action@873c7452cadb7c034694a1282227095d93fbdf92 # just
+        uses: taiki-e/install-action@35e522e91305799a18f8cee79bf13d1f7b28b796 # just
         with:
           tool: just
 
