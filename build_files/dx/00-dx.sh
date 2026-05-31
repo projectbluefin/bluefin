@@ -7,8 +7,11 @@ set -ouex pipefail
 # Load secure COPR helpers
 # shellcheck source=build_files/shared/copr-helpers.sh
 source /ctx/build_files/shared/copr-helpers.sh
+# shellcheck source=build_files/shared/package-lib.sh
+source /ctx/build_files/shared/package-lib.sh
 
 # DX packages from Fedora repos - common to all versions
+# shellcheck disable=SC2034  # passed by name to install_fedora_packages
 FEDORA_PACKAGES=(
     android-tools
     bcc
@@ -64,8 +67,7 @@ FEDORA_PACKAGES=(
     ydotool
 )
 
-echo "Installing ${#FEDORA_PACKAGES[@]} DX packages from Fedora repos..."
-dnf5 -y install "${FEDORA_PACKAGES[@]}"
+install_fedora_packages FEDORA_PACKAGES
 
 # rocm doesn't work well on nvidia
 if [[ ! "${IMAGE_NAME}" =~ nvidia ]]; then
@@ -100,6 +102,7 @@ dnf5 -y install --enablerepo=code \
 
 
 # DX packages to exclude - common to all versions
+# shellcheck disable=SC2034  # passed by name to remove_excluded_packages
 EXCLUDED_PACKAGES=()
 
 # Version-specific package exclusions for DX
@@ -110,14 +113,7 @@ case "$FEDORA_MAJOR_VERSION" in
 esac
 
 # Remove excluded packages if they are installed
-if [[ "${#EXCLUDED_PACKAGES[@]}" -gt 0 ]]; then
-    readarray -t INSTALLED_EXCLUDED < <(rpm -qa --queryformat='%{NAME}\n' "${EXCLUDED_PACKAGES[@]}" 2>/dev/null || true)
-    if [[ "${#INSTALLED_EXCLUDED[@]}" -gt 0 ]]; then
-        dnf5 -y remove "${INSTALLED_EXCLUDED[@]}"
-    else
-        echo "No excluded packages found to remove."
-    fi
-fi
+remove_excluded_packages EXCLUDED_PACKAGES
 
 systemctl enable docker.socket
 systemctl enable podman.socket
