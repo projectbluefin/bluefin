@@ -274,9 +274,12 @@ jobs:
               dest=${{ steps.registry_case.outputs.lowercase }}/${{ env.IMAGE_NAME }}:${tag}
               if [[ "${tag}" == "${{ env.DEFAULT_TAG }}" ]]; then
                 # First push: compress and upload layers
+                # --force-compression: re-compress even if registry already has a
+                # differently-compressed variant (required for gzip→zstd:chunked migration)
                 sudo -E podman push \
                   --compression-format zstd:chunked \
                   --compression-level 3 \
+                  --force-compression \
                   --retry 5 \
                   --retry-delay 30s \
                   ${{ env.IMAGE_NAME }}:${tag} "${dest}"
@@ -285,6 +288,7 @@ jobs:
                 sudo -E podman push \
                   --compression-format zstd:chunked \
                   --compression-level 3 \
+                  --force-compression \
                   --retry 5 \
                   --retry-delay 30s \
                   --digestfile "${{ env.DIGEST_FILE }}" \
@@ -295,12 +299,14 @@ jobs:
                 sudo -E podman push \
                   --compression-format zstd:chunked \
                   --compression-level 3 \
+                  --force-compression \
                   --retry 5 \
                   --retry-delay 30s \
                   ${{ env.IMAGE_NAME }}:${tag} "${dest}"
                 sudo -E podman push \
                   --compression-format zstd:chunked \
                   --compression-level 3 \
+                  --force-compression \
                   --retry 5 \
                   --retry-delay 30s \
                   ${{ env.IMAGE_NAME }}:${tag} "${dest}"
