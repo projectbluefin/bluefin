@@ -44,6 +44,8 @@ dnf5 versionlock add "${OVERRIDES[@]}"
 
 # shellcheck source=build_files/shared/copr-helpers.sh
 source /ctx/build_files/shared/copr-helpers.sh
+# shellcheck source=build_files/shared/package-lib.sh
+source /ctx/build_files/shared/package-lib.sh
 
 # NOTE:
 # Packages are split into FEDORA_PACKAGES and COPR_PACKAGES to prevent
@@ -207,14 +209,7 @@ EXCLUDED_PACKAGES=(
 )
 
 # Remove excluded packages if they are installed
-if [[ "${#EXCLUDED_PACKAGES[@]}" -gt 0 ]]; then
-    readarray -t INSTALLED_EXCLUDED < <(rpm -qa --queryformat='%{NAME}\n' "${EXCLUDED_PACKAGES[@]}" 2>/dev/null || true)
-    if [[ "${#INSTALLED_EXCLUDED[@]}" -gt 0 ]]; then
-        dnf -y remove "${INSTALLED_EXCLUDED[@]}"
-    else
-        echo "No excluded packages found to remove."
-    fi
-fi
+remove_excluded_packages EXCLUDED_PACKAGES
 
 ## Pins and Overrides
 ## Use this section to pin packages in order to avoid regressions
