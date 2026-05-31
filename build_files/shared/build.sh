@@ -44,9 +44,6 @@ echo "::endgroup::"
 # Systemd and Remove Items
 /ctx/build_files/base/17-cleanup.sh
 
-# Run workarounds for lf (Likely not needed)
-/ctx/build_files/base/18-workarounds.sh
-
 # Regenerate initramfs
 /ctx/build_files/base/19-initramfs.sh
 
