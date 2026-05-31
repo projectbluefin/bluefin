@@ -670,9 +670,10 @@ setup-cache $image="bluefin" $tag="latest" $ghcr="0" $github_event="0":
 
     ALLOW_CACHE_WRITE="false"
 
-    # Allow cache write for any image on schedule/workflow_dispatch pushes
+    # Allow cache write on trusted-branch builds (push, schedule, workflow_dispatch).
+    # PR builds use the "pull_request" event and are excluded to prevent cache poisoning.
     if [[ "{{ ghcr }}" == "1" ]] && \
-       [[ "${github_event}" == "workflow_dispatch" || "${github_event}" == "schedule" ]]; then
+       [[ "${github_event}" == "push" || "${github_event}" == "workflow_dispatch" || "${github_event}" == "schedule" ]]; then
         ALLOW_CACHE_WRITE="true"
     fi
 
