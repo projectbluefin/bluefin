@@ -112,10 +112,10 @@ jobs:
     permissions:
       packages: write
       contents: read
-    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@12bd892e476ef930ae3240eff71402390bba8da9 # main
+    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@969d471323a5aed586ba19371a4d2c74c4fa6823 # main
     with:
       image: ${{ needs.verify-e2e.outputs.image }}
-      suites: developer,vanilla-gnome
+      suites: developer,vanilla-gnome,software,common
 
   promote-to-latest-and-stable:
     needs: [e2e, verify-e2e]

@@ -46,7 +46,7 @@ jobs:
     permissions:
       packages: write
       contents: read
-    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@6721f614cf98bc3949578c51cb9a08a2d6e3a8b9 # main
+    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@969d471323a5aed586ba19371a4d2c74c4fa6823 # main
     with:
       image: ${{ needs.e2e.outputs.image }}
-      suites: smoke
+      suites: smoke,common
