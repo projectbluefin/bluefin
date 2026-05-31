@@ -22,6 +22,9 @@ systemctl enable rechunker-group-fix.service
 
 systemctl enable flatpak-preinstall.service
 
+# Onboard to bootc unified storage on first boot (experimental — enables zstd:chunked partial pulls)
+systemctl enable bootc-unified-storage.service
+
 # Updater
 systemctl enable uupd.timer
 

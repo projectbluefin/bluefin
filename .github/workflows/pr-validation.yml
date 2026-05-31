@@ -3,7 +3,7 @@ name: PR Validation — testsuite
 on:
   pull_request:
     branches:
-      - main
+      - testing
   merge_group:
 
 concurrency:
@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install just
-        uses: taiki-e/install-action@873c7452cadb7c034694a1282227095d93fbdf92 # just
+        uses: taiki-e/install-action@35e522e91305799a18f8cee79bf13d1f7b28b796 # just
         with:
           tool: just
 
@@ -42,3 +42,13 @@ jobs:
       - name: Run pre-commit
         shell: bash
         run: pre-commit run --all-files
+
+  testsuite:
+    name: E2E smoke
+    permissions:
+      contents: read
+      packages: write  # testsuite pushes screenshot OCI artifacts to GHCR
+    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@5d2731317911cd875077fe1576761635859cc728 # main
+    with:
+      image: ghcr.io/projectbluefin/bluefin:testing
+      suites: smoke

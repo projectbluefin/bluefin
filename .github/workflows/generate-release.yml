@@ -37,7 +37,7 @@ jobs:
           fetch-depth: 500
 
       - name: Install Just
-        uses: taiki-e/install-action@873c7452cadb7c034694a1282227095d93fbdf92 # just
+        uses: taiki-e/install-action@35e522e91305799a18f8cee79bf13d1f7b28b796 # just
         with:
           tool: just
 
@@ -62,7 +62,7 @@ jobs:
 
       - name: Download SBOM release assets
         if: contains(fromJson('["stable"]'), matrix.version) && (github.event.schedule == '0 1 * * TUE' || contains(fromJson('["workflow_dispatch", "workflow_call"]'), github.event_name))
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: sbom-*
           path: release-assets
