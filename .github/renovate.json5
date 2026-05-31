@@ -22,6 +22,19 @@
       ],
       datasourceTemplate: 'docker',
     },
+    // Track pinned binary download versions in image-versions.yml.
+    // Each pinned entry is preceded by a:
+    //   # renovate: datasource=github-releases depName=owner/repo
+    // comment so Renovate can discover and update the version string.
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^image-versions\\.yml$/',
+      ],
+      matchStrings: [
+        '# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)\\s+\\w+: "(?<currentValue>[^"]+)"',
+      ],
+    },
     // Track GNOME extension submodules that pin to a release tag via the
     // `branch =` field in .gitmodules. Renovate's git-submodules manager
     // alone can't see new tags because tags don't move; this rewrites the
