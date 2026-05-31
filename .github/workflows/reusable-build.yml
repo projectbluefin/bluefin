@@ -137,6 +137,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.architecture }}-buildah-
 
+      - name: Record build start time
+        id: build-timing
+        shell: bash
+        run: echo "build_start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - name: Build Image
         id: build-image
         shell: bash
@@ -148,6 +153,15 @@ jobs:
                                "${{ matrix.stream_name }}" \
                                "${{ matrix.image_flavor }}" \
                                "${{ inputs.kernel_pin }}"
+
+      - name: Record build duration
+        id: build-duration
+        shell: bash
+        run: |
+          BUILD_END=$(date +%s)
+          BUILD_ELAPSED=$(( BUILD_END - ${{ steps.build-timing.outputs.build_start }} ))
+          echo "build_seconds=${BUILD_ELAPSED}" >> "$GITHUB_OUTPUT"
+          echo "Build duration: $(( BUILD_ELAPSED / 60 ))m $(( BUILD_ELAPSED % 60 ))s"
 
       # https://github.com/actions/cache/issues/1533
       - name: Hack around permission issue caching
@@ -186,6 +200,12 @@ jobs:
                             "${MATRIX_IMAGE_FLAVOR}" \
                             "${SYFT_CMD}"
 
+      - name: Record rechunk start time
+        id: rechunk-timing
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: echo "rechunk_start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - name: Rechunk Image
         if: github.event_name != 'pull_request'
         id: rechunk-image
@@ -206,6 +226,16 @@ jobs:
           sudo -E "$(command -v just)" load-rechunk "${{ matrix.base_name }}" \
                             "${{ env.DEFAULT_TAG }}" \
                             "${{ matrix.image_flavor }}"
+
+      - name: Record rechunk duration
+        id: rechunk-duration
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          RECHUNK_END=$(date +%s)
+          RECHUNK_ELAPSED=$(( RECHUNK_END - ${{ steps.rechunk-timing.outputs.rechunk_start }} ))
+          echo "rechunk_seconds=${RECHUNK_ELAPSED}" >> "$GITHUB_OUTPUT"
+          echo "Rechunk duration: $(( RECHUNK_ELAPSED / 60 ))m $(( RECHUNK_ELAPSED % 60 ))s"
 
       - name: Secureboot Check
         if: github.event_name != 'pull_request'
@@ -264,6 +294,12 @@ jobs:
           echo ${{ secrets.GITHUB_TOKEN }} | podman login ghcr.io -u ${{ github.actor }} --password-stdin
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      - name: Record push start time
+        id: push-timing
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: echo "push_start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - name: Push to GHCR
         id: push
         if: github.event_name != 'pull_request'
@@ -310,6 +346,16 @@ jobs:
               fi
             done
 
+      - name: Record push duration
+        id: push-duration
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          PUSH_END=$(date +%s)
+          PUSH_ELAPSED=$(( PUSH_END - ${{ steps.push-timing.outputs.push_start }} ))
+          echo "push_seconds=${PUSH_ELAPSED}" >> "$GITHUB_OUTPUT"
+          echo "Push duration: $(( PUSH_ELAPSED / 60 ))m $(( PUSH_ELAPSED % 60 ))s"
+
       - name: Upload OCI dir as Artifact
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -341,6 +387,44 @@ jobs:
         run: |
           DIGEST=$(cat "${{ env.DIGEST_FILE }}")
           echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Build telemetry summary
+        if: always()
+        shell: bash
+        run: |
+          BUILD_S=${{ steps.build-duration.outputs.build_seconds || 0 }}
+          RECHUNK_S=${{ steps.rechunk-duration.outputs.rechunk_seconds || 0 }}
+          PUSH_S=${{ steps.push-duration.outputs.push_seconds || 0 }}
+          BUILD_START=${{ steps.build-timing.outputs.build_start || 0 }}
+          SUMMARY_END=$(date +%s)
+          WALL_CLOCK_S=0
+          if [[ "${BUILD_START}" -gt 0 ]]; then
+            WALL_CLOCK_S=$(( SUMMARY_END - BUILD_START ))
+          fi
+
+          IMAGE_SIZE=$(sudo podman image inspect "${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}" \
+            --format '{{.Size}}' 2>/dev/null || echo "0")
+          IMAGE_SIZE_MB=$(( IMAGE_SIZE / 1024 / 1024 ))
+          LAYER_COUNT=$(sudo podman image inspect "${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}" \
+            --format '{{len .RootFS.Layers}}' 2>/dev/null || echo "?")
+
+          {
+            echo "## 📊 Build Telemetry: ${{ env.IMAGE_NAME }}"
+            echo ""
+            echo "| Stage | Duration |"
+            echo "|-------|----------|"
+            printf "| Build | %dm %ds |\n" $(( BUILD_S / 60 )) $(( BUILD_S % 60 ))
+            if [[ "${RECHUNK_S}" -gt 0 ]]; then
+              printf "| Rechunk | %dm %ds |\n" $(( RECHUNK_S / 60 )) $(( RECHUNK_S % 60 ))
+            fi
+            if [[ "${PUSH_S}" -gt 0 ]]; then
+              printf "| Push | %dm %ds |\n" $(( PUSH_S / 60 )) $(( PUSH_S % 60 ))
+            fi
+            printf "| **Total wall-clock** | **%dm %ds** |\n" $(( WALL_CLOCK_S / 60 )) $(( WALL_CLOCK_S % 60 ))
+            echo ""
+            echo "**Image size (uncompressed):** ${IMAGE_SIZE_MB} MB"
+            echo "**Layer count:** ${LAYER_COUNT}"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Write digest to artifact
         if: github.event_name != 'pull_request'
