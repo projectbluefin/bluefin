@@ -107,7 +107,7 @@ Common CI/CD logic lives in reusable GitHub Actions at **https://github.com/proj
 | `bootc-build/push-image` | ✅ live `@v1` | Push once + skopeo copy for alias tags, digest capture |
 | `bootc-build/sign-and-publish` | ✅ live `@v1` | Cosign sign (keyless or key-based) + Syft SBOM + ORAS attach + attestation |
 | `bootc-build/rechunk` | ✅ live `@v1` | rpm-ostree chunkah rechunking with delta support |
-| `bootc-build/generate-tags` | ✅ live `@v1` | Produce OCI tags from branch, date, Fedora version |
+| `bootc-build/generate-tags` | 🔲 planned | Produce OCI tags from branch, date, Fedora version |
 | `bootc-build/generate-release` | 🔲 planned | Changelog from RPM diff + SBOM comparison |
 
 ### Migration pattern
@@ -134,12 +134,6 @@ Replace inline workflow steps with action calls:
 - The `projectbluefin/actions` repo is live at https://github.com/projectbluefin/actions
 - Pin consuming workflows to `@v1`; Renovate tracks updates via `github-actions` manager
 - P2 actions (`generate-tags`, `generate-release`) are tracked in bluefin issue #134
-
-## Hard rules for agents
-
-- **PRs always target `testing`.** Never `main`. If you open a PR targeting `main`, close it and re-open.
-- **Never add shared CI logic to `.github/` or `common`.** New reusable actions go in `projectbluefin/actions` only.
-- **Read the actual workflow files before writing about them.** Stored memory about tags, steps, or behavior can be stale. Open the file and verify.
 
 ## Lessons learned
 
