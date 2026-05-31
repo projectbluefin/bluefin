@@ -77,6 +77,25 @@ gh workflow run build-image-latest-main.yml --repo projectbluefin/bluefin --ref 
 - Stable releases are generated from workflow output; do not hand-edit release notes as the primary source of truth
 - ISO release and promotion is a **different repo**: `projectbluefin/bluefin-iso`
 
+## Shared release action
+
+The `bootc-build/generate-release` action standardizes release note generation:
+
+```yaml
+- uses: projectbluefin/actions/bootc-build/generate-release@v1
+  with:
+    image: ghcr.io/projectbluefin/bluefin
+    previous-tag: stable-previous
+    current-tag: stable
+```
+
+It produces:
+- RPM diff (added/removed/upgraded packages)
+- SBOM comparison
+- Formatted changelog markdown
+
+This replaces per-repo `just changelogs` wrapper scripts in CI with a standardized action.
+
 ## Lessons learned
 
 <!-- Add reusable release/promotion patterns here -->

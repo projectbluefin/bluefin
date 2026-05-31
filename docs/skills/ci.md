@@ -94,6 +94,45 @@ If `main` advanced during promotion, the workflow aborts on purpose.
 - Stable release generation depends on SBOM assets existing for the images being diffed
 - Bluefin docs-only changes often skip image builds due to path filters; that is usually expected
 
+## Shared actions architecture (projectbluefin/actions)
+
+The project is extracting common CI/CD logic into reusable GitHub Actions in `projectbluefin/actions`. These actions serve bluefin, aurora, bazzite, and any bootc image builder.
+
+| Action | Purpose |
+|---|---|
+| `bootc-build/setup-runner` | Install modern podman/buildah/skopeo, configure tmpdir, cgroup delegation |
+| `bootc-build/dnf-cache` | DNF metadata + package cache with correct permissions |
+| `bootc-build/preflight` | Validate Containerfile syntax, required labels, base image signatures |
+| `bootc-build/generate-tags` | Produce OCI tags from branch, date, Fedora version |
+| `bootc-build/push-image` | Push multi-arch manifest with retry and rate-limit handling |
+| `bootc-build/sign-and-publish` | Cosign sign (keyless or key-based) + SBOM attach |
+| `bootc-build/rechunk` | rpm-ostree rechunking with delta support |
+| `bootc-build/ghcr-cleanup` | Prune untagged/expired GHCR manifests |
+| `bootc-build/generate-release` | Changelog from RPM diff + SBOM comparison |
+
+### Migration pattern
+
+Replace inline workflow steps with action calls:
+```yaml
+# Before: 15-line inline step
+- name: Set up runner
+  run: |
+    sudo apt-get install ...
+    sudo systemctl ...
+
+# After: single action call
+- uses: projectbluefin/actions/bootc-build/setup-runner@v1
+  with:
+    podman-version: "5.4"
+```
+
+### Design decisions
+
+- Each action is independently consumable (no monolithic action bundle)
+- Signing mode is an input (`keyless` or `key-based`), not hardcoded
+- Actions pin to `@v1` semver tags; Renovate tracks updates via `github-actions` manager
+- The `projectbluefin/actions` repo does NOT exist yet — see epic issue 134
+
 ## Lessons learned
 
 <!-- Add reusable CI/debugging patterns here -->

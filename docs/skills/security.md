@@ -80,6 +80,27 @@ Use this when changing kernel/module-related inputs or build logic that affects 
 | cosign verify fails | wrong key, tag, or unsigned image | verify key source and image reference |
 | secureboot check fails | module/signing mismatch | inspect kernel/module inputs before changing signing logic |
 
+## Signing modes in shared actions
+
+The `bootc-build/sign-and-publish` action supports two signing modes:
+
+| Mode | Used by | How it works |
+|---|---|---|
+| `keyless` | Bluefin | OIDC → Fulcio certificate → Rekor transparency log |
+| `key-based` | Aurora, Bazzite | `SIGNING_SECRET` → cosign sign with private key |
+
+Usage in workflows:
+```yaml
+- uses: projectbluefin/actions/bootc-build/sign-and-publish@v1
+  with:
+    mode: keyless          # or "key-based"
+    image: ghcr.io/projectbluefin/bluefin:stable
+    # key-based mode only:
+    # signing-secret: ${{ secrets.SIGNING_SECRET }}
+```
+
+Keyless is preferred for new projects. Key-based exists for backwards compatibility with existing Aurora/Bazzite infrastructure.
+
 ## Lessons learned
 
 <!-- Add reusable security patterns here -->
