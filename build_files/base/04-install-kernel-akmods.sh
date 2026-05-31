@@ -15,7 +15,32 @@ for pkg in kernel kernel-core kernel-modules kernel-modules-core kernel-modules-
 done
 
 # Fetch Common AKMODS & Kernel RPMS
-skopeo copy --retry-times 3 docker://ghcr.io/ublue-os/akmods:"${AKMODS_FLAVOR}"-"$(rpm -E %fedora)"-"${KERNEL}" dir:/tmp/akmods
+# Pull large OCI artifacts in parallel before any RPM installs.
+declare -A PULL_PIDS
+
+skopeo copy --retry-times 3 docker://ghcr.io/ublue-os/akmods:"${AKMODS_FLAVOR}"-"$(rpm -E %fedora)"-"${KERNEL}" dir:/tmp/akmods &
+PULL_PIDS[akmods]=$!
+
+if [[ "${IMAGE_NAME}" =~ nvidia ]]; then
+    mkdir -p /tmp/akmods-rpms
+    skopeo copy --retry-times 3 docker://ghcr.io/ublue-os/akmods-nvidia-open:"${AKMODS_FLAVOR}"-"$(rpm -E %fedora)"-"${KERNEL}" dir:/tmp/akmods-rpms &
+    PULL_PIDS[nvidia]=$!
+fi
+
+if [[ "${AKMODS_FLAVOR}" =~ coreos ]]; then
+    mkdir -p /tmp/akmods-zfs
+    skopeo copy --retry-times 3 docker://ghcr.io/ublue-os/akmods-zfs:"${AKMODS_FLAVOR}"-"$(rpm -E %fedora)"-"${KERNEL}" dir:/tmp/akmods-zfs &
+    PULL_PIDS[zfs]=$!
+fi
+
+for key in "${!PULL_PIDS[@]}"; do
+    if ! wait "${PULL_PIDS[$key]}"; then
+        echo "ERROR: Failed to pull ${key} image" >&2
+        exit 1
+    fi
+done
+echo "All image pulls completed successfully"
+
 AKMODS_TARGZ=$(jq -r '.layers[].digest' </tmp/akmods/manifest.json | cut -d : -f 2)
 tar -xvzf /tmp/akmods/"$AKMODS_TARGZ" -C /tmp/
 mv /tmp/rpms/* /tmp/akmods/
@@ -60,8 +85,6 @@ fi
 
 # Nvidia AKMODS
 if [[ "${IMAGE_NAME}" =~ nvidia ]]; then
-    # Fetch Nvidia RPMs
-    skopeo copy --retry-times 3 docker://ghcr.io/ublue-os/akmods-nvidia-open:"${AKMODS_FLAVOR}"-"$(rpm -E %fedora)"-"${KERNEL}" dir:/tmp/akmods-rpms
     NVIDIA_TARGZ=$(jq -r '.layers[].digest' </tmp/akmods-rpms/manifest.json | cut -d : -f 2)
     tar -xvzf /tmp/akmods-rpms/"$NVIDIA_TARGZ" -C /tmp/
     mv /tmp/rpms/* /tmp/akmods-rpms/
@@ -88,9 +111,7 @@ EOF
 fi
 
 # ZFS for stable
-if [[ ${AKMODS_FLAVOR} =~ coreos ]]; then
-    # Fetch ZFS RPMs
-    skopeo copy --retry-times 3 docker://ghcr.io/ublue-os/akmods-zfs:"${AKMODS_FLAVOR}"-"$(rpm -E %fedora)"-"${KERNEL}" dir:/tmp/akmods-zfs
+if [[ "${AKMODS_FLAVOR}" =~ coreos ]]; then
     ZFS_TARGZ=$(jq -r '.layers[].digest' </tmp/akmods-zfs/manifest.json | cut -d : -f 2)
     tar -xvzf /tmp/akmods-zfs/"$ZFS_TARGZ" -C /tmp/
     mv /tmp/rpms/* /tmp/akmods-zfs/
