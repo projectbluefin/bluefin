@@ -61,6 +61,7 @@ jobs:
     needs: [detect-changes]
     if: |
       always() &&
+      (github.event_name != 'workflow_dispatch' || github.ref_name == 'main') &&
       (github.event_name != 'pull_request' ||
        needs.detect-changes.outputs.should_build == 'true')
     uses: ./.github/workflows/reusable-build.yml

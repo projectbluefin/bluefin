@@ -30,6 +30,7 @@ permissions:
 jobs:
   build-image-latest:
     name: Build Latest Images
+    if: github.event_name != 'workflow_dispatch' || github.ref_name == 'latest'
     uses: ./.github/workflows/reusable-build.yml
     secrets: inherit
     strategy:

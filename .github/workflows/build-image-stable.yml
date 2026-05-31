@@ -21,6 +21,7 @@ permissions:
 jobs:
   build-image-stable:
     name: Build Stable Images
+    if: github.event_name != 'workflow_dispatch' || github.ref_name == 'stable'
     uses: ./.github/workflows/reusable-build.yml
     secrets: inherit
     strategy:
