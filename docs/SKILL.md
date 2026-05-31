@@ -24,3 +24,9 @@ Agent entry point. Load only the skill that matches the task in front of you.
 | Issue lifecycle, bonedigger, labels, and PR policy | [`workflow.md`](workflow.md) |
 | PR gates by change type | [`pr-checklist.md`](pr-checklist.md) |
 | CI workflows, triggers, and failure modes | [`ci.md`](ci.md) |
+
+## Scope rules for agent tasks
+
+- **Doc/onboarding tasks** (update AGENTS.md, add skills, onboard): modify only `docs/` and `AGENTS.md`. Do not create `.github/` workflow files unless the task is explicitly CI work.
+- **CI tasks** (fix a workflow, add a check): touch only `.github/` and `docs/skills/ci.md`. Do not touch unrelated files.
+- **The Justfile and `docs/` are the source of truth.** When memory and code disagree, code wins.
