@@ -1,0 +1,24 @@
+#!/usr/bin/bash
+# Refresh Bluefin community stats used by fastfetch.
+# Writes to /var/cache/bluefin/ so updates survive across reboots
+# without requiring changes to the immutable /usr layer.
+
+set -euo pipefail
+
+CACHE_DIR=/var/cache/bluefin
+mkdir -p "${CACHE_DIR}"
+
+# User count from ublue-os/countme
+if count=$(curl -sf --retry 3 --max-time 10 \
+    https://raw.githubusercontent.com/ublue-os/countme/main/badge-endpoints/bluefin.json \
+    | jq -r '.message'); then
+    echo "${count}" > "${CACHE_DIR}/fastfetch-user-count"
+fi
+
+# Bazaar weekly downloads from Flathub
+if installs=$(curl -sf --retry 3 --max-time 10 \
+    'https://flathub.org/api/v2/stats/io.github.kolunmi.Bazaar?all=false&days=1' \
+    | jq -r '.installs_last_7_days' \
+    | numfmt --to=si --round=nearest); then
+    echo "${installs}" > "${CACHE_DIR}/bazaar-install-count"
+fi
