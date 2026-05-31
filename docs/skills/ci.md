@@ -140,6 +140,8 @@ Replace inline workflow steps with action calls:
 - **PRs always target `testing`.** Never `main`. If you open a PR targeting `main`, close it and re-open.
 - **Never add shared CI logic to `.github/` or `common`.** New reusable actions go in `projectbluefin/actions` only.
 - **Read the actual workflow files before writing about them.** Stored memory about tags, steps, or behavior can be stale. Open the file and verify.
+- **PATs are forbidden in projectbluefin repos.** Never add `RENOVATE_TOKEN` or any PAT secret. Renovate uses GitHub App auth via `projectbluefin/renovate-config`. Trigger Renovate: `gh workflow run "Renovate Self-Hosted" --repo projectbluefin/renovate-config`
+- **No personal tool artifacts in community files.** This repo is shared; do not include powerlevel ratings, personal skill patterns, or client-specific references in `docs/`.
 
 ## Lessons learned
 
