@@ -30,18 +30,64 @@ ARG FEDORA_MAJOR_VERSION="43"
 ARG IMAGE_NAME="bluefin"
 ARG IMAGE_VENDOR="projectbluefin"
 ARG KERNEL="6.10.10-200.fc40.x86_64"
-ARG SHA_HEAD_SHORT="dedbeef"
 ARG UBLUE_IMAGE_TAG="stable"
-ARG VERSION=""
 ARG IMAGE_FLAVOR=""
 
-# Build, cleanup, lint.
+# Stage 1: install packages, kernel, and akmods.
+# Narrow mount (build_files/ only) enables granular layer caching:
+# a system_files-only PR change gets a cache hit here, saving 20-80 min.
+# NOTE: VERSION and SHA_HEAD_SHORT are intentionally declared AFTER this RUN
+# so they don't bust Stage 1's cache on every commit / daily build.
 RUN --mount=type=cache,dst=/var/cache/libdnf5 \
     --mount=type=cache,dst=/var/cache/rpm-ostree \
-    --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=bind,from=ctx,source=/build_files,target=/ctx/build_files \
+    --mount=type=bind,from=ctx,source=/image-versions.yml,target=/ctx/image-versions.yml \
     --mount=type=secret,id=GITHUB_TOKEN \
     --mount=type=tmpfs,dst=/boot \
-    /ctx/build_files/shared/build.sh
+    bash -euo pipefail -c ' \
+        dnf5 config-manager setopt keepcache=1 && \
+        dnf5 config-manager setopt install_weak_deps=0 && \
+        dnf5 -y swap fedora-logos generic-logos && \
+        rpm --erase --nodeps --nodb generic-logos && \
+        mkdir -p /tmp/scripts/helpers && \
+        install -Dm0755 /ctx/build_files/shared/utils/ghcurl /tmp/scripts/helpers/ghcurl && \
+        export PATH="/tmp/scripts/helpers:$PATH" && \
+        /ctx/build_files/base/03-packages.sh && \
+        /ctx/build_files/base/04-install-kernel-akmods.sh && \
+        /ctx/build_files/base/05-override-install.sh \
+    '
+
+# Per-build metadata: declared here so they don't bust Stage 1's cache key.
+ARG SHA_HEAD_SHORT="dedbeef"
+ARG VERSION=""
+
+# Stage 2: overlay system_files, build extensions, clean up, finalize.
+# Narrow mount (system_files/ + build_files/shared + build_files/dx) means
+# package-script changes do NOT invalidate this stage when build_files/base is unchanged.
+RUN --mount=type=cache,dst=/var/cache/libdnf5 \
+    --mount=type=bind,from=ctx,source=/system_files,target=/ctx/system_files \
+    --mount=type=bind,from=ctx,source=/build_files/shared,target=/ctx/build_files/shared \
+    --mount=type=bind,from=ctx,source=/build_files/dx,target=/ctx/build_files/dx \
+    --mount=type=bind,from=ctx,source=/build_files/base/00-image-info.sh,target=/ctx/build_files/base/00-image-info.sh \
+    --mount=type=bind,from=ctx,source=/build_files/base/17-cleanup.sh,target=/ctx/build_files/base/17-cleanup.sh \
+    --mount=type=bind,from=ctx,source=/build_files/base/19-initramfs.sh,target=/ctx/build_files/base/19-initramfs.sh \
+    --mount=type=bind,from=ctx,source=/build_files/base/20-tests.sh,target=/ctx/build_files/base/20-tests.sh \
+    --mount=type=secret,id=GITHUB_TOKEN \
+    --mount=type=tmpfs,dst=/boot \
+    bash -euo pipefail -c ' \
+        rsync -rvK /ctx/system_files/shared/ / && \
+        mkdir -p /tmp/scripts/helpers && \
+        install -Dm0755 /ctx/build_files/shared/utils/ghcurl /tmp/scripts/helpers/ghcurl && \
+        export PATH="/tmp/scripts/helpers:$PATH" && \
+        /ctx/build_files/base/00-image-info.sh && \
+        /ctx/build_files/shared/build-gnome-extensions.sh && \
+        /ctx/build_files/base/17-cleanup.sh && \
+        /ctx/build_files/base/19-initramfs.sh && \
+        if [ "${IMAGE_FLAVOR:-}" = "dx" ]; then /ctx/build_files/shared/build-dx.sh; fi && \
+        /ctx/build_files/shared/validate-repos.sh && \
+        /ctx/build_files/shared/clean-stage.sh && \
+        /ctx/build_files/base/20-tests.sh \
+    '
 
 # Makes `/opt` writeable by default
 # Needs to be here to make the main image build strict (no /opt there)
