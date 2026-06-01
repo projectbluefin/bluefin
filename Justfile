@@ -469,11 +469,20 @@ verify-container container="" registry="ghcr.io/ublue-os" key="":
         key="{{ justfile_directory() }}/keys/ublue-os-brew.pub"
     fi
 
-    # Verify Container using cosign public key
-    if ! cosign verify --key "${key}" "{{ registry }}"/"{{ container }}" >/dev/null; then
-        echo "NOTICE: Verification failed. Please ensure your public key is correct."
-        exit 1
-    fi
+    # Verify Container using cosign public key (retry up to 5 times for transient registry errors)
+    MAX_RETRIES=5
+    RETRY_DELAY=10
+    for attempt in $(seq 1 ${MAX_RETRIES}); do
+        if cosign verify --key "${key}" "{{ registry }}"/"{{ container }}" >/dev/null; then
+            break
+        fi
+        if [[ "${attempt}" -eq "${MAX_RETRIES}" ]]; then
+            echo "NOTICE: Verification failed after ${MAX_RETRIES} attempts. Please ensure your public key is correct."
+            exit 1
+        fi
+        echo "NOTICE: Verification attempt ${attempt}/${MAX_RETRIES} failed, retrying in ${RETRY_DELAY}s..."
+        sleep "${RETRY_DELAY}"
+    done
 
 # Secureboot Check
 [group('Utility')]
