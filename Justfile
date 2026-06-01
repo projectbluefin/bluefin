@@ -223,6 +223,18 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
         echo "No GitHub token found - build may hit rate limit"
     fi
 
+    # Registry layer cache — reduces build time by reusing unchanged layers from GHCR
+    # Cache write (REGISTRY_CACHE_WRITE=1) is set by CI for non-PR builds only.
+    # PR builds and local builds are read-only to prevent cache poisoning.
+    cache_ref="ghcr.io/{{ repo_organization }}/bluefin-cache:${fedora_version}"
+    PODMAN_BUILD_ARGS+=(--cache-from "${cache_ref}")
+    if [[ "${REGISTRY_CACHE_WRITE:-0}" == "1" ]]; then
+        PODMAN_BUILD_ARGS+=(--cache-to "${cache_ref}")
+        echo "Registry layer cache: read+write (${cache_ref})"
+    else
+        echo "Registry layer cache: read-only (${cache_ref})"
+    fi
+
     ${PODMAN} build "${PODMAN_BUILD_ARGS[@]}" .
     echo "::endgroup::"
 
