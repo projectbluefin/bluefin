@@ -125,7 +125,7 @@ These are the labels bonedigger expects and/or manages for the issue queue:
 ### Common Bluefin labels already in use
 
 - Kind: `kind/bug`, `kind/documentation`, `kind/enhancement`, `kind/github-action`, `kind/question`, `kind/renovate`, `kind/tech-debt`, `kind/wontfix`, `kind/duplicate`, `kind/parity`
-- Area: `area/brew`, `area/dx`, `area/flatpak`, `area/iso`, `area/just`, `area/testing`, `area/gnome`, `area/nvidia`, `area/hardware`, `area/policy`, `area/services`, `area/upstream`, `area/finpilot`, `area/bluespeed`, `area/aurora`, `area/buildstream`, `area/bling`
+- Area: `area/brew`, `area/flatpak`, `area/iso`, `area/just`, `area/testing`, `area/gnome`, `area/nvidia`, `area/hardware`, `area/policy`, `area/services`, `area/upstream`, `area/finpilot`, `area/bluespeed`, `area/aurora`, `area/buildstream`, `area/bling`
 - Other useful labels: `dependencies`, `release-blocker`, `package-requests`, `good first issue`, `help wanted`, `agent-ready`
 
 ## PR comment policy
