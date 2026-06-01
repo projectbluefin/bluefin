@@ -30,7 +30,7 @@ The additional 636 workflow lines represent distinct operational capabilities �
 | **Repo size (GitHub)** | 434,267 KB (full legacy history) | 330 KB (fresh repo, no legacy) |
 | **Tracked files** | 71 | 88 |
 | **Workflow files** | 10 | 16 |
-| **Base image** | `ghcr.io/ublue-os/silverblue-main` (ublue reprocessed, F42) | `quay.io/fedora-ostree-desktops/silverblue` (Fedora direct, F43, digest-pinned) |
+| **Base image** | `ghcr.io/ublue-os/silverblue-main` (ublue reprocessed, F42(FIXME) | `quay.io/fedora-ostree-desktops/silverblue` (Fedora direct, F43(FIXME), digest-pinned) |
 | **Stream model** | Branch-push (`stable`, `latest`, `beta`) | Testing→E2E→weekly promotion→`stable` |
 | **PR validation** | Full image build | Dedicated `pr-validation.yml` with path-filtering |
 | **Signing** | Key-based (cosign `--key env://COSIGN_PRIVATE_KEY`, `cosign.pub` in repo) | Keyless (cosign via OIDC — no secrets, no key file) |
