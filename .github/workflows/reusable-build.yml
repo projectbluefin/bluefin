@@ -42,8 +42,23 @@ concurrency:
 permissions: {}
 
 jobs:
+  preflight:
+    name: Preflight checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Install just
+        uses: taiki-e/install-action@35e522e91305799a18f8cee79bf13d1f7b28b796 # just
+
+      - name: Check Just syntax
+        run: just check
+
   build_container:
     name: image
+    needs: [preflight]
     runs-on: ${{ matrix.architecture == 'x86_64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
     env:
       DIGEST_FILE: ${{ github.workspace }}/.push-digest
@@ -502,6 +517,25 @@ jobs:
             "${{ steps.registry_case.outputs.lowercase }}/${{ env.IMAGE_NAME }}@${{ steps.digest.outputs.digest }}"
         env:
           COSIGN_EXPERIMENTAL: "1"
+
+      - name: Verify rechunk metadata preserved
+        if: github.event_name != 'pull_request'
+        run: |
+          set -euo pipefail
+          IMAGE_REF="${{ steps.registry_case.outputs.lowercase }}/${{ env.IMAGE_NAME }}@${{ steps.digest.outputs.digest }}"
+          MANIFEST=$(skopeo inspect --raw "docker://${IMAGE_REF}")
+          # Check that at least one layer carries an ostree.components annotation —
+          # if all annotations are absent the rechunk push stripped zstd+metadata.
+          if echo "${MANIFEST}" | jq -e '
+            .layers // [] |
+            map(select(.annotations != null and (.annotations | has("ostree.components")))) |
+            length > 0
+          ' > /dev/null 2>&1; then
+            echo "✅ ostree.components annotations present — rechunk metadata preserved"
+          else
+            echo "⚠️  ostree.components annotations missing from pushed image — rechunk metadata may have been stripped"
+            echo "    This is non-fatal for now; tracked in issue #106"
+          fi
 
       - name: Install ORAS
         if: github.event_name != 'pull_request'
