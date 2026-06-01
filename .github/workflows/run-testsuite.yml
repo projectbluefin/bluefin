@@ -3,6 +3,7 @@ name: Run Testsuite
 # Reusable wrapper around projectbluefin/testsuite e2e.yml.
 # Centralises the testsuite SHA pin — Renovate manages it here only.
 # Callers resolve their own image digest, then pass the full image ref.
+# Callers can access overall result via needs.<job-id>.result.
 on:
   workflow_call:
     inputs:
@@ -14,10 +15,6 @@ on:
         description: "Comma-separated test suites to run"
         required: true
         type: string
-    outputs:
-      conclusion:
-        description: "Test conclusion: success or failure"
-        value: ${{ jobs.e2e.result }}
 
 permissions:
   contents: read
