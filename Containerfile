@@ -1,6 +1,9 @@
 ARG BASE_IMAGE_NAME="silverblue"
-ARG FEDORA_MAJOR_VERSION="43@sha256:c9d2f9f0933b9da729536ac61b64dd8d1191b1b87bda15bddeffd9076ecb73d1"
+ARG FEDORA_MAJOR_VERSION="43"
 ARG BASE_IMAGE="quay.io/fedora-ostree-desktops/silverblue"
+# BASE_IMAGE_REF is resolved to BASE_IMAGE:FEDORA_MAJOR_VERSION@digest after cosign verify.
+# Defaults to tag-only for local builds where digest is not resolved.
+ARG BASE_IMAGE_REF="${BASE_IMAGE}:${FEDORA_MAJOR_VERSION}"
 ARG COMMON_IMAGE="ghcr.io/projectbluefin/common:latest"
 ARG COMMON_IMAGE_SHA=""
 ARG BREW_IMAGE="ghcr.io/ublue-os/brew:latest"
@@ -18,11 +21,11 @@ COPY --from=common /system_files/bluefin /system_files/shared
 COPY --from=brew /system_files /system_files/shared
 
 ## bluefin image section
-FROM ${BASE_IMAGE}:${FEDORA_MAJOR_VERSION} AS base
+FROM ${BASE_IMAGE_REF} AS base
 
 ARG AKMODS_FLAVOR="coreos-stable"
 ARG BASE_IMAGE_NAME="silverblue"
-ARG FEDORA_MAJOR_VERSION="40"
+ARG FEDORA_MAJOR_VERSION="43"
 ARG IMAGE_NAME="bluefin"
 ARG IMAGE_VENDOR="projectbluefin"
 ARG KERNEL="6.10.10-200.fc40.x86_64"

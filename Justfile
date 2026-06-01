@@ -130,6 +130,10 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     # Verify Base Image with cosign
     {{ just }} verify-container silverblue:${fedora_version} quay.io/fedora-ostree-desktops "{{ justfile_directory() }}/keys/fedora-ostree.pub"
 
+    # Resolve base image tag to digest (TOCTOU fix: pin the exact image cosign just verified)
+    base_image_digest=$(skopeo inspect --retry-times 3 --format '{{{{.Digest}}}}' docker://quay.io/fedora-ostree-desktops/silverblue:"${fedora_version}")
+    base_image_ref="quay.io/fedora-ostree-desktops/silverblue:${fedora_version}@${base_image_digest}"
+
     # Kernel Release/Pin
     if [[ -z "${kernel_pin:-}" ]]; then
         kernel_release=$(skopeo inspect --retry-times 3 docker://ghcr.io/ublue-os/akmods:"${akmods_flavor}"-"${fedora_version}" | jq -r '.Labels["ostree.linux"]')
@@ -175,6 +179,7 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
         target="dx"
     fi
     BUILD_ARGS+=("--build-arg" "AKMODS_FLAVOR=${akmods_flavor}")
+    BUILD_ARGS+=("--build-arg" "BASE_IMAGE_REF=${base_image_ref}")
     BUILD_ARGS+=("--build-arg" "COMMON_IMAGE=${common_image}")
     BUILD_ARGS+=("--build-arg" "COMMON_IMAGE_SHA=${common_image_sha}")
     BUILD_ARGS+=("--build-arg" "BREW_IMAGE=${brew_image}")
