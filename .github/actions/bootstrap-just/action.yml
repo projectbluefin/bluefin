@@ -1,0 +1,26 @@
+name: Bootstrap just
+description: Checkout repository and install the just command runner
+
+inputs:
+  fetch-depth:
+    description: Number of commits to fetch (0 = full history)
+    required: false
+    default: '1'
+  submodules:
+    description: Whether to checkout submodules (true, false, or recursive)
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: ${{ inputs.fetch-depth }}
+        submodules: ${{ inputs.submodules }}
+
+    - name: Install just
+      uses: taiki-e/install-action@35e522e91305799a18f8cee79bf13d1f7b28b796 # just
+      with:
+        tool: just
