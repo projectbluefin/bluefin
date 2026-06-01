@@ -128,7 +128,7 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     fedora_version=$({{ just }} fedora_version '{{ image }}' '{{ tag }}' '{{ flavor }}' '{{ kernel_pin }}')
 
     # Verify Base Image with cosign
-    {{ just }} verify-container silverblue:${fedora_version} quay.io/fedora-ostree-desktops "https://gitlab.com/fedora/ostree/ci-test/-/raw/main/quay.io-fedora-ostree-desktops.pub?ref_type=heads"
+    {{ just }} verify-container silverblue:${fedora_version} quay.io/fedora-ostree-desktops "{{ justfile_directory() }}/keys/fedora-ostree.pub"
 
     # Kernel Release/Pin
     if [[ -z "${kernel_pin:-}" ]]; then
@@ -146,8 +146,8 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
         {{ just }} verify-container "akmods-nvidia-open:${akmods_flavor}-${fedora_version}-${kernel_release}"
     fi
 
-    {{ just }} verify-container "common:latest@${common_image_sha}" ghcr.io/projectbluefin https://raw.githubusercontent.com/projectbluefin/common/refs/heads/main/cosign.pub
-    {{ just }} verify-container "brew:latest@${brew_image_sha}" ghcr.io/ublue-os https://raw.githubusercontent.com/ublue-os/brew/refs/heads/main/cosign.pub
+    {{ just }} verify-container "common:latest@${common_image_sha}" ghcr.io/projectbluefin "{{ justfile_directory() }}/keys/projectbluefin-common.pub"
+    {{ just }} verify-container "brew:latest@${brew_image_sha}" ghcr.io/ublue-os "{{ justfile_directory() }}/keys/ublue-os-brew.pub"
 
     # Get Version
     if [[ "${tag}" =~ stable ]]; then
@@ -434,9 +434,10 @@ verify-container container="" registry="ghcr.io/ublue-os" key="":
     fi
 
     # Public Key for Container Verification
+    # Keys are vendored in keys/ — update via PR with justification
     key={{ key }}
     if [[ -z "${key:-}" ]]; then
-        key="https://raw.githubusercontent.com/ublue-os/main/main/cosign.pub"
+        key="{{ justfile_directory() }}/keys/ublue-os-brew.pub"
     fi
 
     # Verify Container using cosign public key
