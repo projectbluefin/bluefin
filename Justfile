@@ -1,8 +1,7 @@
 repo_organization := "projectbluefin"
 base_image_org := "quay.io/fedora-ostree-desktops"
 base_image_name := "silverblue"
-common_image := "ghcr.io/projectbluefin/common:latest"
-brew_image := "ghcr.io/ublue-os/brew:latest"
+# common_image and brew_image refs are read from image-versions.yml at build time
 images := '(
     [bluefin]=bluefin
     [bluefin-dx]=bluefin-dx
@@ -105,7 +104,10 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     # Image Name
     image_name=$({{ just }} image_name {{ image }} {{ tag }} {{ flavor }})
 
+    # Read image refs and digests from image-versions.yml (single source of truth)
+    common_image=$(yq -r '.images[] | select(.name == "common") | .image + ":" + .tag' image-versions.yml)
     common_image_sha=$(yq -r '.images[] | select(.name == "common") | .digest' image-versions.yml)
+    brew_image=$(yq -r '.images[] | select(.name == "brew") | .image + ":" + .tag' image-versions.yml)
     brew_image_sha=$(yq -r '.images[] | select(.name == "brew") | .digest' image-versions.yml)
 
     # AKMODS Flavor and Kernel Version
@@ -173,9 +175,9 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
         target="dx"
     fi
     BUILD_ARGS+=("--build-arg" "AKMODS_FLAVOR=${akmods_flavor}")
-    BUILD_ARGS+=("--build-arg" "COMMON_IMAGE={{ common_image }}")
+    BUILD_ARGS+=("--build-arg" "COMMON_IMAGE=${common_image}")
     BUILD_ARGS+=("--build-arg" "COMMON_IMAGE_SHA=${common_image_sha}")
-    BUILD_ARGS+=("--build-arg" "BREW_IMAGE={{ brew_image }}")
+    BUILD_ARGS+=("--build-arg" "BREW_IMAGE=${brew_image}")
     BUILD_ARGS+=("--build-arg" "BREW_IMAGE_SHA=${brew_image_sha}")
     BUILD_ARGS+=("--build-arg" "FEDORA_MAJOR_VERSION=${fedora_version}")
     BUILD_ARGS+=("--build-arg" "IMAGE_NAME=${image_name}")
