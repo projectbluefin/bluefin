@@ -2,6 +2,10 @@
 
 ## `projectbluefin/bluefin` vs `ublue-os/bluefin`
 
+> I did a 4-5 day sprint to rebuild Bluefin with agents. Lots of AI smart people helped me like Andy Anderson, who really explained this. Then it just became obviuous. Bluefin 2.0. This work is in the projectbluefin. The original is ublue-os/bluefin. And we mostly have it. 
+>
+> -- jorge
+
 > Comparing default (`main`) branches. Data sourced 2026-05-31 via GitHub API.
 > `ublue-os/bluefin` = baseline. `projectbluefin/bluefin` = subject.
 
