@@ -131,7 +131,7 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     {{ just }} verify-container silverblue:${fedora_version} quay.io/fedora-ostree-desktops "{{ justfile_directory() }}/keys/fedora-ostree.pub"
 
     # Resolve base image tag to digest (TOCTOU fix: pin the exact image cosign just verified)
-    base_image_digest=$(skopeo inspect --retry-times 3 --format '{{{{.Digest}}}}' docker://quay.io/fedora-ostree-desktops/silverblue:"${fedora_version}")
+    base_image_digest=$(skopeo inspect --retry-times 3 docker://quay.io/fedora-ostree-desktops/silverblue:"${fedora_version}" | jq -r '.Digest')
     base_image_ref="quay.io/fedora-ostree-desktops/silverblue:${fedora_version}@${base_image_digest}"
 
     # Kernel Release/Pin
