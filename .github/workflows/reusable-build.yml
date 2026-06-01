@@ -146,6 +146,7 @@ jobs:
           echo "allow_cache_write=${ALLOW_CACHE_WRITE}" >> "$GITHUB_OUTPUT"
 
       - name: Restore DNF package cache
+        id: dnf-cache-restore
         uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         env:
           CACHE_NAME: ${{ steps.setup-cache.outputs.cache_name }}
@@ -197,7 +198,7 @@ jobs:
           done
 
       - name: Write new DNF package cache
-        if: steps.setup-cache.outputs.allow_cache_write == 'true'
+        if: always() && !cancelled() && steps.setup-cache.outputs.allow_cache_write == 'true'
         uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         env:
           CACHE_NAME: ${{ steps.setup-cache.outputs.cache_name }}
@@ -384,8 +385,7 @@ jobs:
 
             rm -f "${{ env.DIGEST_FILE }}"
 
-            # Push default tag with full upload (two-push pattern for annotation stability)
-            # Workaround for https://github.com/containers/podman/issues/27796
+            # Push default tag.
             # Note: no --force-compression — rechunked layers are already zstd:chunked;
             # forcing re-compression would strip ostree.components annotations.
             sudo -E podman push \
@@ -395,13 +395,11 @@ jobs:
               --retry-delay 30s \
               "${IMAGE}:${DEFAULT_TAG}" "${REGISTRY}/${IMAGE}:${DEFAULT_TAG}"
 
-            sudo -E podman push \
-              --compression-format zstd:chunked \
-              --compression-level 3 \
-              --retry 5 \
-              --retry-delay 30s \
-              --digestfile "${{ env.DIGEST_FILE }}" \
-              "${IMAGE}:${DEFAULT_TAG}" "${REGISTRY}/${IMAGE}:${DEFAULT_TAG}"
+            # Get digest via skopeo inspect rather than a second full push.
+            # This avoids re-uploading all layers just to capture --digestfile output.
+            skopeo inspect --no-tags \
+              "docker://${REGISTRY}/${IMAGE}:${DEFAULT_TAG}" \
+              | jq -r '.Digest' > "${{ env.DIGEST_FILE }}"
 
             # Server-side tag copies — no re-upload of image data
             # shellcheck disable=SC2086 - word splitting on alias_tags is intentional
@@ -475,6 +473,9 @@ jobs:
           LAYER_COUNT=$(sudo podman image inspect "${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}" \
             --format '{{len .RootFS.Layers}}' 2>/dev/null || echo "?")
 
+          DNF_CACHE_HIT="${{ steps.dnf-cache-restore.outputs.cache-hit || 'false' }}"
+          DNF_CACHE_KEY="${{ steps.dnf-cache-restore.outputs.cache-matched-key || 'none' }}"
+
           {
             echo "## 📊 Build Telemetry: ${{ env.IMAGE_NAME }}"
             echo ""
@@ -491,6 +492,15 @@ jobs:
             echo ""
             echo "**Image size (uncompressed):** ${IMAGE_SIZE_MB} MB"
             echo "**Layer count:** ${LAYER_COUNT}"
+            echo ""
+            echo "### 🗄️ Cache"
+            echo "| Cache | Status |"
+            echo "|-------|--------|"
+            if [[ "${DNF_CACHE_HIT}" == "true" ]]; then
+              echo "| DNF/buildah (GHA) | ✅ hit (\`${DNF_CACHE_KEY}\`) |"
+            else
+              echo "| DNF/buildah (GHA) | ❌ miss (key: \`${DNF_CACHE_KEY:-none}\`) |"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Write digest to artifact

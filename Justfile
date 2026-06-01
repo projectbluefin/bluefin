@@ -242,20 +242,24 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     # Note: Podman 5.x+ requires untagged refs for --cache-from/--cache-to.
     # IMPORTANT: bluefin-cache MUST be a PUBLIC GHCR package.
     #   Private packages return 403 on blob existence checks, breaking --cache-from.
-    #   Only enable cache when the package already exists and is accessible.
     #   To unlock: go to https://github.com/orgs/projectbluefin/packages/container/bluefin-cache
     #   → Package settings → Change visibility → Public.
     cache_ref="ghcr.io/{{ repo_organization }}/bluefin-cache"
-    # Only enable cache when probe succeeds (package exists AND is accessible).
-    # 404 (not found) or 403 (private) both skip cache — we do NOT create new private packages.
-    if ${PODMAN} manifest inspect "${cache_ref}" >/dev/null 2>&1; then
+    # Probe: use skopeo list-tags (works even on empty repos; fails on 403/404).
+    # manifest inspect on an untagged ref fails even for valid public repos that
+    # use hash-based cache refs, so it is not a reliable existence check.
+    cache_readable=false
+    if skopeo list-tags "docker://${cache_ref}" >/dev/null 2>&1; then
+        cache_readable=true
         PODMAN_BUILD_ARGS+=(--cache-from "${cache_ref}")
-        if [[ "${REGISTRY_CACHE_WRITE:-0}" == "1" ]]; then
-            PODMAN_BUILD_ARGS+=(--cache-to "${cache_ref}")
-            echo "Registry layer cache: read+write (${cache_ref})"
-        else
-            echo "Registry layer cache: read-only (${cache_ref})"
-        fi
+    fi
+    if [[ "${REGISTRY_CACHE_WRITE:-0}" == "1" ]]; then
+        # Always try to write on trusted builds — the push login provides the auth
+        # needed to create the package if it does not yet exist.
+        PODMAN_BUILD_ARGS+=(--cache-to "${cache_ref}")
+        echo "Registry layer cache: read=${cache_readable}+write (${cache_ref})"
+    elif [[ "${cache_readable}" == "true" ]]; then
+        echo "Registry layer cache: read-only (${cache_ref})"
     else
         echo "Registry layer cache: disabled (${cache_ref} not accessible — make package public to enable)"
     fi
