@@ -231,7 +231,9 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     # Registry layer cache — reduces build time by reusing unchanged layers from GHCR
     # Cache write (REGISTRY_CACHE_WRITE=1) is set by CI for non-PR builds only.
     # PR builds and local builds are read-only to prevent cache poisoning.
-    cache_ref="ghcr.io/{{ repo_organization }}/bluefin-cache:${fedora_version}"
+    # Note: Podman 5.x+ requires untagged refs for --cache-from/--cache-to.
+    # Content-addressed caching handles version isolation automatically.
+    cache_ref="ghcr.io/{{ repo_organization }}/bluefin-cache"
     PODMAN_BUILD_ARGS+=(--cache-from "${cache_ref}")
     if [[ "${REGISTRY_CACHE_WRITE:-0}" == "1" ]]; then
         PODMAN_BUILD_ARGS+=(--cache-to "${cache_ref}")
