@@ -136,6 +136,9 @@ if [[ "${IMAGE_NAME}" =~ nvidia ]]; then
     fi
 
     # Install Nvidia RPMs
+    # Pre-import ublue-os/staging COPR GPG key: nvidia-install.sh enables this COPR and
+    # dnf5 fails with "Signing key not found" on Fedora 44+ if the key isn't already imported.
+    rpm --import "https://download.copr.fedorainfracloud.org/results/ublue-os/staging/pubkey.gpg"
     IMAGE_NAME="${BASE_IMAGE_NAME}" AKMODNV_PATH="/tmp/akmods-rpms" MULTILIB=0 /tmp/akmods-rpms/ublue-os/nvidia-install.sh
     rm -f /usr/share/vulkan/icd.d/nouveau_icd.*.json
     ln -sf libnvidia-ml.so.1 /usr/lib64/libnvidia-ml.so
