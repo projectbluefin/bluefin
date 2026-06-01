@@ -15,7 +15,16 @@ URL="$1"
 shift
 OPTIONS=("$@")
 
-if [[ -n "$AUTH_HEADER" ]]; then
+# Only send the auth header to GitHub-owned hosts to prevent token leakage (CWE-201).
+# Matches: github.com, raw.githubusercontent.com, api.github.com, ghcr.io, and subdomains.
+_is_github_host() {
+  local url="$1"
+  local host
+  host="$(echo "${url}" | sed -E 's|^https?://([^/]+).*|\1|')"
+  [[ "${host}" =~ (^|\.)(github\.com|githubusercontent\.com|ghcr\.io)$ ]]
+}
+
+if [[ -n "$AUTH_HEADER" ]] && _is_github_host "$URL"; then
   curl -sSL -H "$AUTH_HEADER" "${OPTIONS[@]}" "$URL"
 else
   curl -sSL "${OPTIONS[@]}" "$URL"
