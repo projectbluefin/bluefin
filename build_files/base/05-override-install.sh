@@ -14,6 +14,8 @@ mkdir -p /usr/share/doc/bluefin
 # Offline Bluefin documentation
 ghcurl "https://github.com/projectbluefin/documentation/releases/download/0.1/bluefin.pdf" --retry 3 -o /tmp/bluefin.pdf
 install -Dm0644 -t /usr/share/doc/bluefin/ /tmp/bluefin.pdf
+# Tag for rechunker — large unpackaged file gets its own layer
+setfattr -n user.component -v bluefin-docs /usr/share/doc/bluefin/bluefin.pdf
 
 # Footgun, See: https://github.com/ublue-os/main/issues/598
 rm -f /usr/bin/chsh /usr/bin/lchsh
@@ -40,6 +42,8 @@ ghcurl "${STARSHIP_BASE}.sha256" --retry 3 -o /tmp/starship.tar.gz.sha256
 (cd /tmp && sha256sum -c starship.tar.gz.sha256)
 tar -xzf /tmp/starship.tar.gz -C /tmp
 install -c -m 0755 /tmp/starship /usr/bin
+# Tag for rechunker — standalone binary not tracked by RPM
+setfattr -n user.component -v starship /usr/bin/starship
 
 # Configure firewalld with Fedora Workstation defaults
 # https://src.fedoraproject.org/rpms/firewalld/blob/rawhide/f/firewalld.spec
