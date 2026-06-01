@@ -237,7 +237,7 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     cache_ref="ghcr.io/{{ repo_organization }}/bluefin-cache"
     # Probe cache accessibility: 404 (empty) is fine, 403 means private/inaccessible
     PROBE_OUT=$(${PODMAN} manifest inspect "${cache_ref}" 2>&1) && cache_ok=true || cache_ok=false
-    if [[ "${cache_ok}" == "false" ]] && echo "${PROBE_OUT}" | grep -qE "StatusCode: 403|status 403|unauthorized|Unauthorized"; then
+    if [[ "${cache_ok}" == "false" ]] && echo "${PROBE_OUT}" | grep -qE "StatusCode: 403|status 403|unauthorized|Unauthorized|denied"; then
         echo "WARNING: Cache registry ${cache_ref} is inaccessible (403)."
         echo "Make ghcr.io/{{ repo_organization }}/bluefin-cache public in GitHub package settings to enable caching."
         cache_ok=disabled
