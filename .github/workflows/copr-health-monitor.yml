@@ -1,0 +1,116 @@
+name: COPR Health Monitor
+
+on:
+  schedule:
+    - cron: '0 7 * * *' # Daily 07:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-copr:
+    name: Check COPR repository health
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check COPR repos and packages
+        id: check
+        run: |
+          set -euo pipefail
+          FAILURES=()
+
+          check_copr_package() {
+            local owner="$1"
+            local project="$2"
+            local package="$3"
+            local label="${owner}/${project}:${package}"
+
+            echo "Checking ${label}..."
+
+            response=$(curl -fsSL --max-time 15 \
+              "https://copr.fedorainfracloud.org/api_3/package?ownername=${owner}&projectname=${project}&packagename=${package}&with_latest_succeeded_build=True" \
+              2>/dev/null) || {
+              echo "::warning::${label}: COPR API unreachable"
+              FAILURES+=("${label}: API unreachable")
+              return
+            }
+
+            # Check package exists
+            if echo "${response}" | python3 -c "import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get('name') else 1)" 2>/dev/null; then
+              echo "  ✅ Package exists"
+            else
+              echo "::warning::${label}: package not found in COPR"
+              FAILURES+=("${label}: package not found")
+              return
+            fi
+
+            # Check last succeeded build is not stale (> 90 days)
+            build_ts=$(echo "${response}" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          b = d.get('latest_succeeded_build')
+          print(b['submitted_on'] if b else 0)
+          " 2>/dev/null || echo "0")
+
+            if [[ "${build_ts}" == "0" ]]; then
+              echo "::warning::${label}: no succeeded build found"
+              FAILURES+=("${label}: no succeeded build")
+              return
+            fi
+
+            age_days=$(( ($(date +%s) - build_ts) / 86400 ))
+            echo "  ✅ Last succeeded build: ${age_days} days ago"
+
+            if [[ "${age_days}" -gt 90 ]]; then
+              echo "::warning::${label}: last build is ${age_days} days old (>90)"
+              FAILURES+=("${label}: last build ${age_days}d old (staleness threshold: 90d)")
+            fi
+          }
+
+          # COPRs used by build_files/base/03-packages.sh
+          check_copr_package "che"      "nerd-fonts" "nerd-fonts"
+          check_copr_package "ublue-os" "packages"   "ublue-update"
+
+          if [[ ${#FAILURES[@]} -gt 0 ]]; then
+            echo "failed=true" >> "$GITHUB_OUTPUT"
+            # Write multi-line output
+            {
+              echo "failures<<EOF"
+              printf '%s\n' "${FAILURES[@]}"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "failed=false" >> "$GITHUB_OUTPUT"
+            echo "All COPR repos healthy ✅"
+          fi
+
+      - name: Open issue on COPR failure
+        if: steps.check.outputs.failed == 'true'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const failures = `${{ steps.check.outputs.failures }}`;
+
+            // Check for existing open COPR health issue to avoid duplicates
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'area/copr,kind/bug',
+              state: 'open',
+            });
+
+            const alreadyOpen = existing.data.some(i => i.title.startsWith('ci: COPR health check failed'));
+            if (alreadyOpen) {
+              console.log('COPR health issue already open — skipping duplicate creation');
+              return;
+            }
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `ci: COPR health check failed — ${new Date().toISOString().slice(0,10)}`,
+              body: `## COPR Health Check Failure\n\nThe daily COPR health monitor detected problems:\n\n\`\`\`\n${failures}\n\`\`\`\n\n## Impact\n\nBuild failures are likely if the affected COPR repo is unavailable or packages are stale.\n\n## COPRs checked\n- \`che/nerd-fonts\` — nerd-fonts\n- \`ublue-os/packages\` — ublue-update\n\n_Automated detection by copr-health-monitor.yml_`,
+              labels: ['area/copr', 'kind/bug', 'priority/p1'],
+            });
