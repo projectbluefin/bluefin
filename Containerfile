@@ -21,6 +21,7 @@ COPY --from=common /system_files/bluefin /system_files/shared
 COPY --from=brew /system_files /system_files/shared
 
 ## bluefin image section
+# hadolint ignore=DL3006
 FROM ${BASE_IMAGE_REF} AS base
 
 ARG AKMODS_FLAVOR="coreos-stable"
