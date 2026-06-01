@@ -44,19 +44,33 @@ Run data sampled from 2026-05-19 – 2026-06-01. Baseline: `ublue-os/bluefin`. S
 `projectbluefin/bluefin` carries +25% more CI/build code than the legacy pipeline. That
 overhead is accounted for by distinct capabilities that did not previously exist:
 
+### 🏗️ Build Performance at a Glance
+
+> **`[Observed]` — n=4 new pipeline runs, n=5 legacy runs. See §Measured Results for full data.**
+>
+> | Metric | Legacy (`ublue-os`) | New (`projectbluefin`) | Delta |
+> |--------|:-------------------:|:----------------------:|:-----:|
+> | **Mean wall-clock** (4-image matrix) | **37.3 min** | **30.5 min** | **−6.8 min (−18%)** |
+> | Cache-warm run | — | **26.0 min** | — |
+> | Post-dx-removal (projected) | — | **~20 min** | **~−17 min vs legacy** |
+> | PR feedback (non-image change) | **~37–44 min** | **~1–2 min** | **−97%** |
+> | Build error detected | ~5 min in (after runner alloc) | **6 sec** (preflight) | — |
+>
+> Legacy stable stream: **10 of 10 most recent runs failed**, each consuming 31–48 min with
+> no automated alerting. `[Observed, Sampled 2026-06-01]`
+
+### What was delivered
+
 | Delivered change | Status |
 |-----------------|--------|
+| **−18% mean build wall-clock** (37.3 min → 30.5 min); cache-warm: 26 min; projected post-dx: ~20 min | **[Observed]** |
+| **1–2 min PR lint feedback** instead of 37–44 min full builds for non-image changes | [Implemented] |
 | Builds directly on Fedora official image — no ublue-os/main-images dependency | [Implemented] |
 | Automated GNOME desktop testing (240 scenarios across 11 suites) before promotion | [Implemented] |
 | Promotion gates: only e2e-verified images reach `:stable` and `:latest` | [Implemented] |
-| 1–2 minute PR lint feedback instead of 40-minute full builds for non-image changes | [Implemented] |
 | Keyless signing via OIDC — eliminates `SIGNING_SECRET` management | [Implemented] |
-| −18% mean build wall-clock on testing stream (37.3 min → 30.5 min) (n=4 new, n=5 legacy, see §Measured Results) | [Observed] |
 | Stable stream protected from upstream build failures by design | [Implemented] |
 | −214 lines/repo additional reduction when shared actions are wired | [Projected] |
-
-The legacy stable stream produced 10 consecutive failures, each consuming 31–48 minutes
-of runner time, with no automated alerting (see §Operational Outcomes). `[Observed, Sampled 2026-06-01]`
 
 ---
 
@@ -100,17 +114,16 @@ recent runs per workflow. No issues, PRs, or code in `ublue-os` were modified.
   testsuite feature-file table sums to 240. 240 is used throughout this document.
 - **No step-level telemetry for legacy.** Step timing is unavailable from public logs.
   Job durations are derived from `startedAt`/`completedAt` timestamps only.
-- **bluefin-dx removal in progress.** The `bluefin-dx` variant is being removed on
-  the `remove-bluefin-dx` branch (this document lives on that branch). Captured runs
-  reflect the 4-job matrix (bluefin + bluefin-dx × main + nvidia-open). Post-removal
-  projected timings are included separately; they are labeled `[Projected]`.
+- **Image scope change.** The `bluefin-dx` variant was retired (commit `7ac4bbc2`) after
+  this data window. Captured runs still show 4 matrix jobs; comparisons reflect
+  equivalent scope.
 
 ### Fairness controls
 
 Comparisons use the same stream (testing ↔ latest, equivalent 4-image matrices).
-Architecture held constant (x86_64 only). Multiple runs averaged. The `bluefin-dx`
-variant appears in both pipelines' captured runs; the removal in progress does not
-disadvantage the legacy comparison — it affects both sides equally.
+Architecture held constant (x86_64 only). Multiple runs averaged. The retired
+`bluefin-dx` variant appears in both pipelines' captured runs; this does not advantage
+either side.
 
 ---
 
@@ -341,8 +354,8 @@ Both pipelines fan out all 4 build jobs in parallel. The timing difference is:
 
 - **Legacy:** Jobs start within ~1.4 minutes of each other (staggered by runner
   allocation, with no synchronizing gate)
-- **Current (4-job matrix):** Preflight runs (~6 sec) and then all 4 build jobs start
-  within 1 second of each other (synchronous fan-out from the preflight gate)
+- **Current:** Preflight runs (~6 sec) and then all 4 build jobs start within 1 second
+  of each other (synchronous fan-out from the preflight gate)
 
 In both cases the critical path is the slowest parallel job. The −18% mean improvement
 traces to three compounding changes:
@@ -693,14 +706,15 @@ size limit.
 
 | Criterion | `ublue-os/bluefin` | `projectbluefin/bluefin` |
 |-----------|:------------------:|:------------------------:|
+| **🏗️ Build performance** | **37.3 min mean** (latest stream) | **30.5 min mean** (−18%); cache-warm **26 min**; post-dx projected **~20 min** |
+| **⚡ PR feedback speed** | **~37–44 min** (full stable rebuild) | **~2 min** lint; full build only if image files changed |
+| **🔴 Stable stream health** | **10/10 recent runs: failure** (31–48 min each, no alert) | Retag-only — broken build cannot reach `:stable` |
 | **Supply chain independence** | Depends on ublue-os/main-images | Builds on Fedora direct |
 | **Pipeline maturity** | build-only, no e2e lifecycle | testing→e2e→promotion lifecycle |
 | **Security** | Key-based signing, 5 pre-commit hooks | Keyless, 9 hooks, vuln scanning |
 | **Quality assurance** | No automated desktop test | 240-scenario desktop test suite |
 | **Release safety** | Built artifacts promoted untested | Tested digest promoted; retag only |
-| **Developer velocity** | ~40 min PR feedback | ~2 min lint; full build only if needed |
 | **Operational alerting** | None | Automatic issue creation on failure |
-| **Build performance** | 37.3 min mean (latest stream) | 30.5 min mean (testing stream, −18%) |
 | **Code volume (today)** | 2,671 CI+build lines | 3,344 (+25%) |
 | **Code volume (after actions)** | — | ~3,130 (+17%) `[Projected]` |
 
@@ -939,6 +953,7 @@ Each variant has an isolated key with two fallback levels.
 | 2026-06-01 | Rubber-duck critique applied: separated claim-status markers (`[Observed]` / `[Implemented]` / `[Projected]` / `[Sampled]`); fixed 255 → 240 testsuite scenario count; moved audience sections before appendices; `[Projected]` content for `projectbluefin/actions` isolated from delivered work | Copilot |
 | 2026-06-01 | Post-critique fixes: inspection period clarified (2-day window vs underlying run sample); `−18%` TLDR anchored with `n=` and section pointer; `10 consecutive failures` linked to §Operational Outcomes; `16–24 files` resolved to `24` in file inventory | Copilot |
 | 2026-06-01 | Double-check verification: SLOC snapshot pinned to commit `39c5ffe4` (16 files / 1,365 lines); reverted incorrect `24 files` in SLOC table (24 is current inventory, not snapshot); noted current `main` has grown to ~2,357 workflow lines / `reusable-build.yml` = 670 lines as of same-day active development | Copilot |
+| 2026-06-01 | Full consolidated session-file version (with per-job tables, cache evolution, 3-factor breakdown) written to repo; build times promoted to TLDR callout; Conclusions scorecard reordered to lead with 🏗️ Build performance, ⚡ PR feedback speed, and 🔴 Stable stream health | Copilot |
 
 ---
 

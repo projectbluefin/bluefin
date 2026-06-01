@@ -7,7 +7,7 @@ Bluefin's CI is split between PR validation, image builds, post-build e2e, weekl
 | Workflow | Trigger | What it does |
 |---|---|---|
 | `pr-validation.yml` | PRs to `testing`, `merge_group` | Fast validation: `just check`, `shellcheck`, `pre-commit` |
-| `build-image-testing.yml` | Push to `main`, `merge_group`, dispatch, workflow call | Builds testing images via `reusable-build.yml` |
+| `build-image-testing.yml` | Push to `main`, `merge_group`, dispatch, workflow call | Builds testing images via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Successful `Testing Images` workflow on `main` push | Downloads the testing digest and runs smoke tests in `projectbluefin/testsuite` |
 | `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, manual dispatch | Verifies e2e on current `main`, promotes `main` to `latest` + `stable`, triggers downstream builds |
 | `build-image-stable.yml` | Push to `stable`, dispatch, workflow call | Builds stable images and then runs `generate-release.yml` |
@@ -15,14 +15,17 @@ Bluefin's CI is split between PR validation, image builds, post-build e2e, weekl
 | `renovate-automerge.yml` | Successful `PR Validation — testsuite` workflow | Enables squash auto-merge for matching Renovate PRs |
 | `bonedigger.yml` | Issue events, issue comments, daily schedule | Runs the Bluefin 🦖 issue lifecycle bot |
 
-## `reusable-build.yml`
+## Centralized build workflow (`projectbluefin/actions`)
 
-This is the shared image build engine used by testing/stable/latest workflows.
+The shared image build engine lives in [`projectbluefin/actions`](https://github.com/projectbluefin/actions) at `.github/workflows/reusable-build.yml`. The internal `reusable-build.yml` has been deleted — all three stream callers delegate to the centralized workflow:
+
+```yaml
+uses: projectbluefin/actions/.github/workflows/reusable-build.yml@<SHA>
+```
 
 - Matrix: `bluefin`
 - Flavors: `main`, `nvidia-open`
 - Default architecture: `x86_64`
-- Runs `just check` before building
 - Builds with `just build-ghcr`, then rechunks, retags, runs secureboot checks, and generates tags
 - On non-PR events it pushes to GHCR, signs images with cosign, uploads SBOMs, and emits attestations
 - On PR events it uploads a `.oci` artifact and prints bootc test instructions instead of pushing

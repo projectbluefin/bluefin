@@ -36,13 +36,13 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 |---|---|---|
 | `pr-validation.yml` | PRs to `testing`, merge_group | Fast gate: just check, shellcheck, pre-commit, e2e smoke |
 | `pr-smoke.yml` | PRs touching build files | Full build + smoke test |
-| `build-image-testing.yml` | Push to `main`, dispatch | Testing image builds via `reusable-build.yml` |
+| `build-image-testing.yml` | Push to `main`, dispatch | Testing image builds via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Testing build on `main` | Smoke+common continuous e2e gate |
 | `weekly-testing-promotion.yml` | Tuesday 06:00 UTC | Full e2e → retag to :stable/:latest |
 | `build-image-stable.yml` | Push to `stable`, dispatch | Stable rebuild |
 | `build-image-latest-main.yml` | Push to `latest`, dispatch | Latest rebuild |
 | `build-images.yml` | Manual dispatch | Rebuild all streams |
-| `reusable-build.yml` | Called by all build workflows | Core build engine |
+| ~~`reusable-build.yml`~~ (deleted) | Replaced by `projectbluefin/actions/.github/workflows/reusable-build.yml` | **All build callers now use the centralized workflow — no local copy** |
 | `run-testsuite.yml` | Called by all e2e workflows | **Canonical testsuite wrapper — always use this, never e2e.yml directly** |
 | `nightly.yml` | 02:00 UTC daily | smoke+common+vanilla-gnome against :latest |
 | `vulnerability-scan.yml` | Testing build + weekly | Grype → SARIF to Security tab |
