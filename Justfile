@@ -642,22 +642,18 @@ gen-sbom $image="bluefin" $tag="latest" $flavor="main" $syft_cmd="syft":
     OUT_DIR="sbom_out/${image_name}"
     mkdir -p "${OUT_DIR}"
 
-    # We have to do it this stupid way because we are OOMing on github runners
-    # https://github.com/anchore/syft/issues/3800
-    ${PODMAN} container create --replace --name ${image_name} "${image_name}:${tag}"
-
-    ROOTFS="${OUT_DIR}/rootfs"
-    mkdir -p "${ROOTFS}"
-
-    ${PODMAN} export ${image_name} | tar -C "${ROOTFS}" -xf -
-    ${PODMAN} container rm ${image_name}
-
     SBOM="${OUT_DIR}/sbom.json"
+    OCI_DIR="${OUT_DIR}/oci-dir"
 
-    ${syft_cmd} --source-name "${image_name}:${tag}" "${OUT_DIR}" -o syft-json=${SBOM}
+    # Save image as OCI directory and scan directly — avoids the 4-8 GiB
+    # filesystem extraction that the old podman-export approach required.
+    # Syft reads layer tarballs sequentially so memory usage stays low.
+    ${PODMAN} save --format oci-dir -o "${OCI_DIR}" "${image_name}:${tag}"
+
+    ${syft_cmd} --source-name "${image_name}:${tag}" "oci-dir:${OCI_DIR}" -o syft-json="${SBOM}"
     du -sh "${SBOM}"
 
-    rm -rf "${ROOTFS}"
+    rm -rf "${OCI_DIR}"
 
 # DNF CI package cache
 [group('Utility')]
