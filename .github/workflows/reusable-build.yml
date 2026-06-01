@@ -341,6 +341,18 @@ jobs:
         with:
           string: ${{ env.IMAGE_REGISTRY }}
 
+      - name: Fix container auth permissions
+        # 'Login to GHCR for layer cache' runs sudo podman login, which creates root-owned
+        # files in $XDG_RUNTIME_DIR/containers/ (preserved by sudo due to env inheritance).
+        # Restore ownership so the non-sudo push login and skopeo can read/write auth.json.
+        # (sudo -E podman push can still read the file since root ignores ownership bits.)
+        if: github.event_name != 'pull_request'
+        run: |
+          AUTH_DIR="/run/user/$(id -u)/containers"
+          if [[ -d "${AUTH_DIR}" ]]; then
+            sudo chown -R "$(id -u):$(id -g)" "${AUTH_DIR}"
+          fi
+
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
         run: |
