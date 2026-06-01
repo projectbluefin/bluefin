@@ -17,3 +17,9 @@ LICENSE
 .pre-commit-config.yaml
 .devcontainer.json
 .editorconfig
+
+# Verification keys (used for cosign/policy outside the build)
+keys
+
+# Registry metadata
+artifacthub-repo.yml
