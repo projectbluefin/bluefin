@@ -59,6 +59,11 @@ Non-compliance = rejection.
 - Do not open WIP PRs.
 - **NEVER interact with repos outside the [`projectbluefin`](https://github.com/projectbluefin) org.** Do not open, comment on, or modify issues, PRs, or code in `ublue-os`, `coreos`, or any other org. Only `projectbluefin/*` repos are in scope.
 
+  > **⚠️ Git remote trap — confirmed incident 2026-06-01:** In this repo, `origin`
+  > points to `ublue-os/bluefin` (the forbidden org). A bare `git push` or
+  > `git push origin` silently violates this rule. **Always push explicitly:**
+  > `git push projectbluefin <branch>`. Verify with `git remote -v` before any push.
+
 ## PR comment policy
 
 - One comment per PR event, max; combine findings.
