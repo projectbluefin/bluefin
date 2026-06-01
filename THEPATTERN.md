@@ -7,7 +7,19 @@
 > -- jorge
 
 > Comparing default (`main`) branches. Data sourced 2026-05-31 via GitHub API.
-> `ublue-os/bluefin` = baseline. `projectbluefin/bluefin` = subject.
+> Exo Report: `ublue-os/bluefin` = baseline. `projectbluefin/bluefin` = subject.
+
+### TLDR
+
+`projectbluefin/bluefin` trades +25% more CI/build code for:
+- **Eliminated upstream dependency** — builds on Fedora direct, not ublue-os/main-images
+- **Automated desktop testing** (255 scenarios, no self-hosted hardware)
+- **Promotion gates** that prevent untested images from reaching users
+- **1–2 minute PR lint feedback** instead of 40-minute full builds for non-image changes
+- **Keyless signing** that eliminates secret management
+- **A clear path to −15% overhead** once shared actions are wired (today: aspirational)
+
+The additional 636 workflow lines represent distinct operational capabilities — not duplicated boilerplate. The `projectbluefin/actions` repo (801 lines, 9 actions) would reduce per-repo workflow surface by ~214 lines each, but **is not consumed today** — its code-saving value is projected, not proven. The primary delivered value is architectural: an independent supply chain building directly on Fedora, a testing-first promotion model, and keyless signing that eliminates secret management entirely.
 
 ---
 
@@ -379,15 +391,3 @@ sudo just build-ghcr bluefin testing main
 | **Reusability (actual)** | Neither — actions exist but aren't wired |
 | **Reusability (potential)** | projectbluefin — building blocks ready, −214/repo on adoption |
 | **LTS specifically** | projectbluefin — already leaner (−11%), −22% after actions |
-
-### Bottom line
-
-`projectbluefin/bluefin` trades +25% more CI/build code for:
-- **Eliminated upstream dependency** — builds on Fedora direct, not ublue-os/main-images
-- **Automated desktop testing** (255 scenarios, no self-hosted hardware)
-- **Promotion gates** that prevent untested images from reaching users
-- **1–2 minute PR lint feedback** instead of 40-minute full builds for non-image changes
-- **Keyless signing** that eliminates secret management
-- **A clear path to −15% overhead** once shared actions are wired (today: aspirational)
-
-The additional 636 workflow lines represent distinct operational capabilities — not duplicated boilerplate. The `projectbluefin/actions` repo (801 lines, 9 actions) would reduce per-repo workflow surface by ~214 lines each, but **is not consumed today** — its code-saving value is projected, not proven. The primary delivered value is architectural: an independent supply chain building directly on Fedora, a testing-first promotion model, and keyless signing that eliminates secret management entirely.
