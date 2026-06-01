@@ -67,6 +67,7 @@ FEDORA_PACKAGES=(
     cryfs
     davfs2
     ddcutil
+    distrobox
     evtest
     fastfetch
     firewall-config
