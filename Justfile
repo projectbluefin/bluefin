@@ -240,28 +240,26 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     # Cache write (REGISTRY_CACHE_WRITE=1) is set by CI for non-PR builds only.
     # PR builds and local builds are read-only to prevent cache poisoning.
     # Note: Podman 5.x+ requires untagged refs for --cache-from/--cache-to.
-    # IMPORTANT: bluefin-cache MUST be a PUBLIC GHCR package.
-    #   Private packages return 403 on blob existence checks, breaking --cache-from.
-    #   To unlock: go to https://github.com/orgs/projectbluefin/packages/container/bluefin-cache
-    #   → Package settings → Change visibility → Public.
-    cache_ref="ghcr.io/{{ repo_organization }}/bluefin-cache"
-    # Probe: use skopeo list-tags (works even on empty repos; fails on 403/404).
-    # manifest inspect on an untagged ref fails even for valid public repos that
-    # use hash-based cache refs, so it is not a reliable existence check.
+    #
+    # We use the image's own GHCR package (e.g. ghcr.io/projectbluefin/bluefin) as the
+    # cache repository. This avoids needing a separate bluefin-cache package and ensures
+    # GITHUB_TOKEN already has write access (it pushes the final image to this same ref).
+    # Buildah stores cache entries as SHA-keyed blobs that coexist safely with named tags.
+    cache_ref="ghcr.io/{{ repo_organization }}/${image_name}"
+    # Probe: use skopeo list-tags — succeeds on any accessible (public) repo, including
+    # ones with only SHA-keyed blobs. Fails on 403 (private) or 404 (not yet pushed).
     cache_readable=false
     if skopeo list-tags "docker://${cache_ref}" >/dev/null 2>&1; then
         cache_readable=true
         PODMAN_BUILD_ARGS+=(--cache-from "${cache_ref}")
     fi
     if [[ "${REGISTRY_CACHE_WRITE:-0}" == "1" ]]; then
-        # Always try to write on trusted builds — the push login provides the auth
-        # needed to create the package if it does not yet exist.
         PODMAN_BUILD_ARGS+=(--cache-to "${cache_ref}")
         echo "Registry layer cache: read=${cache_readable}+write (${cache_ref})"
     elif [[ "${cache_readable}" == "true" ]]; then
         echo "Registry layer cache: read-only (${cache_ref})"
     else
-        echo "Registry layer cache: disabled (${cache_ref} not accessible — make package public to enable)"
+        echo "Registry layer cache: disabled (${cache_ref} not yet accessible)"
     fi
 
     ${PODMAN} build "${PODMAN_BUILD_ARGS[@]}" .
