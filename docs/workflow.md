@@ -10,6 +10,12 @@
 - Conventional Commits required on every PR title/commit
 - AI-authored commits must include `Assisted-by: <Model> via <Tool>`
 
+## Issue tracker
+
+> **All Bluefin issues go in [`projectbluefin/bluefin`](https://github.com/projectbluefin/bluefin/issues).**
+>
+> Do **NOT** open, comment on, or modify issues, PRs, or code in any repo outside the `projectbluefin` org — including `ublue-os`, `coreos`, or any other org. Only `projectbluefin/*` repos are in scope.
+
 ## Issue flow
 
 `filed → approved → queued → claimed → done`
