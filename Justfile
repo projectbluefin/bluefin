@@ -232,17 +232,15 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     # Cache write (REGISTRY_CACHE_WRITE=1) is set by CI for non-PR builds only.
     # PR builds and local builds are read-only to prevent cache poisoning.
     # Note: Podman 5.x+ requires untagged refs for --cache-from/--cache-to.
-    # Note: bluefin-cache must be a PUBLIC package; private packages return 403
-    # on blob existence checks, breaking both --cache-from and --cache-to.
+    # IMPORTANT: bluefin-cache MUST be a PUBLIC GHCR package.
+    #   Private packages return 403 on blob existence checks, breaking --cache-from.
+    #   Only enable cache when the package already exists and is accessible.
+    #   To unlock: go to https://github.com/orgs/projectbluefin/packages/container/bluefin-cache
+    #   → Package settings → Change visibility → Public.
     cache_ref="ghcr.io/{{ repo_organization }}/bluefin-cache"
-    # Probe cache accessibility: 404 (empty) is fine, 403 means private/inaccessible
-    PROBE_OUT=$(${PODMAN} manifest inspect "${cache_ref}" 2>&1) && cache_ok=true || cache_ok=false
-    if [[ "${cache_ok}" == "false" ]] && echo "${PROBE_OUT}" | grep -qE "StatusCode: 403|status 403|unauthorized|Unauthorized|denied"; then
-        echo "WARNING: Cache registry ${cache_ref} is inaccessible (403)."
-        echo "Make ghcr.io/{{ repo_organization }}/bluefin-cache public in GitHub package settings to enable caching."
-        cache_ok=disabled
-    fi
-    if [[ "${cache_ok}" != "disabled" ]]; then
+    # Only enable cache when probe succeeds (package exists AND is accessible).
+    # 404 (not found) or 403 (private) both skip cache — we do NOT create new private packages.
+    if ${PODMAN} manifest inspect "${cache_ref}" >/dev/null 2>&1; then
         PODMAN_BUILD_ARGS+=(--cache-from "${cache_ref}")
         if [[ "${REGISTRY_CACHE_WRITE:-0}" == "1" ]]; then
             PODMAN_BUILD_ARGS+=(--cache-to "${cache_ref}")
@@ -251,7 +249,7 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
             echo "Registry layer cache: read-only (${cache_ref})"
         fi
     else
-        echo "Registry layer cache: disabled (package inaccessible — build will be uncached)"
+        echo "Registry layer cache: disabled (${cache_ref} not accessible — make package public to enable)"
     fi
 
     ${PODMAN} build "${PODMAN_BUILD_ARGS[@]}" .
