@@ -228,26 +228,33 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
         echo "No GitHub token found - build may hit rate limit"
     fi
 
-    # Registry layer cache — reduces build time by reusing unchanged layers from GHCR
+    # Registry layer cache — reduces build time by reusing unchanged layers from GHCR.
     # Cache write (REGISTRY_CACHE_WRITE=1) is set by CI for non-PR builds only.
     # PR builds and local builds are read-only to prevent cache poisoning.
     # Note: Podman 5.x+ requires untagged refs for --cache-from/--cache-to.
-    # Content-addressed caching handles version isolation automatically.
+    # Note: bluefin-cache must be a PUBLIC package; private packages return 403
+    # on blob existence checks, breaking both --cache-from and --cache-to.
     cache_ref="ghcr.io/{{ repo_organization }}/bluefin-cache"
-    PODMAN_BUILD_ARGS+=(--cache-from "${cache_ref}")
-    if [[ "${REGISTRY_CACHE_WRITE:-0}" == "1" ]]; then
-        PODMAN_BUILD_ARGS_WITH_CACHE=("${PODMAN_BUILD_ARGS[@]}" --cache-to "${cache_ref}")
-        echo "Registry layer cache: read+write (${cache_ref})"
-        # Attempt build with cache write; fall back gracefully if cache push is denied (e.g. 403 on private package)
-        if ! ${PODMAN} build "${PODMAN_BUILD_ARGS_WITH_CACHE[@]}" .; then
-            echo "WARNING: Build with --cache-to failed (likely 403 on private cache package). Retrying without cache write."
-            echo "To fix permanently, make ghcr.io/${repo_organization}/bluefin-cache public in GitHub package settings."
-            ${PODMAN} build "${PODMAN_BUILD_ARGS[@]}" .
+    # Probe cache accessibility: 404 (empty) is fine, 403 means private/inaccessible
+    PROBE_OUT=$(${PODMAN} manifest inspect "${cache_ref}" 2>&1) && cache_ok=true || cache_ok=false
+    if [[ "${cache_ok}" == "false" ]] && echo "${PROBE_OUT}" | grep -qE "StatusCode: 403|status 403|unauthorized|Unauthorized"; then
+        echo "WARNING: Cache registry ${cache_ref} is inaccessible (403)."
+        echo "Make ghcr.io/{{ repo_organization }}/bluefin-cache public in GitHub package settings to enable caching."
+        cache_ok=disabled
+    fi
+    if [[ "${cache_ok}" != "disabled" ]]; then
+        PODMAN_BUILD_ARGS+=(--cache-from "${cache_ref}")
+        if [[ "${REGISTRY_CACHE_WRITE:-0}" == "1" ]]; then
+            PODMAN_BUILD_ARGS+=(--cache-to "${cache_ref}")
+            echo "Registry layer cache: read+write (${cache_ref})"
+        else
+            echo "Registry layer cache: read-only (${cache_ref})"
         fi
     else
-        echo "Registry layer cache: read-only (${cache_ref})"
-        ${PODMAN} build "${PODMAN_BUILD_ARGS[@]}" .
+        echo "Registry layer cache: disabled (package inaccessible — build will be uncached)"
     fi
+
+    ${PODMAN} build "${PODMAN_BUILD_ARGS[@]}" .
     echo "::endgroup::"
 
     # Rechunk
