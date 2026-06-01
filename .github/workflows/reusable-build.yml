@@ -200,6 +200,20 @@ jobs:
                             "${MATRIX_IMAGE_FLAVOR}" \
                             "${SYFT_CMD}"
 
+      - name: Upload SBOM as release artifact
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir -p /tmp/sbom-upload
+          cp "sbom_out/${{ env.IMAGE_NAME }}/sbom.json" "/tmp/sbom-upload/${{ env.IMAGE_NAME }}.sbom.json"
+
+      - name: Upload SBOM artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: sbom-${{ env.IMAGE_NAME }}
+          path: /tmp/sbom-upload/
+          retention-days: 7
+
       - name: Record rechunk start time
         id: rechunk-timing
         if: github.event_name != 'pull_request'
