@@ -100,16 +100,17 @@ recent runs per workflow. No issues, PRs, or code in `ublue-os` were modified.
   testsuite feature-file table sums to 240. 240 is used throughout this document.
 - **No step-level telemetry for legacy.** Step timing is unavailable from public logs.
   Job durations are derived from `startedAt`/`completedAt` timestamps only.
-- **Image scope change.** The `bluefin-dx` variant was retired (commit `7ac4bbc2`) after
-  this data window. Captured runs still show 4 matrix jobs; comparisons reflect
-  equivalent scope.
+- **bluefin-dx removal in progress.** The `bluefin-dx` variant is being removed on
+  the `remove-bluefin-dx` branch (this document lives on that branch). Captured runs
+  reflect the 4-job matrix (bluefin + bluefin-dx × main + nvidia-open). Post-removal
+  projected timings are included separately; they are labeled `[Projected]`.
 
 ### Fairness controls
 
 Comparisons use the same stream (testing ↔ latest, equivalent 4-image matrices).
-Architecture held constant (x86_64 only). Multiple runs averaged. The retired
-`bluefin-dx` variant appears in both pipelines' captured runs; this does not advantage
-either side.
+Architecture held constant (x86_64 only). Multiple runs averaged. The `bluefin-dx`
+variant appears in both pipelines' captured runs; the removal in progress does not
+disadvantage the legacy comparison — it affects both sides equally.
 
 ---
 
@@ -340,30 +341,97 @@ Both pipelines fan out all 4 build jobs in parallel. The timing difference is:
 
 - **Legacy:** Jobs start within ~1.4 minutes of each other (staggered by runner
   allocation, with no synchronizing gate)
-- **Current:** Preflight runs (~6 sec) and then all 4 build jobs start within 1 second
-  of each other (synchronous fan-out from the preflight gate)
+- **Current (4-job matrix):** Preflight runs (~6 sec) and then all 4 build jobs start
+  within 1 second of each other (synchronous fan-out from the preflight gate)
 
-In both cases the critical path is the slowest parallel job. The −18% improvement is not
-from better parallelism; it comes from SBOM skip on the testing stream and cache
-isolation reducing stale-cache restores.
+In both cases the critical path is the slowest parallel job. The −18% mean improvement
+traces to three compounding changes:
 
-### Cache hit detail — run 26774327453
+- **SBOM skip on testing stream:** legacy pipeline generates SBOMs on every run;
+  the new pipeline skips them on the testing stream. SBOM generation accounts for
+  3–7 min of per-run overhead in the legacy pipeline.
+- **DNF cache key isolation** (commit `70593479`): adding `image_flavor` to the
+  cache key prevents the four parallel jobs from overwriting each other's cache
+  artifacts. A shared-key collision forces a full rebuild on the next run for at
+  least one flavor.
+- **GHCR layer cache** (`--cache-from`/`--cache-to`): layers already present in
+  GHCR are skipped during `podman build`. Per-job data shows this reduces the
+  longest build from 26m 8s (cold) to 16m 13s (warm) — a ~10 min reduction on
+  the critical path. See "Cache state evolution" section below for run-by-run detail.
 
-`[Observed]` from `gh run view --log`:
+**`[Projected]` Post-bluefin-dx-removal matrix (2 jobs):**
 
-```
-Cache hit for: Linux-x86_64-buildah-main-bluefin-44
-Cache Size: ~2394 MB (2510570825 B)
-Cache restored from key: Linux-x86_64-buildah-main-bluefin-44
-Elapsed restore: ~23 seconds
-Build duration (main/bluefin): 11m 36s
-Push duration (main/bluefin):   4m 37s
-Build duration (nvidia/bluefin): 11m 9s
-Push duration (nvidia/bluefin):  5m 46s
-```
+With `bluefin-dx` removed, the matrix shrinks to 2 jobs: `main/bluefin` and
+`nvidia-open/bluefin`. Based on the observed per-job data:
 
-Cache miss runs (e.g., 26770727899) produce wall-clocks in the 33–37 min range, which
-overlaps with the legacy pipeline's typical range rather than exceeding it.
+| Cache state | Current critical path | Post-removal critical path | Projected Δ |
+|-------------|----------------------|---------------------------|-------------|
+| Warm (HIT) | main/bluefin-dx: 16m 13s build → 25.5 min job | nvidia-open/bluefin: 11m 9s build → ~19.7 min job | −5.3 min wall-clock |
+| Cold (MISS) | nvidia-open/bluefin-dx: 26m 8s build → 36.9 min wall | nvidia-open/bluefin: 23m 50s build → ~33–34 min wall | −3–4 min wall-clock |
+
+Expected warm-cache wall-clock after removal: **~20 min** (vs 26.0 min observed).
+This projection carries ±3 min uncertainty from runner allocation and GHCR congestion
+variance; treat as directional, not a committed SLA.
+
+`[Observed]` data underpinning this projection: see per-job table above.
+
+### Per-job build and push durations — all 4 sampled runs
+
+`[Observed]` from `gh run view --log`, step-level telemetry emitted by `reusable-build.yml`.
+
+| Run | Job | Build | Push | Cache state |
+|-----|-----|-------|------|-------------|
+| **26774327453** (26.0 min) | main/bluefin | **11m 36s** | 4m 37s | DNF exact HIT (flavor-aware key) |
+| | nvidia-open/bluefin | **11m 9s** | 5m 46s | DNF exact HIT |
+| | main/bluefin-dx | **16m 13s** | 6m 34s | DNF exact HIT |
+| | nvidia-open/bluefin-dx | **12m 50s** | 5m 16s | DNF exact HIT |
+| **26770727899** (36.9 min) | main/bluefin | 19m 2s | — | DNF miss |
+| | nvidia-open/bluefin | 23m 50s | 4m 55s | DNF miss |
+| | main/bluefin-dx | 25m 5s | 8m 0s | DNF miss |
+| | nvidia-open/bluefin-dx | **26m 8s** | 8m 0s | DNF miss |
+| **26766587405** (29.9 min) | main/bluefin | 14m 55s | 4m 11s | DNF restore-key fallback |
+| | nvidia-open/bluefin | 16m 25s | 6m 30s | DNF restore-key fallback |
+| | main/bluefin-dx | 19m 8s | 6m 28s | DNF restore-key fallback |
+| | nvidia-open/bluefin-dx | **19m 28s** | 6m 23s | DNF restore-key fallback |
+| **26762439959** (29.2 min) | main/bluefin | 15m 22s | 3m 47s | DNF exact HIT (old shared key) |
+| | nvidia-open/bluefin | 12m 41s | 5m 38s | DNF exact HIT |
+| | main/bluefin-dx | 19m 6s | 7m 29s | DNF exact HIT |
+| | nvidia-open/bluefin-dx | **19m 19s** | 7m 7s | DNF exact HIT |
+
+The critical path in each run is the slowest parallel job (bolded above). Build times
+span 11–16 min with a warm cache vs 19–26 min on a cold run.
+
+### Cache state evolution across the sample window
+
+The four runs capture three distinct cache states, each reflecting a CI change that
+landed during the 2026-06-01 work window:
+
+| Time (UTC) | Run | Primary DNF key format | DNF result | Longest build |
+|------------|-----|------------------------|------------|---------------|
+| 14:50 | 26762439959 | `Linux-x86_64-buildah-bluefin-44` (shared, pre-fix) | Exact hit | 19m 19s |
+| 16:06 | 26766587405 | `Linux-x86_64-buildah-main-bluefin-44` (new, cold) | Restore-key fallback | 19m 28s |
+| 17:30 | 26770727899 | `Linux-x86_64-buildah-main-bluefin-44` (new) | Miss | 26m 8s |
+| 18:38 | 26774327453 | `Linux-x86_64-buildah-main-bluefin-44` (new, warm) | Exact hit | 16m 13s |
+
+Three changes are visible in this sequence:
+
+1. **DNF cache key isolation** (commit `70593479`): the primary key gained the
+   `image_flavor` segment, eliminating cross-flavor collisions. Run 26766587405
+   shows the new key on its first run (no prior artifact), falling back to the old
+   shared-key artifact. This is expected; the isolated caches populate on first use.
+
+2. **GHCR layer cache cold start** (between runs 26766587405 and 26770727899):
+   `--cache-from`/`--cache-to` via GHCR was activated. Run 26770727899 is the first
+   run with GHCR layer cache configured but no warm layers yet; all four jobs build
+   from scratch. Longest job: 26m 8s.
+
+3. **GHCR layer cache warm** (run 26774327453): both DNF and GHCR layer caches are
+   primed. Longest job drops to 16m 13s — a **9m 55s reduction** on the critical
+   path compared to the cold GHCR run (26m 8s). Wall-clock: 26.0 min.
+
+The −18% mean improvement in the summary table spans all four of these states. A
+fully-warm cache run (26774327453) is 10.9 min faster wall-clock than the coldest
+observed run (26770727899, 36.9 min).
 
 ### Legacy stable stream failure rate
 
