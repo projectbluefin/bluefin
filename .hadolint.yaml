@@ -1,0 +1,6 @@
+# Hadolint configuration for Bluefin Containerfile
+# https://github.com/hadolint/hadolint
+ignore:
+  - DL3006  # Always tag the version of an image explicitly — images use ARG for dynamic tags
+  - DL3059  # Multiple consecutive RUN instructions — intentional single-RUN design until #112
+  - SC2312  # Consider invoking this command separately — style preference

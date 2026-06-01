@@ -44,6 +44,8 @@ dnf5 versionlock add "${OVERRIDES[@]}"
 
 # shellcheck source=build_files/shared/copr-helpers.sh
 source /ctx/build_files/shared/copr-helpers.sh
+# shellcheck source=build_files/shared/package-lib.sh
+source /ctx/build_files/shared/package-lib.sh
 
 # NOTE:
 # Packages are split into FEDORA_PACKAGES and COPR_PACKAGES to prevent
@@ -65,6 +67,7 @@ FEDORA_PACKAGES=(
     cryfs
     davfs2
     ddcutil
+    distrobox
     evtest
     fastfetch
     firewall-config
@@ -166,16 +169,16 @@ case "$FEDORA_MAJOR_VERSION" in
         ;;
 esac
 
-# Install all Fedora packages (bulk - safe from COPR injection)
-echo "Installing ${#FEDORA_PACKAGES[@]} packages from Fedora repos..."
-dnf -y install "${FEDORA_PACKAGES[@]}"
-
-dnf config-manager addrepo --from-repofile=https://pkgs.tailscale.com/stable/fedora/tailscale.repo
-dnf config-manager setopt tailscale-stable.enabled=0
-dnf -y install --enablerepo='tailscale-stable' tailscale
-
-dnf -y install --enablerepo=fedora-multimedia \
+# Install Fedora, Tailscale, and multimedia packages together while keeping COPR packages isolated.
+echo "Installing ${#FEDORA_PACKAGES[@]} Fedora packages plus Tailscale and multimedia packages..."
+dnf5 config-manager addrepo --from-repofile=https://pkgs.tailscale.com/stable/fedora/tailscale.repo
+dnf5 config-manager setopt tailscale-stable.enabled=0
+dnf5 -y install \
+    --enablerepo='tailscale-stable' \
+    --enablerepo='fedora-multimedia' \
     -x PackageKit* \
+    "${FEDORA_PACKAGES[@]}" \
+    tailscale \
     ffmpeg{,-libs} libavcodec @multimedia gstreamer1-plugins-{bad-free,bad-free-libs,good,base} lame{,-libs} libfdk-aac libjxl ffmpegthumbnailer
 
 # From che/nerd-fonts
@@ -187,6 +190,7 @@ copr_install_isolated "ublue-os/packages" \
     "oversteer-udev"
 
 # Packages to exclude - common to all versions
+# shellcheck disable=SC2034  # passed by name to remove_excluded_packages
 EXCLUDED_PACKAGES=(
     default-fonts-cjk-sans
     fedora-bookmarks
@@ -207,14 +211,7 @@ EXCLUDED_PACKAGES=(
 )
 
 # Remove excluded packages if they are installed
-if [[ "${#EXCLUDED_PACKAGES[@]}" -gt 0 ]]; then
-    readarray -t INSTALLED_EXCLUDED < <(rpm -qa --queryformat='%{NAME}\n' "${EXCLUDED_PACKAGES[@]}" 2>/dev/null || true)
-    if [[ "${#INSTALLED_EXCLUDED[@]}" -gt 0 ]]; then
-        dnf -y remove "${INSTALLED_EXCLUDED[@]}"
-    else
-        echo "No excluded packages found to remove."
-    fi
-fi
+remove_excluded_packages EXCLUDED_PACKAGES
 
 ## Pins and Overrides
 ## Use this section to pin packages in order to avoid regressions

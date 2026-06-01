@@ -1,13 +1,11 @@
 name: Latest Images
 on:
-  merge_group:
   pull_request:
     branches:
       - latest
     paths-ignore:
       - ".github/workflows/*validate*.yml"
       - "**.md"
-      - "flatpaks/**"
       - "system_files/shared/etc/bazaar/**"
   push:
     branches:
@@ -15,7 +13,6 @@ on:
     paths-ignore:
       - ".github/workflows/*validate*.yml"
       - "**.md"
-      - "flatpaks/**"
       - "system_files/shared/etc/bazaar/**"
   workflow_call:
   workflow_dispatch:
@@ -30,15 +27,10 @@ permissions:
 jobs:
   build-image-latest:
     name: Build Latest Images
+    if: github.event_name != 'workflow_dispatch' || github.ref_name == 'latest'
     uses: ./.github/workflows/reusable-build.yml
     secrets: inherit
-    strategy:
-      fail-fast: false
-      matrix:
-        brand_name: ["bluefin"]
     with:
-      image_flavors: '["main", "nvidia-open"]'
-      brand_name: ${{ matrix.brand_name }}
       stream_name: latest
       # FIXME: enable when ublue-os/akmods has ARM builds
       # architecture: '["aarch64","x86_64"]'

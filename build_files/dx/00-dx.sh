@@ -7,8 +7,11 @@ set -ouex pipefail
 # Load secure COPR helpers
 # shellcheck source=build_files/shared/copr-helpers.sh
 source /ctx/build_files/shared/copr-helpers.sh
+# shellcheck source=build_files/shared/package-lib.sh
+source /ctx/build_files/shared/package-lib.sh
 
 # DX packages from Fedora repos - common to all versions
+# shellcheck disable=SC2034  # passed by name to install_fedora_packages
 FEDORA_PACKAGES=(
     android-tools
     bcc
@@ -64,21 +67,20 @@ FEDORA_PACKAGES=(
     ydotool
 )
 
-echo "Installing ${#FEDORA_PACKAGES[@]} DX packages from Fedora repos..."
-dnf5 -y install "${FEDORA_PACKAGES[@]}"
+install_fedora_packages FEDORA_PACKAGES
 
 # rocm doesn't work well on nvidia
 if [[ ! "${IMAGE_NAME}" =~ nvidia ]]; then
-  dnf install -y \
+  dnf5 install -y \
     rocm-hip \
     rocm-opencl \
     rocm-smi \
     rocminfo
 fi
 
-dnf config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo
+dnf5 config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo
 sed -i "s/enabled=.*/enabled=0/g" /etc/yum.repos.d/docker-ce.repo
-dnf -y install --enablerepo=docker-ce-stable \
+dnf5 -y install --enablerepo=docker-ce-stable \
     containerd.io \
     docker-buildx-plugin \
     docker-ce \
@@ -95,11 +97,12 @@ gpgcheck=1
 gpgkey=https://packages.microsoft.com/keys/microsoft.asc
 EOF
 sed -i "s/enabled=.*/enabled=0/g" /etc/yum.repos.d/vscode.repo
-dnf -y install --enablerepo=code \
+dnf5 -y install --enablerepo=code \
     code
 
 
 # DX packages to exclude - common to all versions
+# shellcheck disable=SC2034  # passed by name to remove_excluded_packages
 EXCLUDED_PACKAGES=()
 
 # Version-specific package exclusions for DX
@@ -110,29 +113,15 @@ case "$FEDORA_MAJOR_VERSION" in
 esac
 
 # Remove excluded packages if they are installed
-if [[ "${#EXCLUDED_PACKAGES[@]}" -gt 0 ]]; then
-    readarray -t INSTALLED_EXCLUDED < <(rpm -qa --queryformat='%{NAME}\n' "${EXCLUDED_PACKAGES[@]}" 2>/dev/null || true)
-    if [[ "${#INSTALLED_EXCLUDED[@]}" -gt 0 ]]; then
-        dnf5 -y remove "${INSTALLED_EXCLUDED[@]}"
-    else
-        echo "No excluded packages found to remove."
-    fi
-fi
+remove_excluded_packages EXCLUDED_PACKAGES
 
 systemctl enable docker.socket
 systemctl enable podman.socket
 systemctl enable libvirt-workaround.service
 systemctl enable bluefin-dx-groups.service
 
-sed -i 's@enabled=1@enabled=0@g' /etc/yum.repos.d/fedora-cisco-openh264.repo
-
-sed -i 's@enabled=1@enabled=0@g' /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:ublue-os:akmods.repo
-
-# Disable RPM Fusion repos
-for i in /etc/yum.repos.d/rpmfusion-*.repo; do
-    if [[ -f "$i" ]]; then
-        sed -i 's@enabled=1@enabled=0@g' "$i"
-    fi
-done
+# shellcheck source=build_files/shared/disable-repos.sh
+source /ctx/build_files/shared/disable-repos.sh
+disable_third_party_repos
 
 echo "::endgroup::"

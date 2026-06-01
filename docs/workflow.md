@@ -1,0 +1,136 @@
+# Bluefin workflow reference
+
+## Repo rules
+
+- Default development branch: `testing`
+- All PRs target `testing` — never `main`
+- Merge method: squash only
+- No WIP PRs
+- Max 4 open PRs per agent at a time
+- Conventional Commits required on every PR title/commit
+- AI-authored commits must include `Assisted-by: <Model> via <Tool>`
+
+## Issue flow
+
+`filed → approved → queued → claimed → done`
+
+| Stage | Meaning |
+|---|---|
+| `filed` | Issue opened; bonedigger adds or preserves triage context |
+| `approved` | A maintainer signs off on the work |
+| `queued` | Ready for contributors/agents to claim |
+| `claimed` | Someone is actively working the issue |
+| `done` | Fix shipped; community verification closes the loop |
+
+## Bluefin 🦖 pipeline widget examples
+
+### Filed
+
+```text
+Bluefin 🦖  ·  issue pipeline
+─────────────────────────────────────────────────
+  ▶  filed      report received
+  ·  approved   —
+  ·  queued     —
+  ·  claimed    —
+  ·  done       —
+─────────────────────────────────────────────────
+  report:       attached    ·  confirms: 0
+  area:         —           ·  priority: —
+  next action:  same bug? ujust confirm 42
+```
+
+### Approved + queued
+
+```text
+Bluefin 🦖  ·  issue pipeline
+─────────────────────────────────────────────────
+  ✓  filed      report received
+  ✓  approved   signed off by a maintainer
+  ▶  queued     waiting for a contributor to claim
+  ·  claimed    —
+  ·  done       —
+─────────────────────────────────────────────────
+  report:       attached    ·  confirms: 2
+  area:         gnome       ·  priority: high
+  next action:  comment /claim to take this
+```
+
+### Claimed
+
+```text
+Bluefin 🦖  ·  issue pipeline
+─────────────────────────────────────────────────
+  ✓  filed      report received
+  ✓  approved   signed off by a maintainer
+  ✓  queued     —
+  ▶  claimed    @username
+  ·  done       —
+─────────────────────────────────────────────────
+  report:       attached    ·  confirms: 2
+  area:         gnome       ·  priority: high
+  next action:  /unclaim to return to queue if stuck
+```
+
+### Done
+
+```text
+Bluefin 🦖  ·  issue pipeline
+─────────────────────────────────────────────────
+  ✓  filed      report received
+  ✓  approved   signed off by a maintainer
+  ✓  queued     —
+  ✓  claimed    —
+  ▶  done       fix shipped
+─────────────────────────────────────────────────
+  report:       attached    ·  verified: 1/3
+  area:         gnome       ·  priority: high
+  next action:  ujust verify 42 — three verifies closes the case
+```
+
+## Bonedigger commands
+
+| Command | Who uses it | Effect |
+|---|---|---|
+| `/claim` | contributors/agents | Assign the issue and move it into the claimed state |
+| `/unclaim` | claimant or maintainer | Drop assignment and return it to the queue |
+| `/approve` | maintainer | Mark approved and queue it for work |
+| `/lgtm` | maintainer | Alias for `/approve` |
+| `/wontfix [reason]` | maintainer | Close as not planned with a reason |
+
+Bonedigger is wired in via `.github/workflows/bonedigger.yml` and uses the reusable lifecycle workflow from `projectbluefin/bonedigger` with Bluefin branding (`Bluefin`, `🦖`).
+
+## Labels
+
+### Lifecycle labels
+
+These are the labels bonedigger expects and/or manages for the issue queue:
+
+- `needs-triage`
+- `status/discussing`
+- `status/approved`
+- `queue/agent-ready`
+- `queue/claimed`
+- `priority/high`
+- `priority/critical`
+- `lgtm`
+- `stale`
+
+### Common Bluefin labels already in use
+
+- Kind: `kind/bug`, `kind/documentation`, `kind/enhancement`, `kind/github-action`, `kind/question`, `kind/renovate`, `kind/tech-debt`, `kind/wontfix`, `kind/duplicate`, `kind/parity`
+- Area: `area/brew`, `area/dx`, `area/flatpak`, `area/iso`, `area/just`, `area/testing`, `area/gnome`, `area/nvidia`, `area/hardware`, `area/policy`, `area/services`, `area/upstream`, `area/finpilot`, `area/bluespeed`, `area/aurora`, `area/buildstream`, `area/bling`
+- Other useful labels: `dependencies`, `release-blocker`, `package-requests`, `good first issue`, `help wanted`, `agent-ready`
+
+## PR comment policy
+
+- One comment per PR event at most; combine findings
+- Do not duplicate GitHub UI state (approvals, check runs, mergeability)
+- Test reports should only say what ran, whether it passed, and what is blocked
+- Use `@mentions` only when asking a specific person to do something
+- If there is nothing actionable to add, do not comment
+
+## Links
+
+- [bonedigger README](https://github.com/projectbluefin/bonedigger)
+- [Bluefin pull request template](../.github/pull_request_template.md)

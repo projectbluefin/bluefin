@@ -14,6 +14,8 @@ mkdir -p /usr/share/doc/bluefin
 # Offline Bluefin documentation
 ghcurl "https://github.com/projectbluefin/documentation/releases/download/0.1/bluefin.pdf" --retry 3 -o /tmp/bluefin.pdf
 install -Dm0644 -t /usr/share/doc/bluefin/ /tmp/bluefin.pdf
+# Tag for rechunker — large unpackaged file gets its own layer
+setfattr -n user.component -v bluefin-docs /usr/share/doc/bluefin/bluefin.pdf
 
 # Footgun, See: https://github.com/ublue-os/main/issues/598
 rm -f /usr/bin/chsh /usr/bin/lchsh
@@ -32,9 +34,17 @@ ghcurl "https://raw.githubusercontent.com/coreos/fedora-coreos-config/refs/heads
 chmod +x /usr/lib/systemd/system-generators/coreos-sulogin-force-generator
 
 # Starship Shell Prompt
-ghcurl "https://github.com/starship/starship/releases/latest/download/starship-x86_64-unknown-linux-gnu.tar.gz" --retry 3 -o /tmp/starship.tar.gz
+STARSHIP_VERSION="$(grep -A1 'datasource=github-releases depName=starship/starship' /ctx/image-versions.yml | grep 'starship:' | awk '{print $2}' | tr -d '"')"
+STARSHIP_BASE="https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-x86_64-unknown-linux-gnu.tar.gz"
+ghcurl "${STARSHIP_BASE}"        --retry 3 -o /tmp/starship.tar.gz
+ghcurl "${STARSHIP_BASE}.sha256" --retry 3 -o /tmp/starship.tar.gz.sha256
+# Verify download integrity before extracting (CWE-494)
+# starship releases provide a raw hash file (no filename suffix), construct the checksum line
+(cd /tmp && echo "$(tr -d '[:space:]' < starship.tar.gz.sha256)  starship.tar.gz" | sha256sum -c)
 tar -xzf /tmp/starship.tar.gz -C /tmp
 install -c -m 0755 /tmp/starship /usr/bin
+# Tag for rechunker — standalone binary not tracked by RPM
+setfattr -n user.component -v starship /usr/bin/starship
 
 # Configure firewalld with Fedora Workstation defaults
 # https://src.fedoraproject.org/rpms/firewalld/blob/rawhide/f/firewalld.spec

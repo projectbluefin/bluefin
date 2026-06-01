@@ -1,0 +1,99 @@
+name: PR Smoke Test
+
+# Runs a full image build + smoke test on PRs that touch build-affecting files.
+# Results appear as a required check on the PR.
+#
+# Closed issues: #75 (community PRs), #73 (Renovate risk-tier gating — high-risk)
+on:
+  pull_request:
+    branches:
+      - testing
+    paths:
+      - Containerfile
+      - Justfile
+      - image-versions.yml
+      - build_files/**
+      - system_files/**
+
+permissions:
+  contents: read
+  packages: write
+  pull-requests: read
+
+concurrency:
+  group: pr-smoke-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build PR image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    outputs:
+      image: ${{ steps.get-image.outputs.image }}
+    env:
+      IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          submodules: recursive
+
+      - name: Bootstrap just
+        uses: ./.github/actions/bootstrap-just
+
+      - name: Maximize build space
+        uses: ublue-os/remove-unwanted-software@695eb75bc387dbcd9685a8e72d23439d8686cba6 # v10
+
+      - name: Update Podman
+        shell: bash
+        run: |
+          set -eux
+          IDV=$(. /usr/lib/os-release && echo ${ID}-${VERSION_ID})
+          test "${IDV}" = "ubuntu-24.04"
+          if [ "$(dpkg --print-architecture)" = "amd64" ]; then
+            mirror="http://azure.archive.ubuntu.com/ubuntu"
+          else
+            mirror="http://ports.ubuntu.com/ubuntu-ports"
+          fi
+          echo "deb ${mirror} resolute universe main" | sudo tee /etc/apt/sources.list.d/resolute.list
+          /bin/time -f '%E %C' sudo apt update
+          /bin/time -f '%E %C' sudo apt install -y --allow-downgrades crun/resolute buildah/resolute podman/resolute skopeo/resolute
+          podman --version
+
+      - name: Build PR-scoped image
+        id: build-image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sudo -E "$(command -v just)" repo_organization="${{ github.repository_owner }}" \
+            build-ghcr bluefin testing main
+
+      - name: Get PR image ref
+        id: get-image
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          IMAGE="ghcr.io/${{ github.repository_owner }}/bluefin:pr-${{ github.event.pull_request.number }}-sha-${SHORT_SHA}"
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "PR image: ${IMAGE}"
+
+      - name: Push PR-scoped image
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo ${{ secrets.GITHUB_TOKEN }} | sudo podman login ghcr.io -u ${{ github.actor }} --password-stdin
+          sudo podman tag localhost/bluefin:testing \
+            "ghcr.io/${{ github.repository_owner }}/bluefin:pr-${{ github.event.pull_request.number }}-sha-${SHORT_SHA}"
+          sudo podman push \
+            "ghcr.io/${{ github.repository_owner }}/bluefin:pr-${{ github.event.pull_request.number }}-sha-${SHORT_SHA}"
+
+  smoke:
+    name: Smoke test PR image
+    needs: [build]
+    if: needs.build.outputs.image != ''
+    permissions:
+      packages: write
+      contents: read
+    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@969d471323a5aed586ba19371a4d2c74c4fa6823 # main
+    with:
+      image: ${{ needs.build.outputs.image }}
+      suites: smoke

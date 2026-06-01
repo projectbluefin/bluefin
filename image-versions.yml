@@ -7,3 +7,8 @@ images:
     image: ghcr.io/ublue-os/brew
     tag: latest
     digest: sha256:48be52bde586f6637ce83f128bf9ba1580b7e4de4d093fed94bec587082850ce
+
+# Pinned versions for direct binary downloads (managed by Renovate)
+downloads:
+  # renovate: datasource=github-releases depName=starship/starship
+  starship: "1.25.1"

@@ -12,6 +12,7 @@ concurrency:
 permissions:
   contents: write
   actions: write
+  packages: write
 
 jobs:
   # Verify that post-testing-e2e.yml already ran smoke tests on the current
@@ -112,29 +113,24 @@ jobs:
     permissions:
       packages: write
       contents: read
-    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@05445e0ce981ec428bb0b06e94142e711995f2a9 # main
+    uses: ./.github/workflows/run-testsuite.yml
     with:
       image: ${{ needs.verify-e2e.outputs.image }}
-      suites: developer,vanilla-gnome
+      suites: developer,vanilla-gnome,software,common
 
   promote-to-latest-and-stable:
     needs: [e2e, verify-e2e]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    outputs:
-      has_diff: ${{ steps.check-diff.outputs.has_diff }}
+    timeout-minutes: 30
+    permissions:
+      packages: write
+      contents: read
     steps:
       - name: Checkout main
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
           ref: main
-
-      - name: Configure git
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Verify main SHA has not advanced
         env:
@@ -150,48 +146,88 @@ jobs:
           fi
           echo "✅ main SHA unchanged: $CURRENT_SHA"
 
-      - name: Check diff between main and latest
-        id: check-diff
-        run: |
-          set -euo pipefail
-          git fetch origin latest stable 2>/dev/null || true
-          if git diff --quiet origin/latest origin/main 2>/dev/null; then
-            echo "No diff between main and latest — nothing to promote"
-            echo "has_diff=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_diff=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Fast-forward latest and stable to main
-        if: steps.check-diff.outputs.has_diff == 'true'
-        run: |
-          set -euo pipefail
-          git push origin HEAD:refs/heads/latest
-          git push origin HEAD:refs/heads/stable
-          echo "✅ Promoted main → latest + stable"
-
-  trigger-stable-build:
-    needs: [promote-to-latest-and-stable]
-    if: needs.promote-to-latest-and-stable.outputs.has_diff == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger stable build
+      - name: Download all testing image digests
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh workflow run build-image-stable.yml --ref stable -R ${{ github.repository }}
-          echo "✅ Triggered build-image-stable.yml on stable"
+          gh run download "${{ needs.verify-e2e.outputs.build_run_id }}" \
+            --repo "${{ github.repository }}" \
+            --pattern "image-digest-testing-*" \
+            --dir /tmp/all-digests
+          echo "Downloaded digest files:"
+          find /tmp/all-digests -name "*.txt" | sort
 
-  trigger-latest-build:
-    needs: [promote-to-latest-and-stable]
-    if: needs.promote-to-latest-and-stable.outputs.has_diff == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger latest build
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Log in to GHCR
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Retag tested images to :latest and :stable
         run: |
           set -euo pipefail
-          gh workflow run build-image-latest-main.yml --ref latest -R ${{ github.repository }}
-          echo "✅ Triggered build-image-latest-main.yml on latest"
+          REGISTRY="ghcr.io/${{ github.repository_owner }}"
+          PROMOTED=0
+
+          while IFS= read -r -d '' f; do
+            # Each file contains: IMAGE_NAME=sha256:xxxx
+            line=$(grep "=" "$f" | head -1)
+            IMAGE_NAME="${line%%=*}"
+            DIGEST="${line##*=}"
+            if [[ -z "$IMAGE_NAME" || -z "$DIGEST" ]]; then
+              echo "WARNING: Could not parse $f — skipping"
+              continue
+            fi
+
+            SRC="docker://${REGISTRY}/${IMAGE_NAME}@${DIGEST}"
+            echo "Retagging ${IMAGE_NAME}@${DIGEST}"
+            skopeo copy --all "${SRC}" "docker://${REGISTRY}/${IMAGE_NAME}:latest"
+            skopeo copy --all "${SRC}" "docker://${REGISTRY}/${IMAGE_NAME}:stable"
+            echo "  ✅ ${IMAGE_NAME}:latest and :stable updated"
+            PROMOTED=$((PROMOTED + 1))
+          done < <(find /tmp/all-digests -name "*.txt" -print0)
+
+          echo "✅ Promoted ${PROMOTED} image(s) to :latest and :stable"
+          echo "Tested artifacts are now live — no rebuild was triggered."
+
+  report-failure:
+    needs: [verify-e2e, e2e, promote-to-latest-and-stable]
+    if: failure() && needs.verify-e2e.outputs.image != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update failure issue
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const image = '${{ needs.verify-e2e.outputs.image }}';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const title = 'ci: weekly promotion e2e failure';
+
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'area/testing,kind/bug',
+              state: 'open',
+            });
+            const dup = existing.data.find(i => i.title === title);
+            if (dup) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: dup.number,
+                body: `Failure recurred in run ${runUrl} for image \`${image}\``,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body: `## Weekly Promotion E2E Failure\n\n**Image:** \`${image}\`\n**Run:** ${runUrl}\n**Suites:** developer,vanilla-gnome,software,common\n\n_Automatically opened by weekly-testing-promotion.yml_`,
+                labels: ['area/testing', 'kind/bug', 'priority/p1'],
+              });
+            }

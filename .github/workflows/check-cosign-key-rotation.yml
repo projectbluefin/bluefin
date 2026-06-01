@@ -1,0 +1,74 @@
+name: Check Cosign Key Rotation
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-keys:
+    name: Verify vendored keys match upstream
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Fetch upstream keys and compare
+        id: check
+        run: |
+          set -euo pipefail
+          CHANGED=()
+
+          check_key() {
+            local name="$1"
+            local url="$2"
+            local local_path="$3"
+
+            upstream=$(curl -fsSL "${url}")
+            local_key=$(cat "${local_path}")
+
+            if [[ "${upstream}" != "${local_key}" ]]; then
+              echo "::warning::Key mismatch: ${name}"
+              CHANGED+=("${name}")
+            else
+              echo "✅ ${name}: matches upstream"
+            fi
+          }
+
+          check_key "fedora-ostree" \
+            "https://gitlab.com/fedora/ostree/ci-test/-/raw/main/quay.io-fedora-ostree-desktops.pub?ref_type=heads" \
+            "keys/fedora-ostree.pub"
+
+          check_key "projectbluefin-common" \
+            "https://raw.githubusercontent.com/projectbluefin/common/refs/heads/main/cosign.pub" \
+            "keys/projectbluefin-common.pub"
+
+          check_key "ublue-os-brew" \
+            "https://raw.githubusercontent.com/ublue-os/brew/refs/heads/main/cosign.pub" \
+            "keys/ublue-os-brew.pub"
+
+          if [[ ${#CHANGED[@]} -gt 0 ]]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "changed_keys=${CHANGED[*]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open issue on key mismatch
+        if: steps.check.outputs.changed == 'true'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const changedKeys = '${{ steps.check.outputs.changed_keys }}';
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `security: upstream cosign key rotation detected — ${changedKeys}`,
+              body: `## Cosign Key Rotation Detected\n\nThe following vendored keys in \`keys/\` no longer match their upstream sources:\n\n**Changed keys:** \`${changedKeys}\`\n\nThis was detected by the weekly key rotation check.\n\n## Required Action\n\n1. Review the upstream key change (verify it is intentional, not an attack)\n2. Download the new key and open a PR updating \`keys/\`\n3. Include justification in the PR body\n\n_Automated detection by check-cosign-key-rotation.yml_`,
+              labels: ['area/security', 'kind/bug', 'priority/p1'],
+            });

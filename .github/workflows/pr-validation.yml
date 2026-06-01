@@ -3,7 +3,7 @@ name: PR Validation — testsuite
 on:
   pull_request:
     branches:
-      - main
+      - testing
   merge_group:
 
 concurrency:
@@ -18,10 +18,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Install just
-        uses: taiki-e/install-action@873c7452cadb7c034694a1282227095d93fbdf92 # just
-        with:
-          tool: just
+      - name: Bootstrap just
+        uses: ./.github/actions/bootstrap-just
 
       - name: Install shellcheck
         run: sudo apt-get install -y shellcheck
@@ -39,6 +37,22 @@ jobs:
           shopt -s globstar nullglob
           shellcheck build_files/**/*.sh
 
+      - name: Lint Containerfile
+        uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf # v3.1.0
+        with:
+          dockerfile: Containerfile
+          config: .hadolint.yaml
+
       - name: Run pre-commit
         shell: bash
         run: pre-commit run --all-files
+
+  testsuite:
+    name: E2E smoke
+    permissions:
+      contents: read
+      packages: write  # testsuite pushes screenshot OCI artifacts to GHCR
+    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@5d2731317911cd875077fe1576761635859cc728 # main
+    with:
+      image: ghcr.io/projectbluefin/bluefin:testing
+      suites: smoke

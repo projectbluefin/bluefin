@@ -1,6 +1,9 @@
 ARG BASE_IMAGE_NAME="silverblue"
-ARG FEDORA_MAJOR_VERSION="43@sha256:c9d2f9f0933b9da729536ac61b64dd8d1191b1b87bda15bddeffd9076ecb73d1"
+ARG FEDORA_MAJOR_VERSION="43"
 ARG BASE_IMAGE="quay.io/fedora-ostree-desktops/silverblue"
+# BASE_IMAGE_REF is resolved to BASE_IMAGE:FEDORA_MAJOR_VERSION@digest after cosign verify.
+# Defaults to tag-only for local builds where digest is not resolved.
+ARG BASE_IMAGE_REF="${BASE_IMAGE}:${FEDORA_MAJOR_VERSION}"
 ARG COMMON_IMAGE="ghcr.io/projectbluefin/common:latest"
 ARG COMMON_IMAGE_SHA=""
 ARG BREW_IMAGE="ghcr.io/ublue-os/brew:latest"
@@ -12,16 +15,18 @@ FROM ${BREW_IMAGE}@${BREW_IMAGE_SHA} AS brew
 FROM scratch AS ctx
 COPY /system_files /system_files
 COPY /build_files /build_files
+COPY /image-versions.yml /image-versions.yml
 COPY --from=common /system_files/shared /system_files/shared
 COPY --from=common /system_files/bluefin /system_files/shared
 COPY --from=brew /system_files /system_files/shared
 
 ## bluefin image section
-FROM ${BASE_IMAGE}:${FEDORA_MAJOR_VERSION} AS base
+# hadolint ignore=DL3006
+FROM ${BASE_IMAGE_REF} AS base
 
 ARG AKMODS_FLAVOR="coreos-stable"
 ARG BASE_IMAGE_NAME="silverblue"
-ARG FEDORA_MAJOR_VERSION="40"
+ARG FEDORA_MAJOR_VERSION="43"
 ARG IMAGE_NAME="bluefin"
 ARG IMAGE_VENDOR="projectbluefin"
 ARG KERNEL="6.10.10-200.fc40.x86_64"
@@ -35,6 +40,7 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
     --mount=type=cache,dst=/var/cache/rpm-ostree \
     --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=secret,id=GITHUB_TOKEN \
+    --mount=type=tmpfs,dst=/boot \
     /ctx/build_files/shared/build.sh
 
 # Makes `/opt` writeable by default
@@ -44,4 +50,4 @@ RUN rm -rf /opt && ln -s /var/opt /opt
 
 CMD ["/sbin/init"]
 
-RUN bootc container lint
+RUN bootc container lint --fatal-warnings

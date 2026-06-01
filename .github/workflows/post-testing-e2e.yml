@@ -46,7 +46,48 @@ jobs:
     permissions:
       packages: write
       contents: read
-    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@05445e0ce981ec428bb0b06e94142e711995f2a9 # main
+    uses: ./.github/workflows/run-testsuite.yml
     with:
       image: ${{ needs.e2e.outputs.image }}
-      suites: smoke
+      suites: smoke,common
+
+  report-failure:
+    needs: [e2e, run-e2e]
+    if: failure() && needs.e2e.outputs.image != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update failure issue
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const image = '${{ needs.e2e.outputs.image }}';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const sha = '${{ github.event.workflow_run.head_sha }}'.slice(0, 8);
+            const title = `ci: e2e smoke test failure — ${sha}`;
+
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'area/testing,kind/bug',
+              state: 'open',
+            });
+            const dup = existing.data.find(i => i.title === title);
+            if (dup) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: dup.number,
+                body: `Failure recurred in run ${runUrl} for image \`${image}\``,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body: `## E2E Smoke Test Failure\n\n**Image:** \`${image}\`\n**Commit:** ${sha}\n**Run:** ${runUrl}\n**Suites:** smoke,common\n\n_Automatically opened by post-testing-e2e.yml_`,
+                labels: ['area/testing', 'kind/bug', 'priority/p1'],
+              });
+            }

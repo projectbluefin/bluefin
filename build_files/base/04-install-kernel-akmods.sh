@@ -15,7 +15,32 @@ for pkg in kernel kernel-core kernel-modules kernel-modules-core kernel-modules-
 done
 
 # Fetch Common AKMODS & Kernel RPMS
-skopeo copy --retry-times 3 docker://ghcr.io/ublue-os/akmods:"${AKMODS_FLAVOR}"-"$(rpm -E %fedora)"-"${KERNEL}" dir:/tmp/akmods
+# Pull large OCI artifacts in parallel before any RPM installs.
+declare -A PULL_PIDS
+
+skopeo copy --retry-times 3 docker://ghcr.io/ublue-os/akmods:"${AKMODS_FLAVOR}"-"$(rpm -E %fedora)"-"${KERNEL}" dir:/tmp/akmods &
+PULL_PIDS[akmods]=$!
+
+if [[ "${IMAGE_NAME}" =~ nvidia ]]; then
+    mkdir -p /tmp/akmods-rpms
+    skopeo copy --retry-times 3 docker://ghcr.io/ublue-os/akmods-nvidia-open:"${AKMODS_FLAVOR}"-"$(rpm -E %fedora)"-"${KERNEL}" dir:/tmp/akmods-rpms &
+    PULL_PIDS[nvidia]=$!
+fi
+
+if [[ "${AKMODS_FLAVOR}" =~ coreos ]]; then
+    mkdir -p /tmp/akmods-zfs
+    skopeo copy --retry-times 3 docker://ghcr.io/ublue-os/akmods-zfs:"${AKMODS_FLAVOR}"-"$(rpm -E %fedora)"-"${KERNEL}" dir:/tmp/akmods-zfs &
+    PULL_PIDS[zfs]=$!
+fi
+
+for key in "${!PULL_PIDS[@]}"; do
+    if ! wait "${PULL_PIDS[$key]}"; then
+        echo "ERROR: Failed to pull ${key} image" >&2
+        exit 1
+    fi
+done
+echo "All image pulls completed successfully"
+
 AKMODS_TARGZ=$(jq -r '.layers[].digest' </tmp/akmods/manifest.json | cut -d : -f 2)
 tar -xvzf /tmp/akmods/"$AKMODS_TARGZ" -C /tmp/
 mv /tmp/rpms/* /tmp/akmods/
@@ -33,35 +58,67 @@ dnf5 -y install \
 
 dnf5 versionlock add kernel kernel-devel kernel-devel-matched kernel-core kernel-modules kernel-modules-core kernel-modules-extra
 
-dnf copr enable -y ublue-os/akmods
+dnf5 copr enable -y ublue-os/akmods
 
 mkdir -p /etc/pki/akmods/certs
 ghcurl "https://github.com/ublue-os/akmods/raw/refs/heads/main/certs/public_key.der" --retry 3 -Lo /etc/pki/akmods/certs/akmods-ublue.der
 grep -F -e "Universal Blue" /etc/pki/akmods/certs/akmods-ublue.der
 
 # RPMFUSION Dependent AKMODS
+# Write rpmfusion repo files inline instead of installing release RPMs.
+# This avoids network-fetching release packages and eliminates 4 extra DNF transactions.
+RPMFUSION_FREE_REPO=/etc/yum.repos.d/rpmfusion-free-build.repo
+RPMFUSION_NONFREE_REPO=/etc/yum.repos.d/rpmfusion-nonfree-build.repo
+
+cat > "${RPMFUSION_FREE_REPO}" <<'REPOEOF'
+[rpmfusion-free]
+name=RPM Fusion for Fedora $releasever - Free
+baseurl=https://download1.rpmfusion.org/free/fedora/releases/$releasever/Everything/$basearch/os/
+enabled=1
+metadata_expire=3d
+gpgcheck=0
+skip_if_unavailable=1
+
+[rpmfusion-free-updates]
+name=RPM Fusion for Fedora $releasever - Free - Updates
+baseurl=https://download1.rpmfusion.org/free/fedora/updates/$releasever/$basearch/
+enabled=1
+metadata_expire=3d
+gpgcheck=0
+skip_if_unavailable=1
+REPOEOF
+
+cat > "${RPMFUSION_NONFREE_REPO}" <<'REPOEOF'
+[rpmfusion-nonfree]
+name=RPM Fusion for Fedora $releasever - Nonfree
+baseurl=https://download1.rpmfusion.org/nonfree/fedora/releases/$releasever/Everything/$basearch/os/
+enabled=1
+metadata_expire=3d
+gpgcheck=0
+skip_if_unavailable=1
+
+[rpmfusion-nonfree-updates]
+name=RPM Fusion for Fedora $releasever - Nonfree - Updates
+baseurl=https://download1.rpmfusion.org/nonfree/fedora/updates/$releasever/$basearch/
+enabled=1
+metadata_expire=3d
+gpgcheck=0
+skip_if_unavailable=1
+REPOEOF
+
 if [[ "${UBLUE_IMAGE_TAG}" == "beta" ]]; then
     dnf5 -y install \
-        https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-"$(rpm -E %fedora)".noarch.rpm || true
-    dnf5 -y install \
-        https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-"$(rpm -E %fedora)".noarch.rpm || true
-    dnf5 -y install \
         v4l2loopback /tmp/akmods/kmods/*v4l2loopback*.rpm || true
-    dnf5 -y remove rpmfusion-free-release || true
-    dnf5 -y remove rpmfusion-nonfree-release || true
 else
     dnf5 -y install \
-        https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-"$(rpm -E %fedora)".noarch.rpm \
-        https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-"$(rpm -E %fedora)".noarch.rpm
-    dnf5 -y install \
         v4l2loopback /tmp/akmods/kmods/*v4l2loopback*.rpm
-    dnf5 -y remove rpmfusion-free-release rpmfusion-nonfree-release
 fi
+
+# Remove temporary rpmfusion repo files
+rm -f "${RPMFUSION_FREE_REPO}" "${RPMFUSION_NONFREE_REPO}"
 
 # Nvidia AKMODS
 if [[ "${IMAGE_NAME}" =~ nvidia ]]; then
-    # Fetch Nvidia RPMs
-    skopeo copy --retry-times 3 docker://ghcr.io/ublue-os/akmods-nvidia-open:"${AKMODS_FLAVOR}"-"$(rpm -E %fedora)"-"${KERNEL}" dir:/tmp/akmods-rpms
     NVIDIA_TARGZ=$(jq -r '.layers[].digest' </tmp/akmods-rpms/manifest.json | cut -d : -f 2)
     tar -xvzf /tmp/akmods-rpms/"$NVIDIA_TARGZ" -C /tmp/
     mv /tmp/rpms/* /tmp/akmods-rpms/
@@ -88,9 +145,7 @@ EOF
 fi
 
 # ZFS for stable
-if [[ ${AKMODS_FLAVOR} =~ coreos ]]; then
-    # Fetch ZFS RPMs
-    skopeo copy --retry-times 3 docker://ghcr.io/ublue-os/akmods-zfs:"${AKMODS_FLAVOR}"-"$(rpm -E %fedora)"-"${KERNEL}" dir:/tmp/akmods-zfs
+if [[ "${AKMODS_FLAVOR}" =~ coreos ]]; then
     ZFS_TARGZ=$(jq -r '.layers[].digest' </tmp/akmods-zfs/manifest.json | cut -d : -f 2)
     tar -xvzf /tmp/akmods-zfs/"$ZFS_TARGZ" -C /tmp/
     mv /tmp/rpms/* /tmp/akmods-zfs/
@@ -115,6 +170,6 @@ if [[ ${AKMODS_FLAVOR} =~ coreos ]]; then
     echo "zfs" >/usr/lib/modules-load.d/zfs.conf
 fi
 
-dnf copr disable -y ublue-os/akmods
+dnf5 copr disable -y ublue-os/akmods
 
 echo "::endgroup::"

@@ -1,8 +1,7 @@
 repo_organization := "projectbluefin"
 base_image_org := "quay.io/fedora-ostree-desktops"
 base_image_name := "silverblue"
-common_image := "ghcr.io/projectbluefin/common:latest"
-brew_image := "ghcr.io/ublue-os/brew:latest"
+# common_image and brew_image refs are read from image-versions.yml at build time
 images := '(
     [bluefin]=bluefin
     [bluefin-dx]=bluefin-dx
@@ -105,7 +104,10 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     # Image Name
     image_name=$({{ just }} image_name {{ image }} {{ tag }} {{ flavor }})
 
+    # Read image refs and digests from image-versions.yml (single source of truth)
+    common_image=$(yq -r '.images[] | select(.name == "common") | .image + ":" + .tag' image-versions.yml)
     common_image_sha=$(yq -r '.images[] | select(.name == "common") | .digest' image-versions.yml)
+    brew_image=$(yq -r '.images[] | select(.name == "brew") | .image + ":" + .tag' image-versions.yml)
     brew_image_sha=$(yq -r '.images[] | select(.name == "brew") | .digest' image-versions.yml)
 
     # AKMODS Flavor and Kernel Version
@@ -126,7 +128,11 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     fedora_version=$({{ just }} fedora_version '{{ image }}' '{{ tag }}' '{{ flavor }}' '{{ kernel_pin }}')
 
     # Verify Base Image with cosign
-    {{ just }} verify-container silverblue:${fedora_version} quay.io/fedora-ostree-desktops "https://gitlab.com/fedora/ostree/ci-test/-/raw/main/quay.io-fedora-ostree-desktops.pub?ref_type=heads"
+    {{ just }} verify-container silverblue:${fedora_version} quay.io/fedora-ostree-desktops "{{ justfile_directory() }}/keys/fedora-ostree.pub"
+
+    # Resolve base image tag to digest (TOCTOU fix: pin the exact image cosign just verified)
+    base_image_digest=$(skopeo inspect --retry-times 3 docker://quay.io/fedora-ostree-desktops/silverblue:"${fedora_version}" | jq -r '.Digest')
+    base_image_ref="quay.io/fedora-ostree-desktops/silverblue:${fedora_version}@${base_image_digest}"
 
     # Kernel Release/Pin
     if [[ -z "${kernel_pin:-}" ]]; then
@@ -144,8 +150,8 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
         {{ just }} verify-container "akmods-nvidia-open:${akmods_flavor}-${fedora_version}-${kernel_release}"
     fi
 
-    {{ just }} verify-container "common:latest@${common_image_sha}" ghcr.io/projectbluefin https://raw.githubusercontent.com/projectbluefin/common/refs/heads/main/cosign.pub
-    {{ just }} verify-container "brew:latest@${brew_image_sha}" ghcr.io/ublue-os https://raw.githubusercontent.com/ublue-os/brew/refs/heads/main/cosign.pub
+    {{ just }} verify-container "common:latest@${common_image_sha}" ghcr.io/projectbluefin "{{ justfile_directory() }}/keys/projectbluefin-common.pub"
+    {{ just }} verify-container "brew:latest@${brew_image_sha}" ghcr.io/ublue-os "{{ justfile_directory() }}/keys/ublue-os-brew.pub"
 
     # Get Version
     if [[ "${tag}" =~ stable ]]; then
@@ -173,9 +179,10 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
         target="dx"
     fi
     BUILD_ARGS+=("--build-arg" "AKMODS_FLAVOR=${akmods_flavor}")
-    BUILD_ARGS+=("--build-arg" "COMMON_IMAGE={{ common_image }}")
+    BUILD_ARGS+=("--build-arg" "BASE_IMAGE_REF=${base_image_ref}")
+    BUILD_ARGS+=("--build-arg" "COMMON_IMAGE=${common_image}")
     BUILD_ARGS+=("--build-arg" "COMMON_IMAGE_SHA=${common_image_sha}")
-    BUILD_ARGS+=("--build-arg" "BREW_IMAGE={{ brew_image }}")
+    BUILD_ARGS+=("--build-arg" "BREW_IMAGE=${brew_image}")
     BUILD_ARGS+=("--build-arg" "BREW_IMAGE_SHA=${brew_image_sha}")
     BUILD_ARGS+=("--build-arg" "FEDORA_MAJOR_VERSION=${fedora_version}")
     BUILD_ARGS+=("--build-arg" "IMAGE_NAME=${image_name}")
@@ -219,6 +226,20 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
         PODMAN_BUILD_ARGS+=(--secret "id=GITHUB_TOKEN,env=GITHUB_TOKEN")
     else
         echo "No GitHub token found - build may hit rate limit"
+    fi
+
+    # Registry layer cache — reduces build time by reusing unchanged layers from GHCR
+    # Cache write (REGISTRY_CACHE_WRITE=1) is set by CI for non-PR builds only.
+    # PR builds and local builds are read-only to prevent cache poisoning.
+    # Note: Podman 5.x+ requires untagged refs for --cache-from/--cache-to.
+    # Content-addressed caching handles version isolation automatically.
+    cache_ref="ghcr.io/{{ repo_organization }}/bluefin-cache"
+    PODMAN_BUILD_ARGS+=(--cache-from "${cache_ref}")
+    if [[ "${REGISTRY_CACHE_WRITE:-0}" == "1" ]]; then
+        PODMAN_BUILD_ARGS+=(--cache-to "${cache_ref}")
+        echo "Registry layer cache: read+write (${cache_ref})"
+    else
+        echo "Registry layer cache: read-only (${cache_ref})"
     fi
 
     ${PODMAN} build "${PODMAN_BUILD_ARGS[@]}" .
@@ -432,9 +453,10 @@ verify-container container="" registry="ghcr.io/ublue-os" key="":
     fi
 
     # Public Key for Container Verification
+    # Keys are vendored in keys/ — update via PR with justification
     key={{ key }}
     if [[ -z "${key:-}" ]]; then
-        key="https://raw.githubusercontent.com/ublue-os/main/main/cosign.pub"
+        key="{{ justfile_directory() }}/keys/ublue-os-brew.pub"
     fi
 
     # Verify Container using cosign public key
@@ -642,22 +664,18 @@ gen-sbom $image="bluefin" $tag="latest" $flavor="main" $syft_cmd="syft":
     OUT_DIR="sbom_out/${image_name}"
     mkdir -p "${OUT_DIR}"
 
-    # We have to do it this stupid way because we are OOMing on github runners
-    # https://github.com/anchore/syft/issues/3800
-    ${PODMAN} container create --replace --name ${image_name} "${image_name}:${tag}"
-
-    ROOTFS="${OUT_DIR}/rootfs"
-    mkdir -p "${ROOTFS}"
-
-    ${PODMAN} export ${image_name} | tar -C "${ROOTFS}" -xf -
-    ${PODMAN} container rm ${image_name}
-
     SBOM="${OUT_DIR}/sbom.json"
+    OCI_DIR="${OUT_DIR}/oci-dir"
 
-    ${syft_cmd} --source-name "${image_name}:${tag}" "${OUT_DIR}" -o syft-json=${SBOM}
+    # Save image as OCI directory and scan directly — avoids the 4-8 GiB
+    # filesystem extraction that the old podman-export approach required.
+    # Syft reads layer tarballs sequentially so memory usage stays low.
+    ${PODMAN} save --format oci-dir -o "${OCI_DIR}" "${image_name}:${tag}"
+
+    ${syft_cmd} --source-name "${image_name}:${tag}" "oci-dir:${OCI_DIR}" -o syft-json="${SBOM}"
     du -sh "${SBOM}"
 
-    rm -rf "${ROOTFS}"
+    rm -rf "${OCI_DIR}"
 
 # DNF CI package cache
 [group('Utility')]
@@ -670,15 +688,14 @@ setup-cache $image="bluefin" $tag="latest" $ghcr="0" $github_event="0":
 
     ALLOW_CACHE_WRITE="false"
 
-    BLESSED_IMAGE=bluefin-dx
-
-    if [[ "${image_name}" == "${BLESSED_IMAGE}" ]] && \
-       [[ "{{ ghcr }}" == "1" ]] && \
-       [[ "${github_event}" == "workflow_dispatch" || "${github_event}" == "schedule" ]]; then
+    # Allow cache write on trusted-branch builds (push, schedule, workflow_dispatch).
+    # PR builds use the "pull_request" event and are excluded to prevent cache poisoning.
+    if [[ "{{ ghcr }}" == "1" ]] && \
+       [[ "${github_event}" == "push" || "${github_event}" == "workflow_dispatch" || "${github_event}" == "schedule" ]]; then
         ALLOW_CACHE_WRITE="true"
     fi
 
-    CACHE_NAME="${BLESSED_IMAGE}-${fedora_version}"
+    CACHE_NAME="${image_name}-${fedora_version}"
 
     echo "${CACHE_NAME}" "${ALLOW_CACHE_WRITE}"
 

@@ -5,11 +5,14 @@ set -eoux pipefail
 echo "::group:: Copy Files"
 
 # Speeds up local builds
-dnf config-manager setopt keepcache=1
+dnf5 config-manager setopt keepcache=1
+
+# Skip weak dependencies for a smaller, faster image
+dnf5 config-manager setopt install_weak_deps=0
 
 # Keep *-logos in RPM DB for downstream package installations
 # We are not allowed to ship an empty fedora-logos package
-dnf -y swap fedora-logos generic-logos
+dnf5 -y swap fedora-logos generic-logos
 rpm --erase --nodeps --nodb generic-logos
 
 # Copy Files to Container
@@ -40,9 +43,6 @@ echo "::endgroup::"
 
 # Systemd and Remove Items
 /ctx/build_files/base/17-cleanup.sh
-
-# Run workarounds for lf (Likely not needed)
-/ctx/build_files/base/18-workarounds.sh
 
 # Regenerate initramfs
 /ctx/build_files/base/19-initramfs.sh

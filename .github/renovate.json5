@@ -3,7 +3,7 @@
   "extends": [
     "config:best-practices",
   ],
-  "baseBranchPatterns": ["main"],
+  "baseBranchPatterns": ["testing"],
 
   "git-submodules": {
     "enabled": true
@@ -21,6 +21,19 @@
         '(?<justName>.+?)\\s:=\\s"(?<packageName>\\S+):(?<currentValue>\\S+)@(?<currentDigest>sha256:[a-f0-9]+?)"',
       ],
       datasourceTemplate: 'docker',
+    },
+    // Track pinned binary download versions in image-versions.yml.
+    // Each pinned entry is preceded by a:
+    //   # renovate: datasource=github-releases depName=owner/repo
+    // comment so Renovate can discover and update the version string.
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^image-versions\\.yml$/',
+      ],
+      matchStrings: [
+        '# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)\\s+\\w+: "(?<currentValue>[^"]+)"',
+      ],
     },
     // Track GNOME extension submodules that pin to a release tag via the
     // `branch =` field in .gitmodules. Renovate's git-submodules manager
@@ -83,6 +96,23 @@
     {
       "matchDepTypes": ["gnome-extension"],
       "groupName": "GNOME extensions"
+    },
+    // Risk-tier labels for automerge gating (issue #73):
+    // low-risk: action SHA pins, non-build deps — lint validation sufficient
+    // high-risk: base image, COPR, build_files deps — require pr-smoke build+test
+    {
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["pinDigest", "digest"],
+      "addLabels": ["renovate/low-risk"]
+    },
+    {
+      "matchDepNames": [
+        "quay.io/fedora-ostree-desktops/silverblue",
+        "ghcr.io/projectbluefin/common",
+        "ghcr.io/ublue-os/brew",
+        "quay.io/coreos/chunkah"
+      ],
+      "addLabels": ["renovate/high-risk"]
     }
   ]
 }
