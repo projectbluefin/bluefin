@@ -73,12 +73,9 @@ jobs:
       fail-fast: false
       matrix:
         image_flavor: ${{ fromJson(inputs.image_flavors) }}
-        base_name: ["${{ inputs.brand_name }}", "${{ inputs.brand_name }}-dx"]
+        base_name: ["${{ inputs.brand_name }}"]
         stream_name: ["${{ inputs.stream_name }}"]
         architecture: ${{ fromJson(inputs.architecture) }}
-        exclude:
-          - architecture: aarch64
-            base_name: "${{ inputs.brand_name }}-dx"
 
     steps:
       - name: Checkout

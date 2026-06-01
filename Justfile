@@ -4,7 +4,6 @@ base_image_name := "silverblue"
 # common_image and brew_image refs are read from image-versions.yml at build time
 images := '(
     [bluefin]=bluefin
-    [bluefin-dx]=bluefin-dx
 )'
 flavors := '(
     [main]=main
@@ -181,11 +180,6 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
 
     # Build Arguments
     BUILD_ARGS=()
-    # Target
-    if [[ "${image}" =~ dx ]]; then
-        BUILD_ARGS+=("--build-arg" "IMAGE_FLAVOR=dx")
-        target="dx"
-    fi
     BUILD_ARGS+=("--build-arg" "AKMODS_FLAVOR=${akmods_flavor}")
     BUILD_ARGS+=("--build-arg" "BASE_IMAGE_REF=${base_image_ref}")
     BUILD_ARGS+=("--build-arg" "COMMON_IMAGE=${common_image}")
@@ -749,6 +743,6 @@ retag-nvidia-on-ghcr working_tag="" stream="" dry_run="1":
         echo "$GITHUB_PAT" | podman login -u $GITHUB_USERNAME --password-stdin ghcr.io
         skopeo="skopeo"
     fi
-    for image in bluefin-nvidia-open bluefin-dx-nvidia-open; do
+    for image in bluefin-nvidia-open; do
       $skopeo copy docker://ghcr.io/projectbluefin/${image}:{{ working_tag }} docker://ghcr.io/projectbluefin/${image}:{{ stream }}
     done

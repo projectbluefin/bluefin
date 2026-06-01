@@ -119,14 +119,13 @@ This eliminates a dependency on the `ublue-os/main-images` pipeline and gives pr
 | Shell bridge | `org.gnome.Shell.Eval` | GNOME 50+ JS eval for top-bar/overview |
 | VM runtime | QEMU + KVM | Boots OCI image as real VM on GHA runners |
 
-### Test coverage — 255 scenarios across 12 suites
+### Test coverage — 240 scenarios across 11 suites
 
 | Suite | Scenarios | Validates |
 |-------|:---------:|-----------|
 | `smoke` | 82 | GNOME Shell (AT-SPI tree, top bar, Activities, Quick Settings, lock screen, workspaces), app launches (Firefox, Files, Calculator, Settings, Text Editor), regressions |
 | `common` | 32 | Shell env (fzf, starship), dconf/GSettings defaults, desktop entries |
 | `developer` | 19 | Homebrew (version, list, info, search, doctor, install round-trip), Podman |
-| `dx` | 15 | Developer Experience tools layer |
 | `software` | 12 | Flatpak operations |
 | `vanilla-gnome` | 12 | GNOME core without Bluefin customizations |
 | `bazzite` | 20 | Bazzite-specific extensions and shell |

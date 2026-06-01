@@ -19,7 +19,7 @@ Bluefin's CI is split between PR validation, image builds, post-build e2e, weekl
 
 This is the shared image build engine used by testing/stable/latest workflows.
 
-- Matrix: `bluefin` + `bluefin-dx`
+- Matrix: `bluefin`
 - Flavors: `main`, `nvidia-open`
 - Default architecture: `x86_64`
 - Runs `just check` before building

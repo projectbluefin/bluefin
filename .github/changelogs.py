@@ -11,12 +11,12 @@ from collections import defaultdict
 REGISTRY = "ghcr.io/projectbluefin/"
 
 IMAGE_MATRIX_LATEST = {
-    "experience": ["base", "dx"],
+    "experience": ["base"],
     "de": ["gnome"],
     "image_flavor": ["main", "nvidia-open"],
 }
 IMAGE_MATRIX = {
-    "experience": ["base", "dx"],
+    "experience": ["base"],
     "de": ["gnome"],
     "image_flavor": ["main", "nvidia-open"],
 }
@@ -35,7 +35,6 @@ PATTERN_PKGREL = "{version}"
 COMMON_PAT = "### All Images\n| | Name | Previous | New |\n| --- | --- | --- | --- |{changes}\n\n"
 OTHER_NAMES = {
     "base": "### Base Images\n| | Name | Previous | New |\n| --- | --- | --- | --- |{changes}\n\n",
-    "dx": "### [Dev Experience Images](https://docs.projectbluefin.io/bluefin-dx)\n| | Name | Previous | New |\n| --- | --- | --- | --- |{changes}\n\n",
     "gnome": "### [Bluefin Images](https://projectbluefin.io/)\n| | Name | Previous | New |\n| --- | --- | --- | --- |{changes}\n\n",
     "nvidia-open": "### Nvidia Images\n| | Name | Previous | New |\n| --- | --- | --- | --- |{changes}\n\n",
 }
@@ -57,12 +56,6 @@ From previous `{target}` version `{prev}` there have been the following changes.
 | **Mesa** | {pkgrel:mesa-filesystem} |
 | **Podman** | {pkgrel:podman} |
 | **Nvidia** | {pkgrel:nvidia-driver} |
-
-### Major DX packages
-| Name | Version |
-| --- | --- |
-| **Incus** | {pkgrel:incus} |
-| **Docker** | {pkgrel:docker-ce} |
 
 {changes}
 
@@ -108,9 +101,6 @@ def get_images(target: str):
         img = ""
         if de == "gnome":
             img += "bluefin"
-
-        if experience == "dx":
-            img += "-dx"
 
         if image_flavor != "main":
             img += "-"
@@ -300,8 +290,6 @@ def get_package_groups(target: str, prev_tag: str, curr_tag: str):
             if t == "gnome" and de != "gnome":
                 continue
             if t == "base" and experience != "base":
-                continue
-            if t == "dx" and experience != "dx":
                 continue
 
             if first:

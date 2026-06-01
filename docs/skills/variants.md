@@ -19,7 +19,6 @@
 | Image | Purpose |
 |---|---|
 | `bluefin` | base desktop image |
-| `bluefin-dx` | developer-focused variant |
 
 ### Flavors
 
@@ -42,7 +41,6 @@
 ```text
 ghcr.io/projectbluefin/bluefin:testing-main
 ghcr.io/projectbluefin/bluefin:stable-nvidia-open
-ghcr.io/projectbluefin/bluefin-dx:latest-main
 ```
 
 ## Build matrix touchpoints
@@ -56,7 +54,6 @@ ghcr.io/projectbluefin/bluefin-dx:latest-main
 | If you need... | Use |
 |---|---|
 | normal desktop image | `bluefin` |
-| dev tooling baked in | `bluefin-dx` |
 | default driver stack | `main` |
 | NVIDIA open kernel module path | `nvidia-open` |
 | pre-promotion testing image | `testing-*` |
