@@ -192,7 +192,9 @@ jobs:
         shell: bash
         id: cache-perms
         run: |
-          sudo chmod 777 --recursive /var/tmp/buildah-cache-0
+          for d in /var/tmp/buildah-cache-*; do
+            [[ -d "$d" ]] && sudo chmod 777 --recursive "$d"
+          done
 
       - name: Write new DNF package cache
         if: steps.setup-cache.outputs.allow_cache_write == 'true'
