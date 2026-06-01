@@ -10,30 +10,36 @@ CPU_VENDOR=$(grep "vendor_id" "/proc/cpuinfo" | uniq | awk -F": " '{ print $2 }'
 VEN_ID="$(cat /sys/devices/virtual/dmi/id/chassis_vendor)"
 BIOS_VERSION="$(cat /sys/devices/virtual/dmi/id/bios_version 2>/dev/null)"
 
-# GLOBAL
-KARGS=$(rpm-ostree kargs)
-NEEDED_KARGS=()
+# GLOBAL — use grubby for bootc-native kernel arg management
+KARGS=$(grubby --info=DEFAULT | grep args || true)
+NEEDED_ADD_ARGS=()
+NEEDED_DEL_ARGS=()
 echo "Current kargs: $KARGS"
 
 if [[ $KARGS =~ "nomodeset" ]]; then
 	echo "Removing nomodeset"
-	NEEDED_KARGS+=("--delete-if-present=nomodeset")
+	NEEDED_DEL_ARGS+=("nomodeset")
 fi
 
 if [[ ":Framework:" =~ :$VEN_ID: ]]; then
 	if [[ "GenuineIntel" == "$CPU_VENDOR" ]]; then
 		if [[ ! $KARGS =~ "hid_sensor_hub" ]]; then
 			echo "Intel Framework Laptop detected, applying needed keyboard fix"
-			NEEDED_KARGS+=("--append-if-missing=module_blacklist=hid_sensor_hub")
+			NEEDED_ADD_ARGS+=("module_blacklist=hid_sensor_hub")
 		fi
 	fi
 fi
 
-#shellcheck disable=SC2128
-if [[ -n "$NEEDED_KARGS" ]]; then
-	echo "Found needed karg changes, applying the following: ${NEEDED_KARGS[*]}"
+if [[ "${#NEEDED_ADD_ARGS[@]}" -gt 0 || "${#NEEDED_DEL_ARGS[@]}" -gt 0 ]]; then
+	echo "Found needed karg changes"
 	plymouth display-message --text="Updating kargs - Please wait, this may take a while" || true
-	rpm-ostree kargs "${NEEDED_KARGS[*]}" --reboot || exit 1
+	for arg in "${NEEDED_ADD_ARGS[@]}"; do
+		grubby --update-kernel=ALL --args="$arg"
+	done
+	for arg in "${NEEDED_DEL_ARGS[@]}"; do
+		grubby --update-kernel=ALL --remove-args="$arg"
+	done
+	reboot
 else
 	echo "No karg changes needed"
 fi
