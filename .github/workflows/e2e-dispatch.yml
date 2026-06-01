@@ -89,6 +89,7 @@ jobs:
           DISPATCH_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           gh workflow run build-image-testing.yml \
             --ref "$PR_BRANCH" \
+            --field pr_number="${{ github.event.issue.number }}" \
             -R "${{ github.repository }}"
           sleep 60
           RUN_ID=""
