@@ -69,7 +69,7 @@ jobs:
       (github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || inputs.pr_number != '') &&
       (github.event_name != 'pull_request' ||
        needs.detect-changes.outputs.should_build == 'true')
-    uses: ./.github/workflows/reusable-build.yml
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@1845e36f17f998e164b697c5518d3abc062e9ef9
     secrets: inherit
     with:
       image_flavors: >-
