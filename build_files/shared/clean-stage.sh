@@ -19,5 +19,9 @@ find /var/cache/* -maxdepth 0 -type d \! -name libdnf5 \! -name rpm-ostree -exec
 rm -rf /tmp && mkdir -p /tmp
 # shellcheck disable=SC2114
 rm -rf /boot && mkdir -p /boot
+# Clear /run — dnf5 and SELinux policy tooling leave artifacts here during build.
+# /run is a tmpfs at runtime; anything baked into the image is junk and will
+# trip bootc container lint's nonempty-run-tmp check.
+rm -rf /run && mkdir -p /run
 
 echo "::endgroup::"
