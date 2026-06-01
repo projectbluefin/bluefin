@@ -370,10 +370,11 @@ jobs:
 
             # Push default tag with full upload (two-push pattern for annotation stability)
             # Workaround for https://github.com/containers/podman/issues/27796
+            # Note: no --force-compression — rechunked layers are already zstd:chunked;
+            # forcing re-compression would strip ostree.components annotations.
             sudo -E podman push \
               --compression-format zstd:chunked \
               --compression-level 3 \
-              --force-compression \
               --retry 5 \
               --retry-delay 30s \
               "${IMAGE}:${DEFAULT_TAG}" "${REGISTRY}/${IMAGE}:${DEFAULT_TAG}"
@@ -381,7 +382,6 @@ jobs:
             sudo -E podman push \
               --compression-format zstd:chunked \
               --compression-level 3 \
-              --force-compression \
               --retry 5 \
               --retry-delay 30s \
               --digestfile "${{ env.DIGEST_FILE }}" \
