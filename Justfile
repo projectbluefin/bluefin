@@ -133,8 +133,14 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
         || echo "WARNING: Could not verify silverblue base image — quay.io may be unreachable. Continuing..."
 
     # Resolve base image tag to digest (TOCTOU fix: pin the exact image cosign just verified)
-    base_image_digest=$(skopeo inspect --retry-times 3 docker://quay.io/fedora-ostree-desktops/silverblue:"${fedora_version}" | jq -r '.Digest')
-    base_image_ref="quay.io/fedora-ostree-desktops/silverblue:${fedora_version}@${base_image_digest}"
+    # Falls back to tag-only ref if quay.io is unreachable (same condition as above)
+    base_image_digest=$(skopeo inspect --retry-times 3 docker://quay.io/fedora-ostree-desktops/silverblue:"${fedora_version}" 2>/dev/null | jq -r '.Digest // empty') || true
+    if [[ -n "${base_image_digest:-}" ]]; then
+        base_image_ref="quay.io/fedora-ostree-desktops/silverblue:${fedora_version}@${base_image_digest}"
+    else
+        echo "WARNING: Could not resolve silverblue digest — using tag-only ref. Build will pull latest matching tag."
+        base_image_ref="quay.io/fedora-ostree-desktops/silverblue:${fedora_version}"
+    fi
 
     # Kernel Release/Pin
     if [[ -z "${kernel_pin:-}" ]]; then
