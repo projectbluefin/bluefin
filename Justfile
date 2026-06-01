@@ -236,13 +236,18 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     cache_ref="ghcr.io/{{ repo_organization }}/bluefin-cache"
     PODMAN_BUILD_ARGS+=(--cache-from "${cache_ref}")
     if [[ "${REGISTRY_CACHE_WRITE:-0}" == "1" ]]; then
-        PODMAN_BUILD_ARGS+=(--cache-to "${cache_ref}")
+        PODMAN_BUILD_ARGS_WITH_CACHE=("${PODMAN_BUILD_ARGS[@]}" --cache-to "${cache_ref}")
         echo "Registry layer cache: read+write (${cache_ref})"
+        # Attempt build with cache write; fall back gracefully if cache push is denied (e.g. 403 on private package)
+        if ! ${PODMAN} build "${PODMAN_BUILD_ARGS_WITH_CACHE[@]}" .; then
+            echo "WARNING: Build with --cache-to failed (likely 403 on private cache package). Retrying without cache write."
+            echo "To fix permanently, make ghcr.io/${repo_organization}/bluefin-cache public in GitHub package settings."
+            ${PODMAN} build "${PODMAN_BUILD_ARGS[@]}" .
+        fi
     else
         echo "Registry layer cache: read-only (${cache_ref})"
+        ${PODMAN} build "${PODMAN_BUILD_ARGS[@]}" .
     fi
-
-    ${PODMAN} build "${PODMAN_BUILD_ARGS[@]}" .
     echo "::endgroup::"
 
     # Rechunk
