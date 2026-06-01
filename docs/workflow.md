@@ -14,7 +14,7 @@
 
 > **All Bluefin issues go in [`projectbluefin/bluefin`](https://github.com/projectbluefin/bluefin/issues).**
 >
-> Do **NOT** open, comment on, or modify issues in `ublue-os/bluefin` or any other `ublue-os` repo. The `ublue-os` org is upstream and out of agent scope.
+> Do **NOT** open, comment on, or modify issues, PRs, or code in any repo outside the `projectbluefin` org — including `ublue-os`, `coreos`, or any other org. Only `projectbluefin/*` repos are in scope.
 
 ## Issue flow
 

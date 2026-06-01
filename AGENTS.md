@@ -57,7 +57,7 @@ Non-compliance = rejection.
 - Every AI-authored commit must include `Assisted-by: <Model> via <Tool>`.
 - Keep open PR count at 4 or fewer.
 - Do not open WIP PRs.
-- **NEVER open or comment on issues in `ublue-os/bluefin`.** All Bluefin issues live in [`projectbluefin/bluefin`](https://github.com/projectbluefin/bluefin/issues). The `ublue-os` org is upstream and out of scope.
+- **NEVER interact with repos outside the [`projectbluefin`](https://github.com/projectbluefin) org.** Do not open, comment on, or modify issues, PRs, or code in `ublue-os`, `coreos`, or any other org. Only `projectbluefin/*` repos are in scope.
 
 ## PR comment policy
 
