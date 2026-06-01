@@ -71,10 +71,6 @@ jobs:
        needs.detect-changes.outputs.should_build == 'true')
     uses: ./.github/workflows/reusable-build.yml
     secrets: inherit
-    strategy:
-      fail-fast: false
-      matrix:
-        brand_name: ["bluefin"]
     with:
       image_flavors: >-
         ${{
@@ -82,6 +78,5 @@ jobs:
           && needs.detect-changes.outputs.image_flavors
           || '["main", "nvidia-open"]'
         }}
-      brand_name: ${{ matrix.brand_name }}
       stream_name: testing
       pr_number: ${{ inputs.pr_number }}

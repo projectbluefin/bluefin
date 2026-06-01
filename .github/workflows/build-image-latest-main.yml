@@ -30,13 +30,7 @@ jobs:
     if: github.event_name != 'workflow_dispatch' || github.ref_name == 'latest'
     uses: ./.github/workflows/reusable-build.yml
     secrets: inherit
-    strategy:
-      fail-fast: false
-      matrix:
-        brand_name: ["bluefin"]
     with:
-      image_flavors: '["main", "nvidia-open"]'
-      brand_name: ${{ matrix.brand_name }}
       stream_name: latest
       # FIXME: enable when ublue-os/akmods has ARM builds
       # architecture: '["aarch64","x86_64"]'
