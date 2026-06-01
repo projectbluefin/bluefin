@@ -39,7 +39,8 @@ STARSHIP_BASE="https://github.com/starship/starship/releases/download/v${STARSHI
 ghcurl "${STARSHIP_BASE}"        --retry 3 -o /tmp/starship.tar.gz
 ghcurl "${STARSHIP_BASE}.sha256" --retry 3 -o /tmp/starship.tar.gz.sha256
 # Verify download integrity before extracting (CWE-494)
-(cd /tmp && sha256sum -c starship.tar.gz.sha256)
+# starship releases provide a raw hash file (no filename suffix), construct the checksum line
+(cd /tmp && echo "$(tr -d '[:space:]' < starship.tar.gz.sha256)  starship.tar.gz" | sha256sum -c)
 tar -xzf /tmp/starship.tar.gz -C /tmp
 install -c -m 0755 /tmp/starship /usr/bin
 # Tag for rechunker — standalone binary not tracked by RPM
