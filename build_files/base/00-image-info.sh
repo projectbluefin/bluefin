@@ -66,4 +66,11 @@ sed -i "s|^EFIDIR=.*|EFIDIR=\"fedora\"|" /usr/sbin/grub2-switch-to-blscfg
 echo "…" > /usr/share/ublue-os/fastfetch-user-count
 echo "…" > /usr/share/ublue-os/bazaar-install-count
 
+# Add Mutter kms-modifiers for nvidia builds.
+# This must run in Stage 2 (after system_files rsync) — the gschema override
+# file is only available after the system_files overlay.
+if [[ "${IMAGE_NAME}" =~ nvidia ]]; then
+    sed -i "/experimental-features/ s/\]/, 'kms-modifiers'&/" /usr/share/glib-2.0/schemas/zz0-bluefin-modifications.gschema.override
+fi
+
 echo "::endgroup::"

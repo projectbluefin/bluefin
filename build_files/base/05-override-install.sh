@@ -54,11 +54,9 @@ sed -i 's|^DefaultZone=.*|DefaultZone=FedoraWorkstation|g' /etc/firewalld/firewa
 sed -i 's|^IPv6_rpfilter=.*|IPv6_rpfilter=loose|g' /etc/firewalld/firewalld.conf
 
 # Add Mutter experimental-features
-if [[ "${IMAGE_NAME}" =~ nvidia ]]; then
-    sed -i "/experimental-features/ s/\]/, 'kms-modifiers'&/" /usr/share/glib-2.0/schemas/zz0-bluefin-modifications.gschema.override
-    echo "Compiling gschema to include bluefin setting overrides"
-    glib-compile-schemas /usr/share/glib-2.0/schemas
-fi
+# NOTE: The gschema override file lives in system_files/ and is only overlaid
+# in Stage 2 (build-gnome-extensions.sh handles compilation). This block was
+# moved to 00-image-info.sh which runs after the Stage 2 system_files rsync.
 
 # Rebuild gdk-pixbuf loader cache so all installed loaders are registered
 gdk-pixbuf-query-loaders-64 --update-cache
