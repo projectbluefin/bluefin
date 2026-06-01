@@ -10,6 +10,12 @@ on:
       - "system_files/shared/etc/bazaar/**"
   workflow_call:
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number (set by e2e-dispatch to scope image tags to the PR)"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -60,7 +66,7 @@ jobs:
     needs: [detect-changes]
     if: |
       always() &&
-      (github.event_name != 'workflow_dispatch' || github.ref_name == 'main') &&
+      (github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || inputs.pr_number != '') &&
       (github.event_name != 'pull_request' ||
        needs.detect-changes.outputs.should_build == 'true')
     uses: ./.github/workflows/reusable-build.yml
@@ -78,3 +84,4 @@ jobs:
         }}
       brand_name: ${{ matrix.brand_name }}
       stream_name: testing
+      pr_number: ${{ inputs.pr_number }}
