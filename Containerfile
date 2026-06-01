@@ -1,5 +1,5 @@
 ARG BASE_IMAGE_NAME="silverblue"
-ARG FEDORA_MAJOR_VERSION="43"
+ARG FEDORA_MAJOR_VERSION="44"
 ARG BASE_IMAGE="quay.io/fedora-ostree-desktops/silverblue"
 # BASE_IMAGE_REF is resolved to BASE_IMAGE:FEDORA_MAJOR_VERSION@digest after cosign verify.
 # Defaults to tag-only for local builds where digest is not resolved.
@@ -26,7 +26,7 @@ FROM ${BASE_IMAGE_REF} AS base
 
 ARG AKMODS_FLAVOR="coreos-stable"
 ARG BASE_IMAGE_NAME="silverblue"
-ARG FEDORA_MAJOR_VERSION="43"
+ARG FEDORA_MAJOR_VERSION="44"
 ARG IMAGE_NAME="bluefin"
 ARG IMAGE_VENDOR="projectbluefin"
 ARG KERNEL="6.10.10-200.fc40.x86_64"

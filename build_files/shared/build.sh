@@ -44,6 +44,9 @@ echo "::endgroup::"
 # Systemd and Remove Items
 /ctx/build_files/base/17-cleanup.sh
 
+# Run workarounds for upgrades (bling migration, orphan kernel modules)
+/ctx/build_files/base/18-workarounds.sh
+
 # Regenerate initramfs
 /ctx/build_files/base/19-initramfs.sh
 

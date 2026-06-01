@@ -61,7 +61,9 @@ FEDORA_PACKAGES=(
     alsa-firmware
     alsa-tools-firmware
     autofs
+    bash-color-prompt
     bcache-tools
+    bootc
     borgbackup
     containerd
     cryfs
@@ -88,6 +90,7 @@ FEDORA_PACKAGES=(
     gum
     gvfs-nfs
     htop
+    hplip
     ibus-mozc
     ibus-unikey
     ifuse
@@ -104,6 +107,7 @@ FEDORA_PACKAGES=(
     libcamera-tools
     libgda
     libgda-sqlite
+    libimobiledevice
     libimobiledevice-utils
     libratbag-ratbagd
     libsss_autofs
@@ -112,6 +116,7 @@ FEDORA_PACKAGES=(
     lm_sensors
     lshw
     make
+    mesa-libGLU
     mozc
     mtools
     nautilus-gsconnect
@@ -127,6 +132,8 @@ FEDORA_PACKAGES=(
     pipewire-libs-extra
     powerstat
     powertop
+    printer-driver-brlaser
+    pulseaudio-utils
     python3-pip
     python3-pygit2
     rclone
@@ -142,14 +149,20 @@ FEDORA_PACKAGES=(
     squashfs-tools
     sssd-ad
     sssd-krb5
+    sssd-nfs-idmap
+    switcheroo-control
     symlinks
     tcpdump
     tmux
     traceroute
     usbip
+    usbmuxd
     vim
     waypipe
+    wireguard-tools
+    wl-clipboard
     xdg-terminal-exec
+    xprop
     yubikey-manager
     zenity
     zsh
@@ -165,6 +178,13 @@ case "$FEDORA_MAJOR_VERSION" in
         ;;
     43)
         FEDORA_PACKAGES+=(
+            evolution-ews-core
+            gnupg2-scdaemon
+        )
+        ;;
+    44)
+        FEDORA_PACKAGES+=(
+            gnupg2-scdaemon
         )
         ;;
 esac
