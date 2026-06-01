@@ -204,13 +204,15 @@ jobs:
 
       - name: Setup Syft
         id: setup-syft
-        if: github.event_name != 'pull_request'
+        # Skip SBOM for testing stream — runner lifetime is ~26 min; build alone takes ~22 min.
+        # Once bluefin-cache is public and caching is active, remove this condition.
+        if: github.event_name != 'pull_request' && inputs.stream_name != 'testing'
         uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0
         with:
           syft-version: v1.44.0
 
       - name: Generate SBOM
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && inputs.stream_name != 'testing'
         id: generate-sbom
         env:
           MATRIX_BASE_NAME: ${{ matrix.base_name }}
@@ -224,13 +226,13 @@ jobs:
                             "${SYFT_CMD}"
 
       - name: Upload SBOM as release artifact
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && inputs.stream_name != 'testing'
         run: |
           mkdir -p /tmp/sbom-upload
           cp "sbom_out/${{ env.IMAGE_NAME }}/sbom.json" "/tmp/sbom-upload/${{ env.IMAGE_NAME }}.sbom.json"
 
       - name: Upload SBOM artifact
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && inputs.stream_name != 'testing'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: sbom-${{ env.IMAGE_NAME }}
@@ -239,12 +241,12 @@ jobs:
 
       - name: Record rechunk start time
         id: rechunk-timing
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && inputs.stream_name != 'testing'
         shell: bash
         run: echo "rechunk_start=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Rechunk Image
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && inputs.stream_name != 'testing'
         id: rechunk-image
         shell: bash
         env:
@@ -260,7 +262,7 @@ jobs:
                             "${PREVIOUS_BUILD}"
 
       - name: Retag Rechunked Image
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && inputs.stream_name != 'testing'
         id: load-rechunk
         shell: bash
         run: |
@@ -270,7 +272,7 @@ jobs:
 
       - name: Record rechunk duration
         id: rechunk-duration
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && inputs.stream_name != 'testing'
         shell: bash
         run: |
           RECHUNK_END=$(date +%s)
@@ -279,7 +281,7 @@ jobs:
           echo "Rechunk duration: $(( RECHUNK_ELAPSED / 60 ))m $(( RECHUNK_ELAPSED % 60 ))s"
 
       - name: Secureboot Check
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && inputs.stream_name != 'testing'
         id: secureboot
         shell: bash
         run: |
@@ -521,7 +523,7 @@ jobs:
           COSIGN_EXPERIMENTAL: "1"
 
       - name: Verify rechunk metadata preserved
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && inputs.stream_name != 'testing'
         run: |
           set -euo pipefail
           IMAGE_REF="${{ steps.registry_case.outputs.lowercase }}/${{ env.IMAGE_NAME }}@${{ steps.digest.outputs.digest }}"
@@ -540,16 +542,16 @@ jobs:
           fi
 
       - name: Install ORAS
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && inputs.stream_name != 'testing'
         uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3 # v2.0.0
 
       - name: Login to GitHub Container Registry with ORAS
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && inputs.stream_name != 'testing'
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | oras login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Upload SBOM
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && inputs.stream_name != 'testing'
         id: upload-sbom
         env:
           IMAGE: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}
@@ -570,7 +572,7 @@ jobs:
           echo "sbom_digest=${sbom_digest}" >> "$GITHUB_OUTPUT"
 
       - name: Sign SBOM OCI Artifact
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && inputs.stream_name != 'testing'
         uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
         with:
           timeout_minutes: 5
