@@ -151,8 +151,9 @@ jobs:
           CACHE_NAME: ${{ steps.setup-cache.outputs.cache_name }}
         with:
           path: /var/tmp/buildah-cache-*
-          key: ${{ runner.os }}-${{ matrix.architecture }}-buildah-${{ env.CACHE_NAME }}
+          key: ${{ runner.os }}-${{ matrix.architecture }}-buildah-${{ matrix.image_flavor }}-${{ env.CACHE_NAME }}
           restore-keys: |
+            ${{ runner.os }}-${{ matrix.architecture }}-buildah-${{ matrix.image_flavor }}-
             ${{ runner.os }}-${{ matrix.architecture }}-buildah-
 
       - name: Record build start time
@@ -200,12 +201,11 @@ jobs:
           CACHE_NAME: ${{ steps.setup-cache.outputs.cache_name }}
         with:
           path: /var/tmp/buildah-cache-*
-          key: ${{ runner.os }}-${{ matrix.architecture }}-buildah-${{ env.CACHE_NAME }}
+          key: ${{ runner.os }}-${{ matrix.architecture }}-buildah-${{ matrix.image_flavor }}-${{ env.CACHE_NAME }}
 
       - name: Setup Syft
         id: setup-syft
         # Skip SBOM for testing stream — runner lifetime is ~26 min; build alone takes ~22 min.
-        # Once bluefin-cache is public and caching is active, remove this condition.
         if: github.event_name != 'pull_request' && inputs.stream_name != 'testing'
         uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0
         with:
