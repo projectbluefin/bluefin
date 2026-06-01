@@ -12,6 +12,7 @@ concurrency:
 permissions:
   contents: write
   actions: write
+  packages: write
 
 jobs:
   # Verify that post-testing-e2e.yml already ran smoke tests on the current
@@ -120,21 +121,16 @@ jobs:
   promote-to-latest-and-stable:
     needs: [e2e, verify-e2e]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    outputs:
-      has_diff: ${{ steps.check-diff.outputs.has_diff }}
+    timeout-minutes: 30
+    permissions:
+      packages: write
+      contents: read
     steps:
       - name: Checkout main
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
           ref: main
-
-      - name: Configure git
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Verify main SHA has not advanced
         env:
@@ -150,23 +146,48 @@ jobs:
           fi
           echo "✅ main SHA unchanged: $CURRENT_SHA"
 
-      - name: Check diff between main and latest
-        id: check-diff
+      - name: Download all testing image digests
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          git fetch origin latest stable 2>/dev/null || true
-          if git diff --quiet origin/latest origin/main 2>/dev/null; then
-            echo "No diff between main and latest — nothing to promote"
-            echo "has_diff=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_diff=true" >> "$GITHUB_OUTPUT"
-          fi
+          gh run download "${{ needs.verify-e2e.outputs.build_run_id }}" \
+            --repo "${{ github.repository }}" \
+            --pattern "image-digest-testing-*" \
+            --dir /tmp/all-digests
+          echo "Downloaded digest files:"
+          find /tmp/all-digests -name "*.txt" | sort
 
-      - name: Fast-forward latest and stable to main
-        if: steps.check-diff.outputs.has_diff == 'true'
+      - name: Log in to GHCR
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Retag tested images to :latest and :stable
         run: |
           set -euo pipefail
-          git push origin HEAD:refs/heads/latest
-          git push origin HEAD:refs/heads/stable
-          echo "✅ Promoted main → latest + stable"
-          echo "Push events will trigger stable and latest image builds automatically."
+          REGISTRY="ghcr.io/${{ github.repository_owner }}"
+          PROMOTED=0
+
+          while IFS= read -r -d '' f; do
+            # Each file contains: IMAGE_NAME=sha256:xxxx
+            line=$(grep "=" "$f" | head -1)
+            IMAGE_NAME="${line%%=*}"
+            DIGEST="${line##*=}"
+            if [[ -z "$IMAGE_NAME" || -z "$DIGEST" ]]; then
+              echo "WARNING: Could not parse $f — skipping"
+              continue
+            fi
+
+            SRC="docker://${REGISTRY}/${IMAGE_NAME}@${DIGEST}"
+            echo "Retagging ${IMAGE_NAME}@${DIGEST}"
+            skopeo copy --all "${SRC}" "docker://${REGISTRY}/${IMAGE_NAME}:latest"
+            skopeo copy --all "${SRC}" "docker://${REGISTRY}/${IMAGE_NAME}:stable"
+            echo "  ✅ ${IMAGE_NAME}:latest and :stable updated"
+            PROMOTED=$((PROMOTED + 1))
+          done < <(find /tmp/all-digests -name "*.txt" -print0)
+
+          echo "✅ Promoted ${PROMOTED} image(s) to :latest and :stable"
+          echo "Tested artifacts are now live — no rebuild was triggered."
