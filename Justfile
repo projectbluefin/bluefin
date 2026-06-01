@@ -4,7 +4,6 @@ base_image_name := "silverblue"
 # common_image and brew_image refs are read from image-versions.yml at build time
 images := '(
     [bluefin]=bluefin
-    [bluefin-dx]=bluefin-dx
 )'
 flavors := '(
     [main]=main
@@ -181,11 +180,6 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
 
     # Build Arguments
     BUILD_ARGS=()
-    # Target
-    if [[ "${image}" =~ dx ]]; then
-        BUILD_ARGS+=("--build-arg" "IMAGE_FLAVOR=dx")
-        target="dx"
-    fi
     BUILD_ARGS+=("--build-arg" "AKMODS_FLAVOR=${akmods_flavor}")
     BUILD_ARGS+=("--build-arg" "BASE_IMAGE_REF=${base_image_ref}")
     BUILD_ARGS+=("--build-arg" "COMMON_IMAGE=${common_image}")
@@ -240,24 +234,26 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     # Cache write (REGISTRY_CACHE_WRITE=1) is set by CI for non-PR builds only.
     # PR builds and local builds are read-only to prevent cache poisoning.
     # Note: Podman 5.x+ requires untagged refs for --cache-from/--cache-to.
-    # IMPORTANT: bluefin-cache MUST be a PUBLIC GHCR package.
-    #   Private packages return 403 on blob existence checks, breaking --cache-from.
-    #   Only enable cache when the package already exists and is accessible.
-    #   To unlock: go to https://github.com/orgs/projectbluefin/packages/container/bluefin-cache
-    #   → Package settings → Change visibility → Public.
-    cache_ref="ghcr.io/{{ repo_organization }}/bluefin-cache"
-    # Only enable cache when probe succeeds (package exists AND is accessible).
-    # 404 (not found) or 403 (private) both skip cache — we do NOT create new private packages.
-    if ${PODMAN} manifest inspect "${cache_ref}" >/dev/null 2>&1; then
+    #
+    # We use the image's own GHCR package (e.g. ghcr.io/projectbluefin/bluefin) as the
+    # cache repository. This avoids needing a separate bluefin-cache package and ensures
+    # GITHUB_TOKEN already has write access (it pushes the final image to this same ref).
+    # Buildah stores cache entries as SHA-keyed blobs that coexist safely with named tags.
+    cache_ref="ghcr.io/{{ repo_organization }}/${image_name}"
+    # Probe: use skopeo list-tags — succeeds on any accessible (public) repo, including
+    # ones with only SHA-keyed blobs. Fails on 403 (private) or 404 (not yet pushed).
+    cache_readable=false
+    if skopeo list-tags "docker://${cache_ref}" >/dev/null 2>&1; then
+        cache_readable=true
         PODMAN_BUILD_ARGS+=(--cache-from "${cache_ref}")
-        if [[ "${REGISTRY_CACHE_WRITE:-0}" == "1" ]]; then
-            PODMAN_BUILD_ARGS+=(--cache-to "${cache_ref}")
-            echo "Registry layer cache: read+write (${cache_ref})"
-        else
-            echo "Registry layer cache: read-only (${cache_ref})"
-        fi
+    fi
+    if [[ "${REGISTRY_CACHE_WRITE:-0}" == "1" ]]; then
+        PODMAN_BUILD_ARGS+=(--cache-to "${cache_ref}")
+        echo "Registry layer cache: read=${cache_readable}+write (${cache_ref})"
+    elif [[ "${cache_readable}" == "true" ]]; then
+        echo "Registry layer cache: read-only (${cache_ref})"
     else
-        echo "Registry layer cache: disabled (${cache_ref} not accessible — make package public to enable)"
+        echo "Registry layer cache: disabled (${cache_ref} not yet accessible)"
     fi
 
     ${PODMAN} build "${PODMAN_BUILD_ARGS[@]}" .
@@ -747,6 +743,6 @@ retag-nvidia-on-ghcr working_tag="" stream="" dry_run="1":
         echo "$GITHUB_PAT" | podman login -u $GITHUB_USERNAME --password-stdin ghcr.io
         skopeo="skopeo"
     fi
-    for image in bluefin-nvidia-open bluefin-dx-nvidia-open; do
+    for image in bluefin-nvidia-open; do
       $skopeo copy docker://ghcr.io/projectbluefin/${image}:{{ working_tag }} docker://ghcr.io/projectbluefin/${image}:{{ stream }}
     done

@@ -19,7 +19,7 @@ Bluefin's CI is split between PR validation, image builds, post-build e2e, weekl
 
 This is the shared image build engine used by testing/stable/latest workflows.
 
-- Matrix: `bluefin` + `bluefin-dx`
+- Matrix: `bluefin`
 - Flavors: `main`, `nvidia-open`
 - Default architecture: `x86_64`
 - Runs `just check` before building
@@ -67,6 +67,39 @@ The weekly promotion workflow refuses to promote untested code.
 - `.github/renovate.json5` is configured with `baseBranchPatterns: ["testing"]`
 - `renovate-automerge.yml` currently searches for matching PRs with `--base main`
 - If Renovate PRs stop auto-merging, check that branch assumptions still match between Renovate config and the auto-merge workflow
+
+## Build caching
+
+`reusable-build.yml` uses two layers of caching to speed up matrix builds:
+
+### DNF / buildah package cache
+
+Each matrix job saves and restores `/var/tmp/buildah-cache-*` via `actions/cache`.
+
+**Cache key format:**
+```
+{runner.os}-{architecture}-buildah-{image_flavor}-{image_name}-{fedora_version}
+```
+Example: `Linux-x86_64-buildah-main-bluefin-44`
+
+The `image_flavor` segment (`main` / `nvidia-open`) is critical — without it, parallel jobs sharing the same image name write to the same key and GitHub's cache API rejects all-but-one save with "Unable to reserve cache, another job may be creating this cache".
+
+**Restore-key fallback** (broadest-to-narrowest):
+1. `Linux-x86_64-buildah-main-bluefin-44` (exact hit)
+2. `Linux-x86_64-buildah-main-` (cross-image hit within same flavor)
+3. `Linux-x86_64-buildah-` (cross-flavor hit)
+
+**Permission workaround:** buildah creates cache dirs as root. A `cache-perms` step runs `sudo chmod 777 --recursive` on all `/var/tmp/buildah-cache-*` dirs so `actions/cache` (running as the runner user) can read them. The glob is important — buildah may create multiple numbered dirs (`-0`, `-1`, …).
+
+**Cache writes are gated** — only non-PR, non-testing-stream builds write the cache (via `setup-cache` recipe in `Justfile`).
+
+### OCI layer cache (`bluefin-cache`)
+
+Separate from the DNF cache. Uses `ghcr.io/projectbluefin/bluefin-cache` for container layer caching via `--cache-from`/`--cache-to`. Only enabled if the registry package is public (probed with `skopeo inspect`). Refs must be **untagged** (Podman 5.x rejects tagged refs for cache operations).
+
+### Cache budget
+
+GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, the cache approaches the limit. `cache-maintenance.yml` runs weekly to prune entries older than 14 days or from deleted branches.
 
 ## Common failure modes
 

@@ -5,8 +5,8 @@
 Bluefin is a Containerfile-driven rpm-ostree/bootc image build, not a BuildStream repo.
 
 - `Containerfile` is the top-level build definition
-- Multi-stage flow: `common` / `brew` inputs → `ctx` → `base` → `dx`
-- `build_files/shared/build.sh` orchestrates the numbered scripts in `build_files/base/` and `build_files/dx/`
+- Multi-stage flow: `common` / `brew` inputs → `ctx` → `base`
+- `build_files/shared/build.sh` orchestrates the numbered scripts in `build_files/base/`
 - `Justfile` is the operator interface for validation, local builds, tagging, and helper commands
 
 ## Requirements
@@ -25,13 +25,12 @@ Bluefin is a Containerfile-driven rpm-ostree/bootc image build, not a BuildStrea
 
 | Path | Purpose |
 |---|---|
-| `Containerfile` | Multi-stage image build (`base` → `dx`) |
+| `Containerfile` | Multi-stage image build (`base`) |
 | `Justfile` | Build, validation, tagging, cleanup helpers |
 | `build_files/base/` | Base image scripts, run in numeric order |
-| `build_files/dx/` | DX layer scripts |
 | `build_files/shared/` | Shared helpers such as `build.sh` and `copr-helpers.sh` |
 | `system_files/` | Files copied verbatim into the image |
-| `flatpaks/` | Flatpak lists for base and DX variants |
+| `flatpaks/` | Flatpak lists for the image |
 | `brew/` | Homebrew Brewfiles |
 | `just/` | Additional just recipes |
 | `.github/workflows/` | CI/CD pipeline definitions |
@@ -48,7 +47,6 @@ just check
 
 # Only when testing container/image changes:
 just build bluefin latest main
-just build bluefin-dx latest main
 just clean
 ```
 
@@ -66,7 +64,6 @@ just clean
 | Image | Streams | Flavors |
 |---|---|---|
 | `bluefin` | `gts`, `stable`, `latest`, `beta` | `main`, `nvidia-open` |
-| `bluefin-dx` | `gts`, `stable`, `latest`, `beta` | `main`, `nvidia-open` |
 
 The current branch automation also carries a `testing` stream in local/CI recipes; use the release and CI docs for branch-specific pipeline behavior.
 
@@ -75,7 +72,6 @@ The current branch automation also carries a `testing` stream in local/CI recipe
 | Change type | Where to edit |
 |---|---|
 | Base RPMs and system package logic | `build_files/base/` |
-| DX-only RPMs and developer tooling | `build_files/dx/` |
 | Shared shell helpers / COPR isolation | `build_files/shared/` |
 | Files copied into the image | `system_files/` |
 | Flatpak manifests | `flatpaks/` |

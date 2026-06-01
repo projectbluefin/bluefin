@@ -61,7 +61,6 @@ Avoid full image builds for docs-only or workflow-only changes.
 
 ```bash
 just build bluefin latest main
-just build bluefin-dx latest main
 just clean
 ```
 

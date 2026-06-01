@@ -62,12 +62,11 @@ ARG SHA_HEAD_SHORT="dedbeef"
 ARG VERSION=""
 
 # Stage 2: overlay system_files, build extensions, clean up, finalize.
-# Narrow mount (system_files/ + build_files/shared + build_files/dx) means
-# package-script changes do NOT invalidate this stage when build_files/base is unchanged.
+# Narrow mount (system_files/ + build_files/shared) means package-script changes
+# do NOT invalidate this stage when build_files/base is unchanged.
 RUN --mount=type=cache,dst=/var/cache/libdnf5 \
     --mount=type=bind,from=ctx,source=/system_files,target=/ctx/system_files \
     --mount=type=bind,from=ctx,source=/build_files/shared,target=/ctx/build_files/shared \
-    --mount=type=bind,from=ctx,source=/build_files/dx,target=/ctx/build_files/dx \
     --mount=type=bind,from=ctx,source=/build_files/base/00-image-info.sh,target=/ctx/build_files/base/00-image-info.sh \
     --mount=type=bind,from=ctx,source=/build_files/base/17-cleanup.sh,target=/ctx/build_files/base/17-cleanup.sh \
     --mount=type=bind,from=ctx,source=/build_files/base/19-initramfs.sh,target=/ctx/build_files/base/19-initramfs.sh \
@@ -83,7 +82,6 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
         /ctx/build_files/shared/build-gnome-extensions.sh && \
         /ctx/build_files/base/17-cleanup.sh && \
         /ctx/build_files/base/19-initramfs.sh && \
-        if [ "${IMAGE_FLAVOR:-}" = "dx" ]; then /ctx/build_files/shared/build-dx.sh; fi && \
         /ctx/build_files/shared/validate-repos.sh && \
         /ctx/build_files/shared/clean-stage.sh && \
         /ctx/build_files/base/20-tests.sh \

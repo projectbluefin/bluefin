@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 # Disable all third-party repos that were enabled during the build.
 # Source this file and call disable_third_party_repos.
-# Called by: build_files/base/17-cleanup.sh and build_files/dx/00-dx.sh
+# Called by: build_files/base/17-cleanup.sh
 
 disable_third_party_repos() {
     local REPOS_DIR="/etc/yum.repos.d"
