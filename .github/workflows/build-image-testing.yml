@@ -69,7 +69,7 @@ jobs:
       (github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || inputs.pr_number != '') &&
       (github.event_name != 'pull_request' ||
        needs.detect-changes.outputs.should_build == 'true')
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@8dfe8f713d0063e05d1d3f23a3dddffcb81fecfc # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@7378f8b82909dd07405fa6d6c5c1ac6ddf917313
     secrets: inherit
     with:
       image_flavors: >-
@@ -80,3 +80,4 @@ jobs:
         }}
       stream_name: testing
       pr_number: ${{ inputs.pr_number }}
+      include_dx_variant: true

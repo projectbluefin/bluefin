@@ -28,10 +28,11 @@ jobs:
   build-image-latest:
     name: Build Latest Images
     if: github.event_name != 'workflow_dispatch' || github.ref_name == 'latest'
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@8dfe8f713d0063e05d1d3f23a3dddffcb81fecfc # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@7378f8b82909dd07405fa6d6c5c1ac6ddf917313
     secrets: inherit
     with:
       stream_name: latest
       # FIXME: enable when ublue-os/akmods has ARM builds
       # architecture: '["aarch64","x86_64"]'
       architecture: '["x86_64"]'
+      include_dx_variant: true
