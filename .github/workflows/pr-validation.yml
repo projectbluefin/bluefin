@@ -11,6 +11,25 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  detect-changes:
+    name: Detect changed paths
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      needs_e2e: ${{ steps.filter.outputs.image }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3
+        id: filter
+        with:
+          filters: |
+            image:
+              - 'Containerfile'
+              - 'build_files/**'
+              - 'system_files/**'
+              - 'image-versions.yml'
+              - 'Justfile'
+
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -30,6 +49,13 @@ jobs:
 
   testsuite:
     name: E2E smoke
+    needs: [detect-changes]
+    # Skip for PRs that only touch non-image paths (e.g. action bumps, workflow edits).
+    # Always run for merge_group to gate merges to main with the full check.
+    if: |
+      always() &&
+      (github.event_name == 'merge_group' ||
+       needs.detect-changes.outputs.needs_e2e == 'true')
     permissions:
       contents: read
       packages: write  # testsuite pushes screenshot OCI artifacts to GHCR
