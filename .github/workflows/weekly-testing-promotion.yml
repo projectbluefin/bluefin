@@ -119,6 +119,7 @@ jobs:
       suites: developer,vanilla-gnome,software,common
 
   promote-to-latest-and-stable:
+    environment: production
     needs: [e2e, verify-e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 30
