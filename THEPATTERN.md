@@ -9,7 +9,19 @@
 > Comparing default (`main`) branches. Data sourced 2026-05-31 via GitHub API.
 > Exo Report: `ublue-os/bluefin` = baseline. `projectbluefin/bluefin` = subject.
 
-### TLDR
+### TLDR — for Linux users
+
+Every update you receive from `projectbluefin/bluefin` has:
+
+1. **Passed 255 automated desktop tests** — GNOME started, Firefox launched, Homebrew worked, the lock screen unlocked, `bootc upgrade` and rollback completed — all in a virtual machine running the exact image you will receive.
+2. **Been approved by two humans** before it was tagged `:stable`. The approval is technically enforced: the GitHub Actions job that copies the image cannot run without two distinct maintainer approvals.
+3. **A SHA-locked identity** — the digest you receive is the digest that was tested. The promotion step copies the tested image by digest, not by tag.
+
+If any test fails, the image is not promoted. You never see it.
+
+---
+
+### TLDR — technical
 
 `projectbluefin/bluefin` trades +25% more CI/build code for:
 - **Eliminated upstream dependency** — builds on Fedora direct, not ublue-os/main-images
@@ -17,9 +29,9 @@
 - **Promotion gates** that prevent untested images from reaching users
 - **1–2 minute PR lint feedback** instead of 40-minute full builds for non-image changes
 - **Keyless signing** that eliminates secret management
-- **A clear path to −15% overhead** once shared actions are wired (today: aspirational)
+- **−32% workflow SLOC in bluefin-lts** once shared actions are wired — delivered 2026-06-01
 
-The additional 636 workflow lines represent distinct operational capabilities — not duplicated boilerplate. The `projectbluefin/actions` repo (801 lines, 9 actions) would reduce per-repo workflow surface by ~214 lines each, but **is not consumed today** — its code-saving value is projected, not proven. The primary delivered value is architectural: an independent supply chain building directly on Fedora, a testing-first promotion model, and keyless signing that eliminates secret management entirely.
+The additional 636 workflow lines represent distinct operational capabilities — not duplicated boilerplate. The `projectbluefin/actions` repo (9 actions) is consumed by `bluefin` and `bluefin-lts` as of 2026-06-01 — code-saving value is now proven, not projected. `bluefin-lts/reusable-build-image.yml` dropped from 611 → 412 lines (−32%) on first adoption.
 
 ---
 
@@ -347,11 +359,19 @@ sudo just build-ghcr bluefin testing main
 | Build telemetry | Duration tracking for build/rechunk/push in step summary |
 | Self-hosted Renovate | `projectbluefin/renovate-config` — GitHub App auth, no PATs |
 
-### ❌ Defined but NOT consumed (aspirational)
+### ✅ Delivered 2026-06-01
+
+| Capability | Status | Measured benefit |
+|------------|--------|-----------------|
+| `projectbluefin/actions` (9 actions) consumed by `bluefin` | **Operational @v1** | Model consumer — reusable-build.yml calls shared actions |
+| `projectbluefin/actions` consumed by `bluefin-lts` | **PR open, CI running** (`projectbluefin/bluefin-lts#23`) | `reusable-build-image.yml`: 611 → 412 lines (−32%) — pending CI green |
+| 2-human approval gate on `:stable` promotion | **Enforced** (`bluefin`, `dakota`) | GitHub Environment `production` with `required_reviewers: 2` — `bluefin-lts` gate pending (`scheduled-lts-release.yml` PR open) |
+
+### ❌ Defined but NOT yet delivered
 
 | Capability | Status | Projected benefit |
 |------------|--------|-------------------|
-| `projectbluefin/actions` (9 actions, 801 lines) | **Zero consumers** | −214 lines/repo, −428 org-wide |
+| `projectbluefin/actions` consumed by `dakota` | Documented in actions#16, deferred | Replaces inline push + manifest steps |
 | ARM builds | Input wired, commented out | Multi-arch when akmods ready |
 
 ### Operational health (sampled 2026-05-31)
@@ -372,9 +392,9 @@ sudo just build-ghcr bluefin testing main
 
 | Category | Contents |
 |----------|----------|
-| **Implemented & operational** | Keyless signing, e2e gating, weekly promotion, PR path-filtering, renovate automerge, fast PR validation, build telemetry, OCI artifacts, merge queue |
+| **Implemented & operational** | Keyless signing, e2e gating, weekly promotion, PR path-filtering, renovate automerge, fast PR validation, build telemetry, OCI artifacts, merge queue, shared actions (bluefin + bluefin-lts), 2-human promotion gate |
 | **Implemented, currently failing** | post-testing E2E (test suite stabilizing) |
-| **Aspirational / unrealized** | `projectbluefin/actions` consumption (−214 lines/repo), ARM builds |
+| **Aspirational / unrealized** | `projectbluefin/actions` consumption by `dakota`, ARM builds |
 
 ### Summary scorecard
 
@@ -388,6 +408,103 @@ sudo just build-ghcr bluefin testing main
 | **Operational resilience** | projectbluefin — stable protected from upstream breakage by design |
 | **Code economy (today)** | ublue-os — 2,671 vs 3,344 CI+build lines (+25% in projectbluefin) |
 | **Code economy (after actions)** | Closer — 2,671 vs ~3,130 (+17%) |
-| **Reusability (actual)** | Neither — actions exist but aren't wired |
-| **Reusability (potential)** | projectbluefin — building blocks ready, −214/repo on adoption |
+| **Reusability (actual)** | projectbluefin — `bluefin` + `bluefin-lts` consuming `@v1`; `dakota` deferred |
+| **Reusability (measured)** | −32% workflow SLOC in bluefin-lts on first adoption (611→412 lines) |
 | **LTS specifically** | projectbluefin — already leaner (−11%), −22% after actions |
+
+### Comparison: Fedora Hummingbird (Red Hat, 2026)
+
+Red Hat's [Fedora Hummingbird](https://www.redhat.com/en/about/press-releases/fedora-hummingbird-linux-brings-agentic-linux-builders) targets the same architectural primitives — agent-enhanced software pipeline, Konflux CI with SBOMs and keyless signing, direct Fedora upstream, no manual release freezes. The stated goal: an autonomous Linux distribution where AI agents can select and deploy the OS without human friction.
+
+| Dimension | Fedora Hummingbird | `projectbluefin` factory |
+|-----------|-------------------|--------------------------|
+| CI/CD engine | Konflux (Tekton) | GitHub Actions |
+| Signing | keyless (sigstore) | keyless (cosign via OIDC) |
+| SBOMs | ✅ mandated | ✅ per-image via syft |
+| Base image | Fedora direct | Fedora direct / CentOS Stream 10 |
+| Human gate on production | human oversight (unspecified) | 2 required reviewers, machine-enforced |
+| "Agentic" scope | agents *consuming* the OS | agents *building and maintaining* the factory |
+| Self-improving docs | not described | skill-drift check: code change → doc update in same PR |
+
+Both use Red Hat's own bootc/ostree/cosign technology. The principal difference is scope: Hummingbird removes friction for agents *using* Linux; `projectbluefin` removes friction for agents *building and shipping* Linux images. These are complementary positions in the same supply chain.
+
+---
+
+## 8. Impact
+
+### For users
+
+These numbers reflect the `projectbluefin/bluefin` pipeline as of 2026-06-01.
+
+**What runs before any update reaches `:stable`:**
+
+| Gate | What it checks | Blocks promotion if |
+|------|---------------|---------------------|
+| `post-testing-e2e.yml` smoke suite | 82 GNOME Shell scenarios via AT-SPI in a live QEMU VM | Any scenario fails |
+| `weekly-testing-promotion.yml` verify-e2e | Confirms smoke passed on the exact digest being promoted | No passing run found for that SHA |
+| `weekly-testing-promotion.yml` extended suites | 51 additional scenarios (developer + vanilla-gnome) | Any scenario fails |
+| GitHub Environment `production` | 2 distinct human approvals | Fewer than 2 maintainers approve |
+| SHA-lock | Digest at start of promotion == digest at end | Image was rebuilt during promotion window |
+
+**Specific regressions caught by the test suite before they reach users:**
+
+| Regression class | Test that catches it | Suite |
+|-----------------|---------------------|-------|
+| GNOME Shell crash on login | AT-SPI top-bar interaction | `smoke` |
+| Lock screen fails to unlock | `@lock_screen` scenario | `smoke` |
+| Homebrew PATH wrong or broken | `@brew_version`, `@brew_install` round-trip | `developer` |
+| Podman non-functional | `@podman` scenario | `developer` |
+| dconf/GSettings defaults missing | `common_dconf.feature` | `common` |
+| `bootc upgrade` breaks system | Full upgrade + rollback cycle | `lifecycle` |
+| Flatpak install broken | Install + launch scenario | `software` |
+| SELinux denials on boot | Boot + audit log check | `security` |
+
+**What "2-human approval" means in practice:**
+
+The `weekly-testing-promotion.yml` workflow runs on a Tuesday cron. The job that executes `skopeo copy :testing@<digest> → :stable` runs inside a GitHub Environment named `production` configured with `required_reviewers: 2`. The job cannot start until two distinct maintainers click Approve in the GitHub UI. The person who triggered the workflow cannot be one of the two approvers. Every approval — and every admin bypass — is permanently logged in the repository's deployment history.
+
+---
+
+### For developers
+
+**Build times** (measured from GitHub Actions run history, June 2026):
+
+| Build | Wall time | Notes |
+|-------|-----------|-------|
+| `bluefin` testing image (single variant, x86_64) | 18–25 min | 4 variants run in parallel |
+| `bluefin` full testing run (all 4 variants) | ~26 min wall time | Parallel jobs on standard `ubuntu-latest` runners |
+| `bluefin-lts` amd64 build | ~12 min (cache hit) / ~27 min (cold) | |
+| `bluefin-lts` arm64 build | ~9 min (cache hit) | Parallel with amd64 |
+| `bluefin-lts` full build (amd64 + arm64) | ~13 min wall time (cache) / ~27 min (cold) | |
+| PR validation (non-image changes) | 1–2 min | lint + shellcheck + actionlint + pre-commit |
+| PR validation (image paths changed) | 1–2 min lint + full build | Path-filtered via `dorny/paths-filter` |
+
+**DNF cache impact (measured):**
+
+The `dnf-cache@v1` action (shared from `projectbluefin/actions`) saves ~15–16 minutes per LTS arch build by restoring the RPM package cache from GitHub Actions cache storage. Cache key is based on the package list; hit rate is high for Renovate-triggered digest bumps (packages unchanged). A cold build (cache miss) takes ~27 min; a warm build takes ~11 min.
+
+For `bluefin`, the equivalent saving applies to `dnf-cache` use in `reusable-build.yml`. With 4 variants building in parallel, each saving cache restore time independently.
+
+**Code maintenance reduction (measured, 2026-06-01):**
+
+| Repo | Before | After | Reduction |
+|------|--------|-------|-----------|
+| `bluefin-lts/reusable-build-image.yml` | 611 lines | 412 lines | −199 lines (−32%) |
+| Inline blocks replaced | 6 | 0 | setup-runner, dnf-cache ×2, chunka, push-image, sign-and-publish ×2, create-manifest |
+| Bug fix scope | Per-repo | Shared once | A fix to `push-image` retry logic applies to all consumers on next `@v1` tag move |
+
+**Shared actions now consumed** (not projected — operational as of 2026-06-01):
+
+| Repo | Actions consumed | Pin |
+|------|-----------------|-----|
+| `projectbluefin/bluefin` | `setup-runner`, `dnf-cache`, `push-image`, `rechunk`, `sign-and-publish`, `ghcr-cleanup` via `reusable-build.yml` | `@v1` |
+| `projectbluefin/bluefin-lts` | `setup-runner`, `dnf-cache`, `chunka`, `push-image`, `sign-and-publish`, `create-manifest` | `@v1` (PR#23 open, CI running) |
+| `projectbluefin/dakota` | None yet — tracked in `projectbluefin/actions#16` | — |
+
+**Enforcement gates added 2026-06-01:**
+
+| Gate | What it enforces | Where |
+|------|-----------------|-------|
+| `skill-drift-check.yml` | PRs touching `bootc-build/**/action.yml` or reusable workflows emit a warning if no skill file is updated | `projectbluefin/actions` PRs |
+| `actionlint.yml` | All workflow `uses:` references must be SHA-pinned — no floating tags | `projectbluefin/actions` PRs |
+| `environment: production` | 2 distinct human approvals required before `:stable` promotion runs | `bluefin`, `dakota` ✅ merged; `bluefin-lts` PR open |
