@@ -122,6 +122,23 @@ These are the labels bonedigger expects and/or manages for the issue queue:
 - `lgtm`
 - `stale`
 
+### Hive tracking labels
+
+These labels are managed by Hive agents and humans triaging from the live Hive snapshot. They are **dynamic** — reset each cycle — and distinct from the static `priority/` labels.
+
+| Label | Color | When to apply |
+|---|---|---|
+| `hive/p0` | 🔴 `#d93f0b` | Active cycle release blocker — must land before next promotion |
+| `hive/p1` | 🟠 `#e4a117` | Active cycle high priority — should land this cycle |
+
+**Coexistence with bonedigger labels:** `hive/p0` and `hive/p1` coexist with `priority/high` and `priority/critical`. They serve different purposes: `priority/*` is the repo's static backlog priority; `hive/*` means the Hive formation is actively tracking this issue right now.
+
+To find all current Hive blockers across the org:
+```bash
+gh search issues --label "hive/p0" --owner projectbluefin --state open
+gh search issues --label "hive/p1" --owner projectbluefin --state open
+```
+
 ### Common Bluefin labels already in use
 
 - Kind: `kind/bug`, `kind/documentation`, `kind/enhancement`, `kind/github-action`, `kind/question`, `kind/renovate`, `kind/tech-debt`, `kind/wontfix`, `kind/duplicate`, `kind/parity`
