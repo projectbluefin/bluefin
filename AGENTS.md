@@ -30,6 +30,18 @@ dakota  (main→:latest)       ←── images ──→ testsuite (e2e gate)
 
 Each image repo consumes `projectbluefin/common`. `projectbluefin/testsuite` gates promotion.
 
+### Shared CI building blocks (`projectbluefin/actions`)
+
+```text
+projectbluefin/actions  ←── shared CI: composite actions + reusable-build.yml
+        │
+        ├── projectbluefin/bluefin      (calls reusable-build.yml@v1)
+        ├── projectbluefin/bluefin-lts  (à la carte composite actions)
+        └── projectbluefin/dakota       (partial adoption)
+```
+
+**Before fixing a CI issue here:** check if the broken logic lives in a shared composite action in `projectbluefin/actions`. If so, fix it there first. See `docs/skills/ci.md` → "CI fix workflow for agents" for the correct PR sequence.
+
 ## Repo rules
 
 - All PRs target `testing`. Never `main`.
