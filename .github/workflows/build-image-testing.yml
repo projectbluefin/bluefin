@@ -34,7 +34,7 @@ jobs:
       should_build: ${{ steps.detect.outputs.should_build }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: projectbluefin/actions/bootc-build/detect-changes@4387ca8dfc2f33db48b30e3ccc2011f1df5f8b10 # feat/detect-changes-action
+      - uses: projectbluefin/actions/bootc-build/detect-changes@4ec3db50adc3a2b944e175295d419d78eaa63861 # v1
         id: detect
 
   build-image-testing:
