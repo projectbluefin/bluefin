@@ -36,7 +36,6 @@ jobs:
     permissions:
       contents: write
       actions: read
-    secrets: inherit
     uses: ./.github/workflows/generate-release.yml
     with:
       stream_name: '["stable"]'

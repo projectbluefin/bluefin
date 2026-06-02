@@ -9,11 +9,6 @@ concurrency:
   group: weekly-testing-promotion
   cancel-in-progress: false
 
-permissions:
-  contents: write
-  actions: write
-  packages: write
-
 jobs:
   # Verify that post-testing-e2e.yml already ran smoke tests on the current
   # main HEAD since every push to main triggers it. If e2e hasn't passed
@@ -22,6 +17,9 @@ jobs:
   verify-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
     outputs:
       testing_sha: ${{ steps.lock-sha.outputs.sha }}
       build_run_id: ${{ steps.find-build.outputs.run_id }}
