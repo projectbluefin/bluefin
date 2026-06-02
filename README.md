@@ -43,22 +43,6 @@ sudo bootc switch ghcr.io/ublue-os/bluefin:latest --enforce-container-sigpolicy
 sudo bootc switch ghcr.io/ublue-os/bluefin-nvidia-open:latest --enforce-container-sigpolicy
 ```
 
-### Bluefin DX
-
-Developer-focused image with cloud-native tooling pre-installed.
-
-```bash
-# Stable — recommended
-sudo bootc switch ghcr.io/ublue-os/bluefin-dx:stable --enforce-container-sigpolicy
-# Stable — NVIDIA
-sudo bootc switch ghcr.io/ublue-os/bluefin-dx-nvidia-open:stable --enforce-container-sigpolicy
-
-# Latest — tracks Fedora latest
-sudo bootc switch ghcr.io/ublue-os/bluefin-dx:latest --enforce-container-sigpolicy
-# Latest — NVIDIA
-sudo bootc switch ghcr.io/ublue-os/bluefin-dx-nvidia-open:latest --enforce-container-sigpolicy
-```
-
 ## Getting Started
 
 Visit **[projectbluefin.io](https://projectbluefin.io/#scene-picker)** to download and install Bluefin, or check the **[Documentation](https://docs.projectbluefin.io/)** for detailed guides.
