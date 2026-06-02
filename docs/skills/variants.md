@@ -47,7 +47,7 @@ ghcr.io/projectbluefin/bluefin:stable-nvidia-open
 
 - Justfile image map: `Justfile`
 - Build workflows: `.github/workflows/build-image-*.yml`
-- Reusable matrix logic: `.github/workflows/reusable-build.yml`
+- Reusable matrix logic: `projectbluefin/actions/.github/workflows/reusable-build.yml` (centralized — not a local file)
 
 ## Choosing the right target
 

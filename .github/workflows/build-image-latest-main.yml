@@ -28,7 +28,7 @@ jobs:
   build-image-latest:
     name: Build Latest Images
     if: github.event_name != 'workflow_dispatch' || github.ref_name == 'latest'
-    uses: ./.github/workflows/reusable-build.yml
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@ba3519cccc368df4f55e472e82837444f47b2d2a
     secrets: inherit
     with:
       stream_name: latest
