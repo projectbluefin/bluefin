@@ -34,7 +34,7 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| `pr-validation.yml` | PRs to `testing`, merge_group | Fast gate: just check, shellcheck, pre-commit, e2e smoke |
+| `pr-validation.yml` | PRs to `testing`, merge_group | Fast gate via **`validate-pr@v1`**: just check, shellcheck, hadolint, pre-commit; + e2e smoke |
 | `pr-smoke.yml` | PRs touching build files | Full build + smoke test |
 | `build-image-testing.yml` | Push to `main`, dispatch | Testing image builds via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Testing build on `main` | Smoke+common continuous e2e gate |
