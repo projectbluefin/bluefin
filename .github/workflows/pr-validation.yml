@@ -18,34 +18,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Bootstrap just
-        uses: ./.github/actions/bootstrap-just
-
-      - name: Install shellcheck
-        run: sudo apt-get install -y shellcheck
-
-      - name: Install pre-commit
-        run: pip install pre-commit
-
-      - name: Check Just syntax
-        shell: bash
-        run: just check
-
-      - name: Shellcheck build scripts
-        shell: bash
-        run: |
-          shopt -s globstar nullglob
-          shellcheck build_files/**/*.sh
-
-      - name: Lint Containerfile
-        uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5 # v3.3.0
+      - name: Validate PR
+        uses: projectbluefin/actions/bootc-build/validate-pr@v1
         with:
           dockerfile: Containerfile
-          config: .hadolint.yaml
-
-      - name: Run pre-commit
-        shell: bash
-        run: pre-commit run --all-files
+          hadolint-config: .hadolint.yaml
+          shellcheck-glob: "build_files/**/*.sh"
 
   testsuite:
     name: E2E smoke
