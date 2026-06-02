@@ -6,6 +6,7 @@
 Justfile            @castrojo @p5 @m2Giles @tulilirockz
 build_files/        @castrojo @p5 @m2Giles @tulilirockz
 
-# Docs and design — uncomment and add handles when triagers are confirmed
+# BEGIN TRIAGERS — managed by projectbluefin/common, do not edit manually
 # docs/**  @handle1 @handle2
 # *.md     @handle1 @handle2
+# END TRIAGERS
