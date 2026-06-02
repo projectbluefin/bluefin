@@ -11,6 +11,7 @@ Agent entry point. Load only the skill that matches the task in front of you.
 | Debug GitHub Actions or understand workflow behavior | `docs/skills/ci.md` |
 | Understand image variants, streams, or flavors | `docs/skills/variants.md` |
 | Cut a release or promote streams | `docs/skills/release.md` |
+| Fix a stuck, conflicted, or wrong-base PR | [`workflow.md` → Fixing stuck PRs](workflow.md#fixing-stuck-prs) |
 | Handle Renovate PRs or auto-merge behavior | `docs/skills/renovate.md` |
 | Review COPR usage, cosign, or other security-sensitive changes | `docs/skills/security.md` |
 | Work on the LTS image or LTS-specific policy | `docs/skills/lts.md` |
