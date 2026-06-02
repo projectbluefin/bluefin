@@ -16,19 +16,11 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     outputs:
-      needs_e2e: ${{ steps.filter.outputs.image }}
+      needs_e2e: ${{ steps.detect.outputs.image_changed }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3
-        id: filter
-        with:
-          filters: |
-            image:
-              - 'Containerfile'
-              - 'build_files/**'
-              - 'system_files/**'
-              - 'image-versions.yml'
-              - 'Justfile'
+      - uses: projectbluefin/actions/bootc-build/detect-changes@4387ca8dfc2f33db48b30e3ccc2011f1df5f8b10 # feat/detect-changes-action
+        id: detect
 
   validate:
     runs-on: ubuntu-latest
