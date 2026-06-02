@@ -126,13 +126,22 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     fi
     fedora_version=$({{ just }} fedora_version '{{ image }}' '{{ tag }}' '{{ flavor }}' '{{ kernel_pin }}')
 
-    # Verify Base Image with cosign (warning-only: if quay.io is unreachable the build
-    # step itself will fail; we do not want preflight to block on registry outages)
-    {{ just }} verify-container silverblue:${fedora_version} quay.io/fedora-ostree-desktops "{{ justfile_directory() }}/keys/fedora-ostree.pub" \
-        || echo "WARNING: Could not verify silverblue base image — quay.io may be unreachable. Continuing..."
+    # Verify Base Image with cosign — FATAL in CI, skippable locally for dev convenience.
+    # A verification failure means the base image cannot be trusted; continuing would launder
+    # a potentially compromised image through the Bluefin signing pipeline.
+    if [[ "${SKIP_BASE_VERIFY:-}" == "1" && "${CI:-}" != "true" ]]; then
+        echo "WARNING: Skipping base image verification (SKIP_BASE_VERIFY=1, local dev only)"
+    else
+        {{ just }} verify-container silverblue:${fedora_version} quay.io/fedora-ostree-desktops "{{ justfile_directory() }}/keys/fedora-ostree.pub" || {
+            echo "ERROR: Base image cosign verification FAILED for silverblue:${fedora_version}"
+            echo "This may indicate a key rotation, registry compromise, or transient network issue."
+            echo "If this is a known key rotation, update keys/fedora-ostree.pub and retry."
+            echo "If this is a transient network issue, retry the build."
+            exit 1
+        }
+    fi
 
     # Resolve base image tag to digest (TOCTOU fix: pin the exact image cosign just verified)
-    # Falls back to tag-only ref if quay.io is unreachable (same condition as above)
     base_image_digest=$(skopeo inspect --retry-times 3 docker://quay.io/fedora-ostree-desktops/silverblue:"${fedora_version}" 2>/dev/null | jq -r '.Digest // empty') || true
     if [[ -n "${base_image_digest:-}" ]]; then
         base_image_ref="quay.io/fedora-ostree-desktops/silverblue:${fedora_version}@${base_image_digest}"
