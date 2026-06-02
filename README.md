@@ -20,7 +20,44 @@
 
 ## Images
 
-Browse available streams, versions, and `bootc switch` commands on the **[Images page →](https://docs.projectbluefin.io/images/)**
+Full catalog at [docs.projectbluefin.io/images →](https://docs.projectbluefin.io/images/)
+
+### Bluefin
+
+Primary Bluefin desktop image for most systems.
+
+```bash
+# Stable — recommended
+sudo bootc switch ghcr.io/ublue-os/bluefin:stable --enforce-container-sigpolicy
+# Stable — NVIDIA
+sudo bootc switch ghcr.io/ublue-os/bluefin-nvidia-open:stable --enforce-container-sigpolicy
+
+# Stable Daily — tracks Fedora stable, daily rebuilds
+sudo bootc switch ghcr.io/ublue-os/bluefin:stable-daily --enforce-container-sigpolicy
+# Stable Daily — NVIDIA
+sudo bootc switch ghcr.io/ublue-os/bluefin-nvidia-open:stable-daily --enforce-container-sigpolicy
+
+# Latest — tracks Fedora latest
+sudo bootc switch ghcr.io/ublue-os/bluefin:latest --enforce-container-sigpolicy
+# Latest — NVIDIA
+sudo bootc switch ghcr.io/ublue-os/bluefin-nvidia-open:latest --enforce-container-sigpolicy
+```
+
+### Bluefin DX
+
+Developer-focused image with cloud-native tooling pre-installed.
+
+```bash
+# Stable — recommended
+sudo bootc switch ghcr.io/ublue-os/bluefin-dx:stable --enforce-container-sigpolicy
+# Stable — NVIDIA
+sudo bootc switch ghcr.io/ublue-os/bluefin-dx-nvidia-open:stable --enforce-container-sigpolicy
+
+# Latest — tracks Fedora latest
+sudo bootc switch ghcr.io/ublue-os/bluefin-dx:latest --enforce-container-sigpolicy
+# Latest — NVIDIA
+sudo bootc switch ghcr.io/ublue-os/bluefin-dx-nvidia-open:latest --enforce-container-sigpolicy
+```
 
 ## Getting Started
 
@@ -46,7 +83,7 @@ sudo mokutil --import public_key.der
 ## Community
 
 - 📰 **[Blog](https://blog.projectbluefin.io/)** — announcements and release posts
-- �� **[Discussions](https://community.projectbluefin.io/)** — community forum
+- 💬 **[Discussions](https://community.projectbluefin.io/)** — community forum
 - 📋 **[Project Board](https://todo.projectbluefin.io/)** — what we're working on
 - 📖 **[Documentation](https://docs.projectbluefin.io/)** — user guides and reference
 
