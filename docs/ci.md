@@ -15,9 +15,11 @@ Bluefin's CI is split between PR validation, image builds, post-build e2e, weekl
 | `renovate-automerge.yml` | Successful `PR Validation — testsuite` workflow | Enables squash auto-merge for matching Renovate PRs |
 | `bonedigger.yml` | Issue events, issue comments, daily schedule | Runs the Bluefin 🦖 issue lifecycle bot |
 
-## Centralized build workflow (`projectbluefin/actions`)
+## Centralized actions (`projectbluefin/actions`)
 
-The shared image build engine lives in [`projectbluefin/actions`](https://github.com/projectbluefin/actions) at `.github/workflows/reusable-build.yml`. The internal `reusable-build.yml` has been deleted — all three stream callers delegate to the centralized workflow:
+Shared reusable workflows and composite actions for the Bluefin build pipeline live in [`projectbluefin/actions`](https://github.com/projectbluefin/actions). **Do not add new action pins inline in workflow files** — if the same action would be used in more than one workflow, it belongs in a composite action in `projectbluefin/actions`. This keeps Renovate updates centralised: one PR in `projectbluefin/actions` propagates to all consumers.
+
+The internal `reusable-build.yml` has been deleted — all three stream callers delegate to the centralized workflow:
 
 ```yaml
 uses: projectbluefin/actions/.github/workflows/reusable-build.yml@<SHA>
@@ -30,21 +32,37 @@ uses: projectbluefin/actions/.github/workflows/reusable-build.yml@<SHA>
 - On non-PR events it pushes to GHCR, signs images with cosign, uploads SBOMs, and emits attestations
 - On PR events it uploads a `.oci` artifact and prints bootc test instructions instead of pushing
 
+### Available composite actions
+
+| Action | Purpose |
+|---|---|
+| `bootc-build/setup-runner` | Update podman, BTRFS mount, install tools |
+| `bootc-build/detect-changes` | Detect changed paths; compute `image_flavors` matrix for PR builds |
+| `bootc-build/validate-pr` | PR validation: just check, shellcheck, hadolint, pre-commit (all tool pins live here) |
+| `bootc-build/dnf-cache` | Restore/save buildah layer cache |
+| `bootc-build/preflight` | Validate registry auth, normalize image refs |
+| `bootc-build/push-image` | GHCR push with retry and digest capture |
+| `bootc-build/sign-and-publish` | Cosign sign + SBOM + attestation |
+| `bootc-build/rechunk` | rpm-ostree rechunking for OTA deltas |
+| `bootc-build/generate-tags` | Generate OCI tags from stream, version, and event context |
+
+See [`docs/skills/ci.md`](skills/ci.md) → "Shared actions architecture" for the full catalog and fix-first workflow.
+
 ## How PRs are validated
 
 A normal Bluefin PR should target `testing`.
 
-`pr-validation.yml` runs these steps:
+`pr-validation.yml` runs validation via the shared `bootc-build/validate-pr` action from `projectbluefin/actions`:
 
-1. Checkout
-2. Install `just`
-3. Install `shellcheck`
-4. Install `pre-commit`
-5. Run `just check`
-6. Run `shellcheck build_files/**/*.sh`
+1. Install `just` (via `taiki-e/install-action`)
+2. Install `shellcheck`
+3. Install `pre-commit`
+4. Run `just check`
+5. Run `shellcheck build_files/**/*.sh`
+6. Run `hadolint` on `Containerfile`
 7. Run `pre-commit run --all-files`
 
-This workflow is intentionally fast. It validates repo health without doing a full local-style container build.
+This workflow is intentionally fast. It validates repo health without doing a full local-style container build. All tool pins (hadolint, install-action) live in `bootc-build/validate-pr` — Renovate bumps them once there, not per-workflow.
 
 ## How testing promotion works
 
