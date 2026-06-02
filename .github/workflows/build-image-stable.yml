@@ -21,7 +21,7 @@ jobs:
   build-image-stable:
     name: Build Stable Images
     if: github.event_name != 'workflow_dispatch' || github.ref_name == 'stable'
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@ba3519cccc368df4f55e472e82837444f47b2d2a
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@v1
     secrets: inherit
     with:
  #    kernel_pin: 6.17.12-300.fc43.x86_64 ## Pin to 6.17 for ZFS compatibility
