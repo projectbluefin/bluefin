@@ -58,7 +58,7 @@ jobs:
         id: get-image
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
-          IMAGE="ghcr.io/${{ github.repository_owner }}/bluefin:pr-${{ github.event.pull_request.number }}-sha-${SHORT_SHA}"
+          IMAGE="ghcr.io/${{ github.repository_owner }}/bluefin-pr:${{ github.event.pull_request.number }}-sha-${SHORT_SHA}"
           echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
           echo "PR image: ${IMAGE}"
 
@@ -67,9 +67,9 @@ jobs:
           SHORT_SHA=$(git rev-parse --short HEAD)
           echo ${{ secrets.GITHUB_TOKEN }} | sudo podman login ghcr.io -u ${{ github.actor }} --password-stdin
           sudo podman tag localhost/bluefin:testing \
-            "ghcr.io/${{ github.repository_owner }}/bluefin:pr-${{ github.event.pull_request.number }}-sha-${SHORT_SHA}"
+            "ghcr.io/${{ github.repository_owner }}/bluefin-pr:${{ github.event.pull_request.number }}-sha-${SHORT_SHA}"
           sudo podman push \
-            "ghcr.io/${{ github.repository_owner }}/bluefin:pr-${{ github.event.pull_request.number }}-sha-${SHORT_SHA}"
+            "ghcr.io/${{ github.repository_owner }}/bluefin-pr:${{ github.event.pull_request.number }}-sha-${SHORT_SHA}"
 
   smoke:
     name: Smoke test PR image
@@ -78,7 +78,7 @@ jobs:
     permissions:
       packages: write
       contents: read
-    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@32f06097321bc4237dbdee2484b7e3e1b2a89155 # main
+    uses: ./.github/workflows/run-testsuite.yml
     with:
       image: ${{ needs.build.outputs.image }}
       suites: smoke

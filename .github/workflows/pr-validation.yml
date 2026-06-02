@@ -22,5 +22,18 @@ jobs:
         uses: projectbluefin/actions/bootc-build/validate-pr@v1
         with:
           dockerfile: Containerfile
-          hadolint-config: .hadolint.yaml
-          shellcheck-glob: "build_files/**/*.sh"
+          config: .hadolint.yaml
+
+      - name: Run pre-commit
+        shell: bash
+        run: pre-commit run --all-files
+
+  testsuite:
+    name: E2E smoke
+    permissions:
+      contents: read
+      packages: write  # testsuite pushes screenshot OCI artifacts to GHCR
+    uses: ./.github/workflows/run-testsuite.yml
+    with:
+      image: ghcr.io/projectbluefin/bluefin:testing
+      suites: smoke
