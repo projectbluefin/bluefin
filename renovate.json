@@ -3,6 +3,7 @@
   "extends": [
     "local>projectbluefin/renovate-config"
   ],
+  "baseBranches": ["testing"],
   "packageRules": [
     {
       "description": "Automerge chore dep updates (digest, pin, patch, minor) when CI passes",
