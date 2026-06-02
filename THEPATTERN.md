@@ -6,7 +6,7 @@
 >
 > -- jorge
 
-> Comparing default (`main`) branches. Data sourced 2026-05-31 via GitHub API.
+> Comparing default (`main`) branches. Data sourced 2026-05-31; updated 2026-06-02.
 > Exo Report: `ublue-os/bluefin` = baseline. `projectbluefin/bluefin` = subject.
 
 ### TLDR — for Linux users
@@ -313,7 +313,7 @@ sudo just build-ghcr bluefin testing main
 | Component | `ublue-os/bluefin-lts` | `projectbluefin/bluefin-lts` (current) | After actions (est.) |
 |-----------|:----------------------:|:--------------------------------------:|:--------------------:|
 | Workflows | 1,376 (14 files) | 1,175 (11 files) | **~961** |
-| ↳ `reusable-build-image.yml` | 573 | 583 | **~369** |
+| ↳ `reusable-build-image.yml` | 573 | 611 | **412** |
 | Containerfile | 45 | 47 | 47 |
 | Justfile | 412 | 413 | 413 |
 | **CI+Build Total** | **1,833** | **1,635** | **~1,421** |
@@ -359,22 +359,25 @@ sudo just build-ghcr bluefin testing main
 | Build telemetry | Duration tracking for build/rechunk/push in step summary |
 | Self-hosted Renovate | `projectbluefin/renovate-config` — GitHub App auth, no PATs |
 
-### ✅ Delivered 2026-06-01
+### ✅ Operational as of 2026-06-02
 
-| Capability | Status | Measured benefit |
-|------------|--------|-----------------|
-| `projectbluefin/actions` (9 actions) consumed by `bluefin` | **Operational @v1** | Model consumer — reusable-build.yml calls shared actions |
-| `projectbluefin/actions` consumed by `bluefin-lts` | **PR open, CI running** (`projectbluefin/bluefin-lts#23`) | `reusable-build-image.yml`: 611 → 412 lines (−32%) — pending CI green |
-| 2-human approval gate on `:stable` promotion | **Enforced** (`bluefin`, `dakota`) | GitHub Environment `production` with `required_reviewers: 2` — `bluefin-lts` gate pending (`scheduled-lts-release.yml` PR open) |
+| Capability | Scope | Measured benefit |
+|------------|-------|-----------------|
+| `projectbluefin/actions` shared CI library (9 actions, `@v1`) | `bluefin`, `bluefin-lts` | `reusable-build-image.yml`: 611 → 412 lines (−32%); single fix point for all consumers |
+| 2-human approval gate on production builds | `bluefin`, `bluefin-lts`, `dakota` | GitHub Environment `production`, `required_reviewers: 2` — job cannot run without two distinct maintainer approvals |
+| Weekly skill audit (`skill-audit.yml`, Monday 09:00 UTC) | `projectbluefin/actions` | Opens `skill-drift` issues when skill files are older than the code they document; routing-table + front-matter lint |
+| Skill-drift PR check (per-repo wrappers → `skill-drift-check.yml@v1`) | `actions`, `bluefin`, `bluefin-lts`, `dakota` | Advisory warning on PRs that change CI/build files without updating skill docs |
+| `docs/skills/factory-operations.md` | `projectbluefin/actions` | Canonical reference for production gate, skill-drift check, and skill audit — loaded by future agents before touching these systems |
 
-### ❌ Defined but NOT yet delivered
+### Deferred
 
-| Capability | Status | Projected benefit |
-|------------|--------|-------------------|
-| `projectbluefin/actions` consumed by `dakota` | Documented in actions#16, deferred | Replaces inline push + manifest steps |
-| ARM builds | Input wired, commented out | Multi-arch when akmods ready |
+| Capability | Notes |
+|------------|-------|
+| `projectbluefin/actions` consumed by `dakota` | BST build engine requires a different integration path; fully documented in `projectbluefin/actions#16` |
+| ARM builds | Input wired, disabled pending akmods ARM support |
+| Branch protection + CODEOWNERS (Track C-2) | Planned: required PR review, status checks, and sensitive-path CODEOWNERS entries across all four repos |
 
-### Operational health (sampled 2026-05-31)
+### Operational health (sampled 2026-06-02)
 
 | Repo | Status | Notes |
 |------|--------|-------|
@@ -503,8 +506,9 @@ For `bluefin`, the equivalent saving applies to `dnf-cache` use in `reusable-bui
 
 **Enforcement gates added 2026-06-01:**
 
-| Gate | What it enforces | Where |
+| Gate | What it enforces | Repos |
 |------|-----------------|-------|
-| `skill-drift-check.yml` | PRs touching `bootc-build/**/action.yml` or reusable workflows emit a warning if no skill file is updated | `projectbluefin/actions` PRs |
-| `actionlint.yml` | All workflow `uses:` references must be SHA-pinned — no floating tags | `projectbluefin/actions` PRs |
-| `environment: production` | 2 distinct human approvals required before `:stable` promotion runs | `bluefin`, `dakota` ✅ merged; `bluefin-lts` PR open |
+| `environment: production` | 2 distinct human approvals before production builds/promotion run | `bluefin`, `bluefin-lts`, `dakota` |
+| `skill-drift-check.yml@v1` | PR warning when code changes without a skill file update | all four `projectbluefin/*` repos |
+| `skill-audit.yml` (Monday cron) | Opens issues when skill files are older than the code they document | `projectbluefin/actions` |
+| `actionlint.yml` | All workflow `uses:` must be SHA-pinned — no floating tags | `projectbluefin/actions` PRs |
