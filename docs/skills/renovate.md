@@ -90,4 +90,7 @@ No additional Renovate config is needed beyond `config:best-practices` — it al
 
 ## Lessons learned
 
-<!-- Add reusable Renovate patterns here -->
+- **`testing` has no branch protection** — `gh pr merge --auto` fails with "Protected branch rules not configured". Just use `--squash` directly. There is no merge queue on `testing`.
+- **Bulk-merging chore PRs** — iterate with `gh pr merge NNN --repo projectbluefin/bluefin --squash`. Skip DIRTY ones (conflicts) and trigger Renovate to rebase them.
+- **Conflicted Renovate PRs** — do not rebase by hand. Trigger the central Renovate run and it will rebase all conflicting PRs automatically within a few minutes.
+- **Wrong base branch** — Renovate PRs that land on `main` are not validated and cannot be enqueued. Retarget with `gh pr edit NNN --base testing`, then merge normally.

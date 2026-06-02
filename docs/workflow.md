@@ -145,6 +145,68 @@ gh search issues --label "hive/p1" --owner projectbluefin --state open
 - Area: `area/brew`, `area/flatpak`, `area/iso`, `area/just`, `area/testing`, `area/gnome`, `area/nvidia`, `area/hardware`, `area/policy`, `area/services`, `area/upstream`, `area/finpilot`, `area/bluespeed`, `area/aurora`, `area/buildstream`, `area/bling`
 - Other useful labels: `dependencies`, `release-blocker`, `package-requests`, `good first issue`, `help wanted`, `agent-ready`
 
+## Fixing stuck PRs
+
+### PR targets wrong base branch
+
+If a PR targets `main` instead of `testing`, `pr-validation.yml` will never run (it only triggers on PRs to `testing`), and the merge queue ruleset on `main` will block the enqueue because the `validate` check has not passed.
+
+Fix: retarget the PR.
+
+```bash
+gh pr edit <number> --repo projectbluefin/bluefin --base testing
+```
+
+### PR is BEHIND (branch out of date)
+
+`mergeStateStatus: BEHIND` means the PR branch has diverged from `testing`. Auto-merge will not fire and the branch cannot be enqueued until it is updated.
+
+If the branch has only relevant commits, rebase it:
+```bash
+git fetch projectbluefin testing
+git checkout <branch>
+git rebase projectbluefin/testing
+git push projectbluefin <branch> --force
+```
+
+If the branch has accumulated **unrelated commits** on top of the intended fix, cherry-pick only the relevant commit onto a clean branch:
+```bash
+git checkout projectbluefin/testing -b <branch>-clean
+git cherry-pick <commit-sha>
+just check
+git push projectbluefin <branch>-clean:<branch> --force   # updates the open PR
+gh pr merge <number> --repo projectbluefin/bluefin --squash
+git push projectbluefin --delete <branch>-clean            # clean up temp branch
+```
+
+### PR is DIRTY (merge conflicts)
+
+Same fix as BEHIND — rebase or cherry-pick onto the latest `testing`.
+
+For Renovate/chore PRs with conflicts, trigger a central Renovate run to rebase them automatically:
+```bash
+gh workflow run "Renovate Self-Hosted" --repo projectbluefin/renovate-config
+```
+
+### Auto-merge cannot be enabled
+
+`testing` has no branch protection. GitHub requires branch protection to enable auto-merge, so `gh pr merge --auto` will fail with "Protected branch rules not configured."
+
+Just squash-merge directly instead:
+```bash
+gh pr merge <number> --repo projectbluefin/bluefin --squash
+```
+
+For a batch of chore/Renovate PRs:
+```bash
+for pr in 101 102 103; do
+  echo -n "PR #$pr: "
+  gh pr merge $pr --repo projectbluefin/bluefin --squash 2>&1
+done
+```
+
+PRs that show merge conflicts will need the Renovate rebase trigger above first.
+
 ## PR comment policy
 
 - One comment per PR event at most; combine findings
