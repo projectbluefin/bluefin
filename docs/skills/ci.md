@@ -96,13 +96,12 @@ If `main` advanced during promotion, the workflow aborts on purpose.
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `startup_failure` with zero jobs | unsupported permissions scope in that environment | compare `permissions:` with a known-good upstream run |
-| `No SBOM referrer found` in release generation | one side of the diff has no attached SBOM (testing stream skips SBOM — #213) | allow missing SBOMs for diff generation and use intersection-only comparisons |
+| `No SBOM referrer found` in release generation | testing stream skips SBOM; promoted images lack signed SBOMs | allow missing SBOMs for diff generation and use intersection-only comparisons |
 | promotion says no passing e2e for current SHA | `post-testing-e2e` has not passed the locked `main` commit | wait or rerun after e2e completes |
 | required check is skipped | path filter skipped the workflow | verify whether skipped is intentional for that workflow |
 | Renovate PR did not automerge | PR lookup missed mergeraptor author or wrong base branch | accept both `renovate[bot]` and `app/mergeraptor` in jq filter; verify branch targeting `testing` |
-| Weekly promotion cannot find digest artifact | Artifact expired (1-day retention, #212) | Push fresh commit to `main` to regenerate artifact |
-| Cosign sign/verify fails | Sigstore outage or base image cosign verify is non-fatal (#214) | Check `check-cosign-key-rotation.yml` issues; verify Justfile cosign steps are fatal |
-| Architecture fromJson() parse error | Architecture input default uses single quotes: `"['x86_64']"` (#210) | Pass architecture explicitly or fix default to `'["x86_64"]'` |
+| Weekly promotion cannot find digest artifact | artifact expired before Tuesday promotion window | push fresh commit to `main` to regenerate artifact |
+| Cosign sign/verify fails | Sigstore outage or key rotation | check `check-cosign-key-rotation.yml` issues; retry after Sigstore recovers |
 
 ## Non-obvious patterns
 
@@ -211,7 +210,7 @@ When adding `if: github.event_name != 'pull_request'` to the rechunk step, the "
 
 ### Pre-production security audit — 14 tracked findings
 
-Full adversarial review of all 23 workflow files. Epic: **#209**. Sub-issues: **#210–#215, #218–#225**.
+Full adversarial review of all 23 workflow files. Findings live in GitHub Issues — search label `area/ci` + `kind/bug`.
 
 **Blocking (P1) — fix before relying on production pipeline:**
 
@@ -239,7 +238,8 @@ Full adversarial review of all 23 workflow files. Epic: **#209**. Sub-issues: **
 
 **Verified-good — do not remove:**
 - All action pins use SHA (not floating tags)
-- `permissions: {}` at workflow level + per-job escalation in `reusable-build.yml`
+- Workflow and job-level `permissions` scoped to minimum required
+- Build callers do not use `secrets: inherit`
 - `/e2e` dispatch gated to write/maintain/admin collaborators only
 - Shell injection protected via env-variable binding for PR branch names
 - GitHub App tokens (not PATs) for cherry-pick workflow

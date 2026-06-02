@@ -88,15 +88,15 @@ The weekly promotion workflow refuses to promote untested code. It uses SHA-lock
 The canonical testsuite pin lives in **one place only**: `.github/workflows/run-testsuite.yml`. All other workflows must call this wrapper — never call `projectbluefin/testsuite/.github/workflows/e2e.yml` directly. Renovate maintains the single pin automatically.
 
 ```bash
-# Check for drift — should return empty after fixing #223
+# Check for drift — should return empty
 grep -rn "projectbluefin/testsuite" .github/workflows/ | grep -v "run-testsuite.yml"
 ```
 
 ### SBOM / provenance chain
 
-- **Testing builds:** SBOM generation is currently skipped (runner time budget) — tracked in #213
+- **Testing builds:** SBOM generation is skipped (runner time budget)
 - **Stable/latest direct builds:** Full SBOM via Syft → ORAS attach → cosign sign
-- **Weekly promotion path:** Retags testing digests which currently lack SBOMs — see #213
+- **Weekly promotion path:** Retags testing digests which lack SBOMs
 - **Attestation:** `actions/attest` runs on all non-PR builds regardless of stream
 - **SBOM verification:** `oras discover --format json ghcr.io/projectbluefin/IMAGE@DIGEST | jq '.referrers[] | select(.artifactType == "application/vnd.spdx+json")'`
 
@@ -126,15 +126,12 @@ Every production image has:
 - `keys/ublue-os-brew.pub` — brew layer signing key
 - `check-cosign-key-rotation.yml` — weekly monitor, opens P1 issue on mismatch
 
-### Known gaps (tracked)
+### Known gaps
 
-| Gap | Issue |
-|-----|-------|
-| Testing stream skips SBOM → promoted images lack signed SBOMs | #213 |
-| Base image cosign verify is warning-only (non-fatal) | #214 |
-| Cosign bootstrap from unverified cgr.dev:latest | #215 |
-| Promotion doesn't verify signatures before retagging | #218 |
-| Weekly promotion promotes nvidia-open without e2e | #211 |
+| Gap | Description |
+|-----|-------------|
+| Testing stream skips SBOM | Promoted `:stable`/`:latest` images lack signed SBOMs; `generate-release.yml` must tolerate missing referrers |
+| Weekly promotion tests one flavor | Only `bluefin-main` is e2e-verified before all flavors are promoted |
 
 ## Build caching
 
@@ -179,9 +176,9 @@ GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, t
 | `pre-commit` fails | Formatting or repo policy hook failed | Run `pre-commit run --all-files` locally and apply the fixes |
 | Post-testing e2e cannot find a digest | Artifact name or upstream build output changed | Verify `build-image-testing.yml` and `reusable-build.yml` still publish `image-digest-testing-bluefin-main` |
 | Weekly promotion aborts because `main` advanced | New commits landed during e2e | Rerun `weekly-testing-promotion.yml` after e2e is green again |
-| Weekly promotion cannot download digest artifact | Artifact expired (1-day retention, pending fix #212) | Trigger a fresh push to `main` to get a new artifact |
+| Weekly promotion cannot download digest artifact | Artifact expired before the Tuesday window | Trigger a fresh push to `main` to get a new artifact |
 | Renovate auto-merge finds no PR | Author filter mismatch (renovate[bot] vs app/mergeraptor) | Check jq filter in `renovate-automerge.yml` includes both |
-| `generate-release.yml` fails with "No SBOM referrer found" | Image was built before SBOM pipeline existed, or is from testing stream | See `allow_missing_sbom=True` pattern in skill Learnings |
+| `generate-release.yml` fails with "No SBOM referrer found" | Testing stream skips SBOM; promoted images lack referrers | See `allow_missing_sbom=True` pattern in skill Learnings |
 | Cosign sign/verify fails | Sigstore Fulcio/Rekor outage or key rotation | Check `check-cosign-key-rotation.yml` issues; retry after Sigstore recovers |
 
 ## Complete workflow inventory
