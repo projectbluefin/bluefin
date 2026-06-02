@@ -58,6 +58,9 @@ Non-compliance = rejection.
 - Keep open PR count at 4 or fewer.
 - Do not open WIP PRs.
 - **NEVER interact with repos outside the [`projectbluefin`](https://github.com/projectbluefin) org.** Do not open, comment on, or modify issues, PRs, or code in `ublue-os`, `coreos`, or any other org. Only `projectbluefin/*` repos are in scope.
+- **Agents MUST NOT push directly to `main`.** All changes via PR from a feature branch. Branch protection enforces this.
+- **Production promotion** (`weekly-testing-promotion.yml`) requires 2 distinct human approvals in the GitHub `production` Environment before `:stable` is updated. No agent may trigger, approve, or bypass this gate. Every admin bypass is permanently logged in Environment deployment history.
+- **`.github/workflows/`, `Justfile`, and `build_files/` are CODEOWNERS-protected** — PRs touching these paths require maintainer review.
 
 ## PR comment policy
 
