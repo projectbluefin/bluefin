@@ -110,7 +110,8 @@ If `main` advanced during promotion, the workflow aborts on purpose.
 - A skipped workflow can still satisfy a required check if GitHub considers it skipped-by-filter
 - Stable release generation depends on SBOM assets existing for the images being diffed — testing stream skips SBOM generation; promoted images lack signed SBOMs until a separate SBOM pass runs
 - Bluefin docs-only changes often skip image builds due to path filters; that is usually expected
-- **Testsuite pin lives in `run-testsuite.yml` only** — all other workflows must call this wrapper; never call `projectbluefin/testsuite/.github/workflows/e2e.yml` directly
+- **Testsuite pin lives in `run-testsuite.yml` only** — all other workflows must call this wrapper; never call `projectbluefin/testsuite/.github/workflows/e2e.yml` directly. To audit: `grep -r "projectbluefin/testsuite" .github/workflows/` — any hit outside `run-testsuite.yml` is a bug.
+- **Vulnerability scans must use the build digest, not a mutable tag.** `vulnerability-scan.yml` downloads `image-digest-{stream_name}-{brand_name}-{image_flavor}` from the triggering `workflow_run` and passes `image@sha256:...` to the scanner to avoid TOCTOU. Artifact names for the default bluefin build: `image-digest-testing-bluefin-main`, `image-digest-testing-bluefin-nvidia-open`.
 - Weekly promotion uses retag-only (skopeo copy) for the canonical path; a parallel rebuild pathway also exists via branch push
 - Build callers do not pass `secrets: inherit` — `reusable-build.yml` only needs `GITHUB_TOKEN`, which is automatically available
 
@@ -184,9 +185,9 @@ Never duplicate an existing shared action inline — doing so creates a second R
 - **PATs are forbidden in projectbluefin repos.** Never add `RENOVATE_TOKEN` or any PAT secret. Renovate uses GitHub App auth via `projectbluefin/renovate-config`. Trigger Renovate: `gh workflow run "Renovate Self-Hosted" --repo projectbluefin/renovate-config`
 - **No personal tool artifacts in community files.** This repo is shared; do not include powerlevel ratings, personal skill patterns, or client-specific references in `docs/`.
 
-## Lessons learned
+## Reference patterns
 
-### PR rechunk guard requires a PR-only OCI export step (2026-05-31)
+### PR rechunk guard requires a PR-only OCI export step
 
 When adding `if: github.event_name != 'pull_request'` to the rechunk step, the "Upload OCI dir as Artifact" step breaks on PRs because `${{ env.IMAGE_NAME }}_build` (the rechunk output dir) no longer exists. Fix: add a PR-only step before the upload that exports the un-rechunked image:
 
@@ -200,7 +201,7 @@ When adding `if: github.event_name != 'pull_request'` to the rechunk step, the "
       ${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
 ```
 
-### skopeo copy for alias tags requires registry login before the push step
+### skopeo copy for alias tags
 
 `skopeo copy docker://... docker://...` needs the registry to be authenticated. The `Login to GitHub Container Registry` step must run before the push block (it already does in reusable-build.yml). No separate login needed for skopeo — it uses the credential store populated by `podman login`.
 
@@ -208,7 +209,7 @@ When adding `if: github.event_name != 'pull_request'` to the rechunk step, the "
 
 `pr-validation.yml` already runs `just check` as a required check before merge. Running it in every matrix cell wastes ~60-120s per build with zero added value. Remove it from `reusable-build.yml`; keep it only in `pr-validation.yml`.
 
-### Pre-production security audit — 14 tracked findings (2026-06-01)
+### Pre-production security audit — 14 tracked findings
 
 Full adversarial review of all 23 workflow files. Epic: **#209**. Sub-issues: **#210–#215, #218–#225**.
 
@@ -230,9 +231,9 @@ Full adversarial review of all 23 workflow files. Epic: **#209**. Sub-issues: **
 | #218 | `weekly-testing-promotion.yml` | No `cosign verify` before retag — unsigned digest can reach production |
 | #219 | `weekly-testing-promotion.yml` L12-15 | `contents/actions/packages: write` at workflow level — over-broad for read-only jobs |
 | #220 | `build-image-*.yml` | All callers use `secrets: inherit` — only `GITHUB_TOKEN` needed |
-| #221 | `vulnerability-scan.yml` L48 | Scans `:testing` tag not build digest (TOCTOU) |
+| #221 | `vulnerability-scan.yml` L48 | Scans `:testing` tag not build digest (TOCTOU) — **fixed PR #263** |
 | #222 | `pr-smoke.yml` L83-87 | PR builds push under official `ghcr.io/projectbluefin/` namespace |
-| #223 | `pr-validation.yml` L55 | Stale testsuite SHA `5d273131` (canonical: `969d4713` in `run-testsuite.yml`); bypasses wrapper |
+| #223 | `pr-validation.yml` L55 | Stale testsuite SHA; `nightly.yml`, `pr-smoke.yml`, `pr-validation.yml` all bypassed wrapper — **fixed PR #262** |
 | #224 | `pr-validation.yml` L28 | `pip install pre-commit` unpinned |
 | #225 | `build-image-stable.yml` | Parallel rebuild pathway coexists with retag-only promotion (dual provenance) — needs maintainer decision |
 
