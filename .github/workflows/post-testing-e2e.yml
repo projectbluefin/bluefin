@@ -56,7 +56,7 @@ jobs:
     permissions:
       packages: write
       contents: read
-    uses: projectbluefin/actions/.github/workflows/upgrade-test.yml@19058ec8319ab6f0c9a07d69e4dbbf078bf8457b # feat/lifecycle-chunked-input
+    uses: projectbluefin/actions/.github/workflows/upgrade-test.yml@45ab927e8f8b9c83ffa5ae91c20eb98e44562223 # feat/lifecycle-chunked-v2
     with:
       image: ${{ needs.e2e.outputs.image }}
       suites: lifecycle
