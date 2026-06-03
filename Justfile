@@ -126,28 +126,45 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     fi
     fedora_version=$({{ just }} fedora_version '{{ image }}' '{{ tag }}' '{{ flavor }}' '{{ kernel_pin }}')
 
+    # Resolve and pin the base image digest first (TOCTOU fix)
+    BASE_IMAGE_MAX_RETRIES=5
+    BASE_IMAGE_RETRY_DELAY=10
+    last_digest_error=""
+    for attempt in $(seq 1 ${BASE_IMAGE_MAX_RETRIES}); do
+        if inspect_output=$(skopeo inspect --retry-times 3 docker://quay.io/fedora-ostree-desktops/silverblue:"${fedora_version}" 2>&1); then
+            base_image_digest=$(jq -r '.Digest // empty' <<<"${inspect_output}")
+            if [[ -n "${base_image_digest:-}" ]]; then
+                break
+            fi
+            last_digest_error="skopeo inspect returned no digest"
+        else
+            last_digest_error="${inspect_output}"
+        fi
+
+        if [[ "${attempt}" -eq "${BASE_IMAGE_MAX_RETRIES}" ]]; then
+            echo "ERROR: Could not resolve silverblue digest after ${BASE_IMAGE_MAX_RETRIES} attempts. Refusing to build without a pinned, verified base image."
+            echo "Last error: ${last_digest_error}"
+            exit 1
+        fi
+
+        echo "NOTICE: Digest resolution attempt ${attempt}/${BASE_IMAGE_MAX_RETRIES} failed, retrying in ${BASE_IMAGE_RETRY_DELAY}s..."
+        sleep "${BASE_IMAGE_RETRY_DELAY}"
+    done
+    base_image_ref="quay.io/fedora-ostree-desktops/silverblue:${fedora_version}@${base_image_digest}"
+
     # Verify Base Image with cosign — FATAL in CI, skippable locally for dev convenience.
     # A verification failure means the base image cannot be trusted; continuing would launder
     # a potentially compromised image through the Bluefin signing pipeline.
     if [[ "${SKIP_BASE_VERIFY:-}" == "1" && "${CI:-}" != "true" ]]; then
         echo "WARNING: Skipping base image verification (SKIP_BASE_VERIFY=1, local dev only)"
     else
-        {{ just }} verify-container silverblue:${fedora_version} quay.io/fedora-ostree-desktops "{{ justfile_directory() }}/keys/fedora-ostree.pub" || {
-            echo "ERROR: Base image cosign verification FAILED for silverblue:${fedora_version}"
+        {{ just }} verify-container "silverblue:${fedora_version}@${base_image_digest}" quay.io/fedora-ostree-desktops "{{ justfile_directory() }}/keys/fedora-ostree.pub" || {
+            echo "ERROR: Base image cosign verification FAILED for ${base_image_ref}"
             echo "This may indicate a key rotation, registry compromise, or transient network issue."
             echo "If this is a known key rotation, update keys/fedora-ostree.pub and retry."
             echo "If this is a transient network issue, retry the build."
             exit 1
         }
-    fi
-
-    # Resolve base image tag to digest (TOCTOU fix: pin the exact image cosign just verified)
-    base_image_digest=$(skopeo inspect --retry-times 3 docker://quay.io/fedora-ostree-desktops/silverblue:"${fedora_version}" 2>/dev/null | jq -r '.Digest // empty') || true
-    if [[ -n "${base_image_digest:-}" ]]; then
-        base_image_ref="quay.io/fedora-ostree-desktops/silverblue:${fedora_version}@${base_image_digest}"
-    else
-        echo "WARNING: Could not resolve silverblue digest — using tag-only ref. Build will pull latest matching tag."
-        base_image_ref="quay.io/fedora-ostree-desktops/silverblue:${fedora_version}"
     fi
 
     # Kernel Release/Pin
