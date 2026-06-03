@@ -51,8 +51,18 @@ jobs:
       image: ${{ needs.e2e.outputs.image }}
       suites: smoke,common
 
+  run-upgrade-test:
+    needs: [e2e]
+    permissions:
+      packages: write
+      contents: read
+    uses: projectbluefin/actions/.github/workflows/upgrade-test.yml@a88ffb30e0c33767cac04ca48bddac94f821a27c # feat/lifecycle-chunked-input
+    with:
+      image: ${{ needs.e2e.outputs.image }}
+      suites: lifecycle
+
   report-failure:
-    needs: [e2e, run-e2e]
+    needs: [e2e, run-e2e, run-upgrade-test]
     if: failure() && needs.e2e.outputs.image != ''
     runs-on: ubuntu-latest
     timeout-minutes: 5
