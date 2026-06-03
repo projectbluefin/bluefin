@@ -56,7 +56,7 @@ jobs:
     permissions:
       packages: write
       contents: read
-    uses: projectbluefin/actions/.github/workflows/upgrade-test.yml@aa9188e387140dcb8da923dca366caed8249ebd9 # main
+    uses: projectbluefin/actions/.github/workflows/upgrade-test.yml@0527fe28c462e3f53cb1f6674c429562861e316c # main
     with:
       image: ${{ needs.e2e.outputs.image }}
       suites: lifecycle
