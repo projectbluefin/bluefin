@@ -47,6 +47,12 @@ sudo bootc switch ghcr.io/ublue-os/bluefin-nvidia-open:latest --enforce-containe
 
 Visit **[projectbluefin.io](https://projectbluefin.io/#scene-picker)** to download and install Bluefin, or check the **[Documentation](https://docs.projectbluefin.io/)** for detailed guides.
 
+### Developer Setup
+
+If you want to contribute to Bluefin, start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch workflow, validation steps, and commit conventions.
+
+For local image build prerequisites and commands, see [docs/build.md](docs/build.md).
+
 ### Secure Boot
 
 Secure Boot is supported by default. After the first installation you will be prompted to enroll the secure boot key in the BIOS. Enter the password `universalblue` when prompted.
