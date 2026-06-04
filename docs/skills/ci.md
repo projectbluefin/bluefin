@@ -30,11 +30,11 @@ Retry only failed jobs:
 gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 ```
 
-## Workflow map (complete — 23 workflows)
+## Workflow map (high-signal workflows)
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| `pr-validation.yml` | PRs to `testing`, merge_group | Fast gate: **`validate`** (validate-pr@v1: just check, shellcheck, hadolint, pre-commit) + **`unit-tests`** (bats tests/unit/) — **E2E (`testsuite`) only on `merge_group`** |
+| `pr-validation.yml` | PRs to `testing`, merge_group | Fast gate: **`validate`** (shared `validate-pr`, SHA-pinned in callers: just check, shellcheck, hadolint, pre-commit) + **`unit-tests`** (bats tests/unit/) — **E2E (`testsuite`) only on `merge_group`** |
 | `pr-smoke.yml` | PRs touching build files | Full image build + smoke test |
 | `build-image-testing.yml` | Push to `main`, dispatch | Testing image builds via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Testing build on `main` | Smoke+common continuous e2e gate |
@@ -57,6 +57,7 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 | `cherry-pick-to-stable.yml` | `cherry-pick` label on PR | Backport via GitHub App token |
 | `bonedigger.yml` | Issue events, daily | Issue lifecycle |
 | `moderator.yml` | Issues/comments | AI spam detection |
+| `skill-drift.yml` | PRs to `testing` | Guardrail: workflow/build changes must update matching docs/skills |
 
 ## Fast checks by symptom
 
@@ -123,17 +124,27 @@ Common CI/CD logic lives in reusable GitHub Actions at **https://github.com/proj
 
 | Action | Status | Purpose |
 |---|---|---|
-| `bootc-build/setup-runner` | ✅ live `@v1` | Update podman from Ubuntu resolute, BTRFS mount, install just/cosign/oras/syft |
-| `bootc-build/dnf-cache` | ✅ live `@v1` | Restore/save buildah cache with chmod 777 workaround |
-| `bootc-build/ghcr-cleanup` | ✅ live `@v1` | Parameterized GHCR image retention |
-| `bootc-build/preflight` | ✅ live `@v1` | Validate registry auth, normalize image refs, check required secrets |
-| `bootc-build/detect-changes` | ✅ live `@v1` | Detect changed paths; compute image-flavor build matrix (`image_flavors`, `should_build`) |
-| `bootc-build/validate-pr` | ✅ live `@v1` | PR validation: just check, shellcheck, hadolint, pre-commit — all tool pins live here |
-| `bootc-build/push-image` | ✅ live `@v1` | Push once + skopeo copy for alias tags, digest capture |
-| `bootc-build/sign-and-publish` | ✅ live `@v1` | Cosign sign (keyless or key-based) + Syft SBOM + ORAS attach + attestation |
-| `bootc-build/rechunk` | ✅ live `@v1` | rpm-ostree chunkah rechunking with delta support |
-| `bootc-build/generate-tags` | ✅ live `@v1` | Produce OCI tags from branch, date, Fedora version |
+| `bootc-build/setup-runner` | ✅ released on `v1` | Update podman from Ubuntu resolute, BTRFS mount, install just/cosign/oras/syft |
+| `bootc-build/dnf-cache` | ✅ released on `v1` | Restore/save buildah cache with chmod 777 workaround |
+| `bootc-build/ghcr-cleanup` | ✅ released on `v1` | Parameterized GHCR image retention |
+| `bootc-build/preflight` | ✅ released on `v1` | Validate registry auth, normalize image refs, check required secrets |
+| `bootc-build/detect-changes` | ✅ released on `v1` | Detect changed paths; compute image-flavor build matrix (`image_flavors`, `should_build`) |
+| `bootc-build/validate-pr` | ✅ released on `v1` | PR validation: just check, shellcheck, hadolint, pre-commit — all tool pins live here |
+| `bootc-build/push-image` | ✅ released on `v1` | Push once + skopeo copy for alias tags, digest capture |
+| `bootc-build/sign-and-publish` | ✅ released on `v1` | Cosign sign (keyless or key-based) + Syft SBOM + ORAS attach + attestation |
+| `bootc-build/rechunk` | ✅ released on `v1` | rpm-ostree chunkah rechunking with delta support |
+| `bootc-build/generate-tags` | ✅ released on `v1` | Produce OCI tags from branch, date, Fedora version |
 | `bootc-build/generate-release` | 🔲 planned | Changelog from RPM diff + SBOM comparison |
+
+### Caller pinning rule
+
+Workflow consumers in this repo pin `projectbluefin/actions` references to a full commit SHA and keep the release channel in a trailing comment:
+
+```yaml
+- uses: projectbluefin/actions/bootc-build/setup-runner@13e3593568d87cfe075a86e3995930e350f8c5ea # v1
+```
+
+Floating `@v1` tags are blocked by the repo's `no-floating-action-tags` pre-commit hook. The `# v1` comment is the stable contract; the SHA is the actual pin that Renovate updates.
 
 ### Migration pattern
 
@@ -146,7 +157,7 @@ Replace inline workflow steps with action calls:
     sudo systemctl ...
 
 # After: single action call
-- uses: projectbluefin/actions/bootc-build/setup-runner@v1
+- uses: projectbluefin/actions/bootc-build/setup-runner@<SHA> # v1
   with:
     podman-version: "5.4"
 ```
@@ -155,7 +166,7 @@ Replace inline workflow steps with action calls:
 
 - Each action is independently consumable (no monolithic action bundle)
 - Signing mode is an input (`keyless` or `key-based`), not hardcoded
-- Actions pin to `@v1` semver tags; Renovate tracks updates via `github-actions` manager
+- Consumer repos pin SHAs; Renovate tracks updates via the `github-actions` manager and preserves the `# v1` release-channel comment
 - The full catalog and authoring guide lives at **https://github.com/projectbluefin/actions/tree/main/docs/skills**
 
 ### CI fix workflow for agents
@@ -174,7 +185,7 @@ When you encounter a CI issue that involves duplicated inline steps, path-filter
 1. Open a PR in `projectbluefin/actions` on a feature branch
 2. Open a draft PR here pinned to the feature branch SHA (e.g. `projectbluefin/actions/bootc-build/detect-changes@<SHA>`)
 3. CI must pass on this draft PR before the actions PR merges
-4. After the actions PR merges and `@v1` moves, update this PR to `@v1`
+4. After the actions PR merges, update this repo to the released `v1` SHA (keep the trailing `# v1` comment)
 
 Never duplicate an existing shared action inline — doing so creates a second Renovate pin that drifts independently.
 
@@ -183,6 +194,8 @@ Never duplicate an existing shared action inline — doing so creates a second R
 - **PRs always target `testing`.** Never `main`. If you open a PR targeting `main`, close it and re-open.
 - **Never add shared CI logic to `.github/` or `common`.** New reusable actions go in `projectbluefin/actions` only. See "CI fix workflow for agents" above for the correct sequence.
 - **Never inline a third-party action that is already wrapped in `projectbluefin/actions`.** Use the shared action instead; duplicating the pin creates Renovate drift.
+- **Bluefin workflow files are thin callers.** Local workflow edits should usually stop at triggers, permissions, concurrency, repo-specific constraints, and inputs to shared actions/workflows.
+- **Workflow behavior changes must update `docs/skills/ci.md` in the same PR.** `skill-drift.yml` now runs on PRs to `testing` to enforce this on the real landing branch.
 - **Read the actual workflow files before writing about them.** Stored memory about tags, steps, or behavior can be stale. Open the file and verify.
 - **PATs are forbidden in projectbluefin repos.** Never add `RENOVATE_TOKEN` or any PAT secret. Renovate uses GitHub App auth via `projectbluefin/renovate-config`. Trigger Renovate: `gh workflow run "Renovate Self-Hosted" --repo projectbluefin/renovate-config`
 - **No personal tool artifacts in community files.** This repo is shared; do not include powerlevel ratings, personal skill patterns, or client-specific references in `docs/`.

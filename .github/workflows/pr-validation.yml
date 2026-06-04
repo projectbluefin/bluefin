@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      # Constrain the shared validate-pr composite to a repo-pinned pre-commit.
+      # Repo-local constraint only; keep the shared validate-pr logic in projectbluefin/actions.
       PIP_CONSTRAINT: ${{ github.workspace }}/.github/requirements-ci.txt
     steps:
       - name: Checkout

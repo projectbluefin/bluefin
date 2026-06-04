@@ -37,6 +37,8 @@ jobs:
   build-image-testing:
     name: Build Testing Images
     needs: [detect-changes]
+    # Thin caller only: shared build orchestration belongs in projectbluefin/actions.
+    # Keep repo-local edits here limited to triggers, permissions, and reusable-build inputs.
     if: |
       always() &&
       (github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || inputs.pr_number != '') &&
