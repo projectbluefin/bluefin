@@ -9,10 +9,7 @@ concurrency:
   group: weekly-testing-promotion
   cancel-in-progress: false
 
-permissions:
-  contents: write
-  actions: write
-  packages: write
+permissions: {}
 
 jobs:
   # Verify that post-testing-e2e.yml already ran smoke tests on the current
@@ -22,10 +19,14 @@ jobs:
   verify-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
     outputs:
       testing_sha: ${{ steps.lock-sha.outputs.sha }}
       build_run_id: ${{ steps.find-build.outputs.run_id }}
       image: ${{ steps.get-digest.outputs.image }}
+      nvidia_open_image: ${{ steps.get-nvidia-digest.outputs.image }}
     steps:
       - name: Lock main HEAD SHA
         id: lock-sha
@@ -52,7 +53,7 @@ jobs:
             --workflow post-testing-e2e.yml \
             --branch main \
             --repo "${{ github.repository }}" \
-            --limit 20 \
+            --limit 50 \
             --json headSha,conclusion \
             --jq ".[] | select(.headSha == \"$LOCKED_SHA\") | .conclusion" \
             | head -1)
@@ -81,7 +82,7 @@ jobs:
             --workflow build-image-testing.yml \
             --branch main \
             --repo "${{ github.repository }}" \
-            --limit 20 \
+            --limit 50 \
             --json databaseId,headSha,conclusion \
             --jq ".[] | select(.headSha == \"$LOCKED_SHA\" and .conclusion == \"success\") | .databaseId" \
             | head -1)
@@ -100,13 +101,42 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          DIGEST_DIR="$RUNNER_TEMP/digest-main"
+          rm -rf "$DIGEST_DIR"
+          mkdir -p "$DIGEST_DIR"
           gh run download "${{ steps.find-build.outputs.run_id }}" \
             --repo "${{ github.repository }}" \
             --name "image-digest-testing-bluefin-main" \
-            --dir /tmp/digest
-          DIGEST=$(grep "=" /tmp/digest/main-bluefin.txt | head -1 | cut -d= -f2-)
+            --dir "$DIGEST_DIR"
+          DIGEST=$(grep "=" "$DIGEST_DIR/main-bluefin.txt" | head -1 | cut -d= -f2-)
           echo "image=ghcr.io/${{ github.repository_owner }}/bluefin@${DIGEST}" >> "$GITHUB_OUTPUT"
           echo "Promoting: ghcr.io/${{ github.repository_owner }}/bluefin@${DIGEST}"
+
+      - name: Get nvidia-open digest for e2e gate
+        id: get-nvidia-digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          DIGEST_DIR="$RUNNER_TEMP/digest-nvidia"
+          rm -rf "$DIGEST_DIR"
+          mkdir -p "$DIGEST_DIR"
+          gh run download "${{ steps.find-build.outputs.run_id }}" \
+            --repo "${{ github.repository }}" \
+            --name "image-digest-testing-bluefin-nvidia-open-x86_64" \
+            --dir "$DIGEST_DIR" 2>/dev/null || {
+            echo "::warning::nvidia-open digest not found — skipping nvidia-open promotion gate"
+            echo "image=" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+          DIGEST=$(grep -hoE 'sha256:[0-9a-f]{64}' "$DIGEST_DIR"/*.txt | head -1)
+          if [[ -z "$DIGEST" ]]; then
+            echo "::warning::Could not extract nvidia-open digest — skipping gate"
+            echo "image=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "image=ghcr.io/${{ github.repository_owner }}/bluefin-nvidia-open@${DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "Found nvidia-open digest: ${DIGEST}"
 
   e2e:
     needs: [verify-e2e]
@@ -118,9 +148,28 @@ jobs:
       image: ${{ needs.verify-e2e.outputs.image }}
       suites: developer,vanilla-gnome,software,common
 
+  e2e-nvidia-open:
+    needs: [verify-e2e]
+    if: needs.verify-e2e.outputs.nvidia_open_image != ''
+    permissions:
+      packages: write
+      contents: read
+    uses: ./.github/workflows/run-testsuite.yml
+    with:
+      image: ${{ needs.verify-e2e.outputs.nvidia_open_image }}
+      suites: smoke,common
+    secrets: inherit
+
   promote-to-latest-and-stable:
-    environment: production
-    needs: [e2e, verify-e2e]
+    if: >-
+      always() &&
+      needs.verify-e2e.result == 'success' &&
+      needs.e2e.result == 'success' &&
+      (
+        needs.verify-e2e.outputs.nvidia_open_image == '' ||
+        needs.e2e-nvidia-open.result == 'success'
+      )
+    needs: [e2e, e2e-nvidia-open, verify-e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -128,7 +177,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout main
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
           ref: main
@@ -158,6 +207,50 @@ jobs:
             --dir /tmp/all-digests
           echo "Downloaded digest files:"
           find /tmp/all-digests -name "*.txt" | sort
+
+      - name: Verify cosign signatures before promotion
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Install cosign via sigstore installer (already available if run after a build)
+          # Fall back to downloading from GitHub releases if not available
+          if ! command -v cosign &>/dev/null; then
+            COSIGN_VERSION="v2.5.0"
+            curl -fsSL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" \
+              -o /usr/local/bin/cosign
+            chmod +x /usr/local/bin/cosign
+          fi
+
+          REGISTRY="ghcr.io/${{ github.repository_owner }}"
+          FAILED=0
+
+          while IFS= read -r -d '' f; do
+            line=$(grep "=" "$f" | head -1)
+            IMAGE_NAME="${line%%=*}"
+            DIGEST="${line##*=}"
+            if [[ -z "$IMAGE_NAME" || -z "$DIGEST" ]]; then
+              echo "WARNING: Could not parse $f — skipping verification"
+              continue
+            fi
+            REF="${REGISTRY}/${IMAGE_NAME}@${DIGEST}"
+            echo "Verifying signature: ${REF}"
+            if ! cosign verify \
+              --certificate-identity-regexp "https://github.com/${{ github.repository }}/.github/workflows/" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              "${REF}" 2>/dev/null; then
+              echo "::error::Signature verification FAILED for ${IMAGE_NAME}@${DIGEST}"
+              FAILED=$((FAILED + 1))
+            else
+              echo "  ✅ Signature verified: ${IMAGE_NAME}"
+            fi
+          done < <(find /tmp/all-digests -name "*.txt" -print0)
+
+          if [[ "${FAILED}" -gt 0 ]]; then
+            echo "::error::${FAILED} image(s) failed signature verification — aborting promotion"
+            exit 1
+          fi
+          echo "✅ All signatures verified — proceeding with promotion"
 
       - name: Log in to GHCR
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
@@ -194,15 +287,15 @@ jobs:
           echo "Tested artifacts are now live — no rebuild was triggered."
 
   report-failure:
-    needs: [verify-e2e, e2e, promote-to-latest-and-stable]
-    if: failure() && needs.verify-e2e.outputs.image != ''
+    needs: [verify-e2e, e2e, e2e-nvidia-open, promote-to-latest-and-stable]
+    if: always() && failure() && needs.verify-e2e.outputs.image != ''
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       issues: write
     steps:
       - name: Open or update failure issue
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const image = '${{ needs.verify-e2e.outputs.image }}';

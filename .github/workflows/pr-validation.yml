@@ -14,45 +14,41 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      # Constrain the shared validate-pr composite to a repo-pinned pre-commit.
+      PIP_CONSTRAINT: ${{ github.workspace }}/.github/requirements-ci.txt
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
-      - name: Bootstrap just
-        uses: ./.github/actions/bootstrap-just
+      - name: Validate
+        uses: projectbluefin/actions/bootc-build/validate-pr@4ec3db50adc3a2b944e175295d419d78eaa63861 # v1
 
-      - name: Install shellcheck
-        run: sudo apt-get install -y shellcheck
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
-      - name: Install pre-commit
-        run: pip install pre-commit
+      - name: Install bats
+        run: sudo apt-get install -y bats
 
-      - name: Check Just syntax
-        shell: bash
-        run: just check
-
-      - name: Shellcheck build scripts
-        shell: bash
-        run: |
-          shopt -s globstar nullglob
-          shellcheck build_files/**/*.sh
-
-      - name: Lint Containerfile
-        uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf # v3.1.0
-        with:
-          dockerfile: Containerfile
-          config: .hadolint.yaml
-
-      - name: Run pre-commit
-        shell: bash
-        run: pre-commit run --all-files
+      - name: Run unit tests
+        run: bats tests/unit/package-lib_test.bats
 
   testsuite:
     name: E2E smoke
+    # Only gate actual merges — not every PR push.
+    if: github.event_name == 'merge_group'
     permissions:
       contents: read
       packages: write  # testsuite pushes screenshot OCI artifacts to GHCR
-    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@5d2731317911cd875077fe1576761635859cc728 # main
+    # Keep the testsuite SHA centralized in run-testsuite.yml.
+    uses: ./.github/workflows/run-testsuite.yml
     with:
       image: ghcr.io/projectbluefin/bluefin:testing
       suites: smoke

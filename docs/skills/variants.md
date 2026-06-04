@@ -19,7 +19,6 @@
 | Image | Purpose |
 |---|---|
 | `bluefin` | base desktop image |
-| `bluefin-dx` | developer-focused variant |
 
 ### Flavors
 
@@ -42,21 +41,19 @@
 ```text
 ghcr.io/projectbluefin/bluefin:testing-main
 ghcr.io/projectbluefin/bluefin:stable-nvidia-open
-ghcr.io/projectbluefin/bluefin-dx:latest-main
 ```
 
 ## Build matrix touchpoints
 
 - Justfile image map: `Justfile`
 - Build workflows: `.github/workflows/build-image-*.yml`
-- Reusable matrix logic: `.github/workflows/reusable-build.yml`
+- Reusable matrix logic: `projectbluefin/actions/.github/workflows/reusable-build.yml` (centralized — not a local file)
 
 ## Choosing the right target
 
 | If you need... | Use |
 |---|---|
 | normal desktop image | `bluefin` |
-| dev tooling baked in | `bluefin-dx` |
 | default driver stack | `main` |
 | NVIDIA open kernel module path | `nvidia-open` |
 | pre-promotion testing image | `testing-*` |

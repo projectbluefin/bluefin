@@ -48,7 +48,7 @@ body:
       label: "Which area does this affect?"
       options:
         - "GNOME / desktop experience"
-        - "Developer experience (DX)"
+        - "Developer experience"
         - "Flatpaks / applications"
         - "Homebrew / CLI tools"
         - "ujust recipes"

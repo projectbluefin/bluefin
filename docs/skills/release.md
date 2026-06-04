@@ -54,6 +54,16 @@ gh workflow run build-image-stable.yml --repo projectbluefin/bluefin --ref stabl
 gh workflow run build-image-latest-main.yml --repo projectbluefin/bluefin --ref latest
 ```
 
+To unblock a broken release when the fix is on a branch but not yet merged to `stable`, dispatch directly on the fix branch — `--ref` makes the workflow run using that branch's scripts:
+
+```bash
+gh workflow run generate-release.yml \
+  --repo projectbluefin/bluefin \
+  --ref <fix-branch> \
+  --field stream_name='["stable"]' \
+  --field handwritten="optional notes"
+```
+
 ## Release checklist
 
 1. `main` testing image build passed
@@ -68,7 +78,8 @@ gh workflow run build-image-latest-main.yml --repo projectbluefin/bluefin --ref 
 |---|---|---|
 | promotion aborts because SHA changed | new commit landed on `main` during gate | rerun promotion later |
 | promotion says nothing to do | `main` and `latest` are identical | no action needed |
-| stable release generation fails on SBOM lookup | older compared image lacks SBOM referrer | use missing-SBOM-safe changelog logic |
+| `generate-release.yml` fails with "not enough tags" | first-ever release: `changelogs.py` needs ≥ 2 stable tags; fixed by bootstrap patch (PR #264) | ensure the bootstrap fix is merged to `stable`; or dispatch on the fix branch with `--ref` |
+| stable release generation fails on SBOM lookup | testing stream skips SBOM (#213); promoted images lack signed referrers | dispatch `build-image-stable.yml` after promotion to rebuild with SBOM, then redispatch `generate-release.yml` |
 | latest/stable moved without intended coverage | bypassed the testing gate | use workflow-driven promotion, not manual retagging |
 
 ## Non-obvious patterns
@@ -76,6 +87,7 @@ gh workflow run build-image-latest-main.yml --repo projectbluefin/bluefin --ref 
 - `weekly-testing-promotion.yml` locks the current `main` SHA first, then verifies the gate on that exact commit
 - Stable releases are generated from workflow output; do not hand-edit release notes as the primary source of truth
 - ISO release and promotion is a **different repo**: `projectbluefin/bluefin-iso`
+- `changelogs.py` requires ≥ 2 stable tags in GHCR to compute an RPM diff; the very first release has only 1 tag and the script exits 1 unless the bootstrap fix (PR #264) is present
 
 ## Shared release action
 
@@ -95,7 +107,3 @@ It produces:
 - Formatted changelog markdown
 
 This replaces per-repo `just changelogs` wrapper scripts in CI with a standardized action.
-
-## Lessons learned
-
-<!-- Add reusable release/promotion patterns here -->

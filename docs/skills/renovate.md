@@ -53,21 +53,25 @@ If a Renovate PR targets the wrong branch:
 2. retrigger Renovate
 3. correct or replace the already-open PRs
 
-## Review and merge flow
+## Automerge for Renovate/mergeraptor PRs
 
-```bash
-gh pr list --repo projectbluefin/bluefin --author 'app/renovate'
-gh pr view PR_NUMBER --repo projectbluefin/bluefin
-gh pr review PR_NUMBER --repo projectbluefin/bluefin --approve
-gh pr merge PR_NUMBER --repo projectbluefin/bluefin --squash
-```
+All Renovate and mergeraptor PRs automerge once `PR Validation — testsuite` passes:
+- No manual review needed for digest/pin/patch/minor bumps (configured in `renovate.json`)
+- `renovate-automerge.yml` runs `gh pr merge --auto --squash` — no high-risk/smoke distinction
+- Requires: `testing` branch protection with `validate` as required check + `allow_auto_merge=true` at repo level
+
+If auto-merge does not trigger:
+1. Confirm `testing` has branch protection: `gh api repos/projectbluefin/bluefin/branches/testing/protection`
+2. Confirm `allow_auto_merge` is set: `gh api repos/projectbluefin/bluefin --jq .allow_auto_merge`
+3. Re-run the failed `PR Validation` check to re-trigger the `workflow_run` event
 
 ## Common failure modes
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | Renovate PRs target `main` | wrong `baseBranchPatterns` | set branch pattern to `testing` |
-| automerge skipped a passing PR | PR finder ignored `app/mergeraptor` | include both Renovate and mergeraptor authors |
+| automerge skipped a passing PR | `testing` has no branch protection, or PR finder missed `app/mergeraptor` | enable branch protection on `testing` with `validate` required check; include both authors |
+| `enablePullRequestAutoMerge` GraphQL error | repo `allow_auto_merge` not set | `gh api --method PATCH repos/projectbluefin/bluefin -f allow_auto_merge=true` |
 | validator rejects config | stale field name | check current Renovate schema and rename the field |
 | workflow asks for a PAT | wrong auth model | use GitHub App secrets, never PATs |
 
@@ -90,4 +94,7 @@ No additional Renovate config is needed beyond `config:best-practices` — it al
 
 ## Lessons learned
 
-<!-- Add reusable Renovate patterns here -->
+- **`testing` has branch protection** — required check: `validate`; `allow_auto_merge=true` at repo level. `gh pr merge --auto --squash` works.
+- **Bulk-merging chore PRs** — iterate with `gh pr merge NNN --repo projectbluefin/bluefin --squash`. Skip DIRTY ones (conflicts) and trigger Renovate to rebase them.
+- **Conflicted Renovate PRs** — do both at once: post `@renovate rebase` on each conflicted PR AND trigger the central Renovate run. The comment makes Renovate prioritize that PR; the run handles all of them in batch.
+- **Wrong base branch** — Renovate PRs that land on `main` are not validated and cannot be enqueued. Retarget with `gh pr edit NNN --base testing`, then merge normally.

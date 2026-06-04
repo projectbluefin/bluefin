@@ -4,7 +4,6 @@ base_image_name := "silverblue"
 # common_image and brew_image refs are read from image-versions.yml at build time
 images := '(
     [bluefin]=bluefin
-    [bluefin-dx]=bluefin-dx
 )'
 flavors := '(
     [main]=main
@@ -34,6 +33,18 @@ check:
     done
     echo "Checking syntax: Justfile"
     {{ just }} --unstable --fmt --check -f Justfile
+
+# Run unit tests for shared build scripts
+[group('Just')]
+test-unit:
+    #!/usr/bin/bash
+    set -euo pipefail
+    if ! command -v bats &>/dev/null; then
+        echo "bats not found — install with: sudo apt-get install bats  OR  npm install -g bats"
+        exit 1
+    fi
+    echo "Running unit tests..."
+    bats tests/unit/package-lib_test.bats
 
 # Fix Just Syntax
 [group('Just')]
@@ -127,19 +138,45 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     fi
     fedora_version=$({{ just }} fedora_version '{{ image }}' '{{ tag }}' '{{ flavor }}' '{{ kernel_pin }}')
 
-    # Verify Base Image with cosign (warning-only: if quay.io is unreachable the build
-    # step itself will fail; we do not want preflight to block on registry outages)
-    {{ just }} verify-container silverblue:${fedora_version} quay.io/fedora-ostree-desktops "{{ justfile_directory() }}/keys/fedora-ostree.pub" \
-        || echo "WARNING: Could not verify silverblue base image — quay.io may be unreachable. Continuing..."
+    # Resolve and pin the base image digest first (TOCTOU fix)
+    BASE_IMAGE_MAX_RETRIES=5
+    BASE_IMAGE_RETRY_DELAY=10
+    last_digest_error=""
+    for attempt in $(seq 1 ${BASE_IMAGE_MAX_RETRIES}); do
+        if inspect_output=$(skopeo inspect --retry-times 3 docker://quay.io/fedora-ostree-desktops/silverblue:"${fedora_version}" 2>&1); then
+            base_image_digest=$(jq -r '.Digest // empty' <<<"${inspect_output}")
+            if [[ -n "${base_image_digest:-}" ]]; then
+                break
+            fi
+            last_digest_error="skopeo inspect returned no digest"
+        else
+            last_digest_error="${inspect_output}"
+        fi
 
-    # Resolve base image tag to digest (TOCTOU fix: pin the exact image cosign just verified)
-    # Falls back to tag-only ref if quay.io is unreachable (same condition as above)
-    base_image_digest=$(skopeo inspect --retry-times 3 docker://quay.io/fedora-ostree-desktops/silverblue:"${fedora_version}" 2>/dev/null | jq -r '.Digest // empty') || true
-    if [[ -n "${base_image_digest:-}" ]]; then
-        base_image_ref="quay.io/fedora-ostree-desktops/silverblue:${fedora_version}@${base_image_digest}"
+        if [[ "${attempt}" -eq "${BASE_IMAGE_MAX_RETRIES}" ]]; then
+            echo "ERROR: Could not resolve silverblue digest after ${BASE_IMAGE_MAX_RETRIES} attempts. Refusing to build without a pinned, verified base image."
+            echo "Last error: ${last_digest_error}"
+            exit 1
+        fi
+
+        echo "NOTICE: Digest resolution attempt ${attempt}/${BASE_IMAGE_MAX_RETRIES} failed, retrying in ${BASE_IMAGE_RETRY_DELAY}s..."
+        sleep "${BASE_IMAGE_RETRY_DELAY}"
+    done
+    base_image_ref="quay.io/fedora-ostree-desktops/silverblue:${fedora_version}@${base_image_digest}"
+
+    # Verify Base Image with cosign — FATAL in CI, skippable locally for dev convenience.
+    # A verification failure means the base image cannot be trusted; continuing would launder
+    # a potentially compromised image through the Bluefin signing pipeline.
+    if [[ "${SKIP_BASE_VERIFY:-}" == "1" && "${CI:-}" != "true" ]]; then
+        echo "WARNING: Skipping base image verification (SKIP_BASE_VERIFY=1, local dev only)"
     else
-        echo "WARNING: Could not resolve silverblue digest — using tag-only ref. Build will pull latest matching tag."
-        base_image_ref="quay.io/fedora-ostree-desktops/silverblue:${fedora_version}"
+        {{ just }} verify-container "silverblue:${fedora_version}@${base_image_digest}" quay.io/fedora-ostree-desktops "{{ justfile_directory() }}/keys/fedora-ostree.pub" || {
+            echo "ERROR: Base image cosign verification FAILED for ${base_image_ref}"
+            echo "This may indicate a key rotation, registry compromise, or transient network issue."
+            echo "If this is a known key rotation, update keys/fedora-ostree.pub and retry."
+            echo "If this is a transient network issue, retry the build."
+            exit 1
+        }
     fi
 
     # Kernel Release/Pin
@@ -182,11 +219,6 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
 
     # Build Arguments
     BUILD_ARGS=()
-    # Target
-    if [[ "${image}" =~ dx ]]; then
-        BUILD_ARGS+=("--build-arg" "IMAGE_FLAVOR=dx")
-        target="dx"
-    fi
     BUILD_ARGS+=("--build-arg" "AKMODS_FLAVOR=${akmods_flavor}")
     BUILD_ARGS+=("--build-arg" "BASE_IMAGE_REF=${base_image_ref}")
     BUILD_ARGS+=("--build-arg" "COMMON_IMAGE=${common_image}")
@@ -458,19 +490,21 @@ verify-container container="" registry="ghcr.io/ublue-os" key="":
     #!/usr/bin/bash
     set -eou pipefail
 
-    # Get Cosign if Needed
-    if [[ ! $(command -v cosign) ]]; then
-        COSIGN_CONTAINER_ID=$(${SUDOIF} ${PODMAN} create cgr.dev/chainguard/cosign:latest bash)
-        ${SUDOIF} ${PODMAN} cp "${COSIGN_CONTAINER_ID}":/usr/bin/cosign /usr/local/bin/cosign
-        ${SUDOIF} ${PODMAN} rm -f "${COSIGN_CONTAINER_ID}"
-    fi
+    # In CI, cosign is already installed by a SHA-pinned action.
+    # For local use, install a pinned release from GitHub only if it is missing.
+    if command -v cosign >/dev/null 2>&1; then
+        echo "cosign already available: $(cosign version 2>/dev/null | head -1)"
+    else
+        COSIGN_VERSION="v2.5.0"
+        COSIGN_INSTALL_PATH="{{ justfile_directory() }}/.cosign-install"
 
-    # Verify Cosign Image Signatures if needed
-    if [[ -n "${COSIGN_CONTAINER_ID:-}" ]]; then
-        if ! cosign verify --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity=https://github.com/chainguard-images/images/.github/workflows/release.yaml@refs/heads/main cgr.dev/chainguard/cosign >/dev/null; then
-            echo "NOTICE: Failed to verify cosign image signatures."
-            exit 1
-        fi
+        echo "Installing cosign ${COSIGN_VERSION}..."
+        trap 'rm -f "${COSIGN_INSTALL_PATH}"' EXIT
+        curl -fsSL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" \
+            -o "${COSIGN_INSTALL_PATH}"
+        chmod +x "${COSIGN_INSTALL_PATH}"
+        ${SUDOIF} install -m 0755 "${COSIGN_INSTALL_PATH}" /usr/local/bin/cosign
+        echo "cosign installed: $(cosign version 2>/dev/null | head -1)"
     fi
 
     # Public Key for Container Verification
@@ -750,6 +784,6 @@ retag-nvidia-on-ghcr working_tag="" stream="" dry_run="1":
         echo "$GITHUB_PAT" | podman login -u $GITHUB_USERNAME --password-stdin ghcr.io
         skopeo="skopeo"
     fi
-    for image in bluefin-nvidia-open bluefin-dx-nvidia-open; do
+    for image in bluefin-nvidia-open; do
       $skopeo copy docker://ghcr.io/projectbluefin/${image}:{{ working_tag }} docker://ghcr.io/projectbluefin/${image}:{{ stream }}
     done

@@ -24,7 +24,7 @@ jobs:
     permissions:
       packages: write
       contents: read
-    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@969d471323a5aed586ba19371a4d2c74c4fa6823 # main
+    uses: ./.github/workflows/run-testsuite.yml
     with:
       image: ghcr.io/${{ github.repository_owner }}/bluefin:latest
       suites: smoke,common,vanilla-gnome

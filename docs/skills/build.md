@@ -61,7 +61,6 @@ Avoid full image builds for docs-only or workflow-only changes.
 
 ```bash
 just build bluefin latest main
-just build bluefin-dx latest main
 just clean
 ```
 
@@ -132,12 +131,16 @@ PR validation (just check + pre-commit + shellcheck)
 | Scope | Tool | Why |
 |---|---|---|
 | Local validation | `just check`, `just fix` | Fast, no network needed |
-| Image build | `just build` locally, `reusable-build.yml` in CI | Same Containerfile, different runners |
+| Image build | `just build` locally, centralized `projectbluefin/actions` workflow in CI | Same Containerfile, different runners |
 | Promotion/signing | GitHub Actions only | Requires OIDC identity, registry access |
 
 ### Key shared actions (projectbluefin/actions)
 
-These actions are being extracted to standardize the build across bluefin, aurora, and bazzite:
+Bluefin's CI delegates to composite actions and a reusable workflow in [`projectbluefin/actions`](https://github.com/projectbluefin/actions). The internal `reusable-build.yml` has been deleted — callers now use:
+
+```yaml
+uses: projectbluefin/actions/.github/workflows/reusable-build.yml@<SHA>
+```
 
 | Action | Build phase |
 |---|---|

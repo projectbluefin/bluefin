@@ -32,12 +32,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 500
 
-      - name: Bootstrap just
-        uses: ./.github/actions/bootstrap-just
+      - name: Install just
+        uses: taiki-e/install-action@427262525d42141333caf43b602cf574dd6a6381 # just
+        with:
+          tool: just
 
       - name: Check Just Syntax
         shell: bash

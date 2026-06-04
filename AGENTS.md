@@ -30,6 +30,18 @@ dakota  (main→:latest)       ←── images ──→ testsuite (e2e gate)
 
 Each image repo consumes `projectbluefin/common`. `projectbluefin/testsuite` gates promotion.
 
+### Shared CI building blocks (`projectbluefin/actions`)
+
+```text
+projectbluefin/actions  ←── shared CI: composite actions + reusable-build.yml
+        │
+        ├── projectbluefin/bluefin      (calls reusable-build.yml@v1)
+        ├── projectbluefin/bluefin-lts  (à la carte composite actions)
+        └── projectbluefin/dakota       (partial adoption)
+```
+
+**Before fixing a CI issue here:** check if the broken logic lives in a shared composite action in `projectbluefin/actions`. If so, fix it there first. See `docs/skills/ci.md` → "CI fix workflow for agents" for the correct PR sequence.
+
 ## Repo rules
 
 - All PRs target `testing`. Never `main`.
@@ -61,6 +73,11 @@ Non-compliance = rejection.
 - **Agents MUST NOT push directly to `main`.** All changes via PR from a feature branch. Branch protection enforces this.
 - **Production promotion** (`weekly-testing-promotion.yml`) requires 2 distinct human approvals in the GitHub `production` Environment before `:stable` is updated. No agent may trigger, approve, or bypass this gate. Every admin bypass is permanently logged in Environment deployment history.
 - **`.github/workflows/`, `Justfile`, and `build_files/` are CODEOWNERS-protected** — PRs touching these paths require maintainer review.
+
+  > **⚠️ Git remote trap — confirmed incident 2026-06-01:** In this repo, `origin`
+  > points to `ublue-os/bluefin` (the forbidden org). A bare `git push` or
+  > `git push origin` silently violates this rule. **Always push explicitly:**
+  > `git push projectbluefin <branch>`. Verify with `git remote -v` before any push.
 
 ## PR comment policy
 

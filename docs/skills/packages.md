@@ -5,7 +5,6 @@
 - Adding, removing, or updating RPM packages in the image
 - Handling COPR packages safely
 - Figuring out whether a change belongs in RPM, Flatpak, or Homebrew
-- Touching DX-only package sets
 
 ## When NOT to use
 
@@ -28,7 +27,6 @@
 | Type | Location | Notes |
 |---|---|---|
 | Base RPMs | `build_files/base/03-packages.sh` | Main `FEDORA_PACKAGES` list |
-| DX RPMs | `build_files/dx/00-dx.sh` | Developer-only packages |
 | COPR helper | `build_files/shared/copr-helpers.sh` | Use `copr_install_isolated()` |
 | Flatpak setup hooks | `system_files/shared/usr/share/ublue-os/privileged-setup.hooks.d/99-flatpaks.sh` | This repo currently carries setup, not the full app list |
 | Brew-triggered user setup | `system_files/shared/usr/share/ublue-os/user-setup.hooks.d/` | Example: Framework laptop casks |
@@ -38,18 +36,12 @@
 Edit the correct array, then validate syntax:
 ```bash
 bash -n build_files/base/03-packages.sh
-bash -n build_files/dx/00-dx.sh
 just check && pre-commit run --all-files
 ```
 
 Base image packages belong in:
 ```bash
 build_files/base/03-packages.sh
-```
-
-DX-only packages belong in:
-```bash
-build_files/dx/00-dx.sh
 ```
 
 ## COPR changes
