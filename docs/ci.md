@@ -17,9 +17,57 @@ Bluefin's CI is split between PR validation, image builds, post-build e2e, weekl
 
 ## Centralized actions (`projectbluefin/actions`)
 
-Shared reusable workflows and composite actions for the Bluefin build pipeline live in [`projectbluefin/actions`](https://github.com/projectbluefin/actions). **Do not add new action pins inline in workflow files** — if the same action would be used in more than one workflow, it belongs in a composite action in `projectbluefin/actions`. This keeps Renovate updates centralised: one PR in `projectbluefin/actions` propagates to all consumers.
+Shared reusable workflows and composite actions live in [`projectbluefin/actions`](https://github.com/projectbluefin/actions). **Do not add new action pins inline in workflow files** — if the same action would be used in more than one workflow, it belongs in a composite action in `projectbluefin/actions`. This keeps Renovate updates centralised: one PR in `projectbluefin/actions` propagates to all consumers.
 
-The internal `reusable-build.yml` has been deleted — all three stream callers delegate to the centralized workflow:
+### Architecture rule
+
+| Location | Purpose |
+|---|---|
+| `projectbluefin/actions/bootc-build/` | Shared composite actions (setup-runner, detect-changes, rechunk, …) |
+| `projectbluefin/actions/.github/workflows/` | Shared reusable workflows (reusable-build.yml) |
+| `.github/actions/` (this repo) | **Repo-specific** helpers only — must not duplicate what `projectbluefin/actions` already provides |
+| Inline `uses:` in workflow YAML | Only for actions used exactly once in this repo and not shared across the org |
+
+### Referencing shared actions
+
+Pin to a full commit SHA during development; update to `@v1` after the action PR merges and the maintainer advances the tag:
+
+```yaml
+# During development / before v1 tag moves:
+uses: projectbluefin/actions/bootc-build/detect-changes@4387ca8dfc2f33db48b30e3ccc2011f1df5f8b10
+
+# After v1 is released:
+uses: projectbluefin/actions/bootc-build/detect-changes@v1
+```
+
+Renovate tracks SHA pins automatically (`config:best-practices` includes `github-actions` manager).
+
+### Available shared components
+
+| Name | Path | Purpose |
+|---|---|---|
+| `setup-runner` | `bootc-build/setup-runner` | Install just, buildah, podman, skopeo, oras; set up storage |
+| `detect-changes` | `bootc-build/detect-changes` | Path-filter: image_changed, nvidia_changed, image_flavors |
+| `dnf-cache` | `bootc-build/dnf-cache` | Restore/save DNF build cache |
+| `ghcr-cleanup` | `bootc-build/ghcr-cleanup` | Delete old images from GHCR |
+| `preflight` | `bootc-build/preflight` | Pre-build cosign verify, key checks |
+| `push-image` | `bootc-build/push-image` | Push OCI image to GHCR |
+| `sign-and-publish` | `bootc-build/sign-and-publish` | Cosign sign, SBOM attach, attest |
+| `rechunk` | `bootc-build/rechunk` | rpm-ostree rechunker step |
+| `reusable-build.yml` | `.github/workflows/` | Core image build engine (all stream callers use this) |
+
+### Tracked gaps in centralisation
+
+| Gap | Issue |
+|---|---|
+| `github/codeql-action/upload-sarif` SHA drifted between scorecard.yml and vulnerability-scan.yml | #251 |
+| `actions/checkout` v4.3.1 in check-cosign-key-rotation.yml vs v6 everywhere else | #252 |
+| `.github/actions/bootstrap-just` duplicates setup-runner's `just` install | #253 |
+| pr-validation.yml validate job (hadolint/shellcheck/pre-commit) should be a shared action | #254 |
+
+### Build workflow
+
+The shared image build engine is at `.github/workflows/reusable-build.yml` in `projectbluefin/actions`. The internal copy has been deleted — all three stream callers delegate to the centralised workflow:
 
 ```yaml
 uses: projectbluefin/actions/.github/workflows/reusable-build.yml@<SHA>

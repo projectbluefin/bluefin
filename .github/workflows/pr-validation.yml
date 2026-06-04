@@ -11,6 +11,17 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  detect-changes:
+    name: Detect changed paths
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      needs_e2e: ${{ steps.detect.outputs.image_changed }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: projectbluefin/actions/bootc-build/detect-changes@4ec3db50adc3a2b944e175295d419d78eaa63861 # v1
+        id: detect
+
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -18,9 +29,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
-      - name: Validate PR
-        uses: projectbluefin/actions/bootc-build/validate-pr@v1
-        with:
-          dockerfile: Containerfile
-          hadolint-config: .hadolint.yaml
-          shellcheck-glob: "build_files/**/*.sh"
+      - name: Validate
+        uses: projectbluefin/actions/bootc-build/validate-pr@4ec3db50adc3a2b944e175295d419d78eaa63861 # v1
+
+  testsuite:
+    name: E2E smoke
+    needs: [detect-changes]
+    # Skip for PRs that only touch non-image paths (e.g. action bumps, workflow edits).
+    # Always run for merge_group to gate merges to main with the full check.
+    if: |
+      always() &&
+      (github.event_name == 'merge_group' ||
+       needs.detect-changes.outputs.needs_e2e == 'true')
+    permissions:
+      contents: read
+      packages: write  # testsuite pushes screenshot OCI artifacts to GHCR
+    uses: ./.github/workflows/run-testsuite.yml
+    with:
+      image: ghcr.io/projectbluefin/bluefin:testing
+      suites: smoke
