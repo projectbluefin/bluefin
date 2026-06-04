@@ -2,7 +2,7 @@ name: Renovate Auto-merge
 
 on:
   workflow_run:
-    workflows: ["PR Validation — testsuite", "PR Smoke Test"]
+    workflows: ["PR Validation — testsuite"]
     types: [completed]
 
 permissions:
@@ -20,13 +20,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-          TRIGGER_WORKFLOW: ${{ github.event.workflow_run.name }}
         run: |
           PR_JSON=$(gh pr list \
             --repo ${{ github.repository }} \
             --base testing \
             --state open \
-            --json number,headRefOid,author,labels \
+            --json number,headRefOid,author \
             --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | select(.author.login == \"renovate[bot]\" or .author.login == \"app/mergeraptor\")")
 
           if [ -z "$PR_JSON" ]; then
@@ -36,25 +35,7 @@ jobs:
           fi
 
           PR_NUMBER=$(echo "$PR_JSON" | jq -r '.number')
-          IS_HIGH_RISK=$(echo "$PR_JSON" | jq -r '[.labels[].name] | any(. == "renovate/high-risk")')
-
-          echo "Found PR #${PR_NUMBER} (high-risk: ${IS_HIGH_RISK})"
-          echo "Triggered by: ${TRIGGER_WORKFLOW}"
-
-          # High-risk PRs: only automerge after PR Smoke Test passes
-          if [[ "${IS_HIGH_RISK}" == "true" && "${TRIGGER_WORKFLOW}" != "PR Smoke Test" ]]; then
-            echo "High-risk PR — waiting for PR Smoke Test (not PR Validation)"
-            echo "pr_number=" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          # Low-risk PRs: automerge after PR Validation passes (skip if triggered by smoke)
-          if [[ "${IS_HIGH_RISK}" == "false" && "${TRIGGER_WORKFLOW}" == "PR Smoke Test" ]]; then
-            echo "Low-risk PR — PR Smoke Test not required, skipping"
-            echo "pr_number=" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
+          echo "Found PR #${PR_NUMBER}"
           echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
 
       - name: Enable auto-merge
