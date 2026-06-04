@@ -40,6 +40,8 @@ jobs:
           submodules: recursive
 
       - name: Setup runner
+        # Keep this workflow limited to Bluefin-specific PR image plumbing.
+        # If setup/build/push logic becomes reusable, move it to projectbluefin/actions.
         uses: projectbluefin/actions/bootc-build/setup-runner@13e3593568d87cfe075a86e3995930e350f8c5ea # v1
         with:
           storage-backend: btrfs
