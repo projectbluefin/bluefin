@@ -1,5 +1,15 @@
 # Bluefin build reference
 
+## Git hook setup
+
+After cloning, install the pre-push guard to prevent accidentally pushing to `origin` (which points to `ublue-os/bluefin`):
+
+```bash
+bash .github/scripts/install-hooks.sh
+```
+
+This installs a `pre-push` hook that blocks `git push origin` and reminds you to use `git push projectbluefin <branch>`.
+
 ## Build model
 
 Bluefin is a Containerfile-driven rpm-ostree/bootc image build, not a BuildStream repo.
@@ -36,6 +46,15 @@ Bluefin is a Containerfile-driven rpm-ostree/bootc image build, not a BuildStrea
 | `just/` | Additional just recipes |
 | `.github/workflows/` | CI/CD pipeline definitions |
 | `docs/` | Agent reference docs |
+
+## Containerfile cache stages
+
+The `Containerfile` intentionally splits the image build into two cache boundaries:
+
+- **Stage 1 — package installs only**: runs `build_files/base/03-packages.sh`, `04-install-kernel-akmods.sh`, and `05-override-install.sh` with only `build_files/` mounted into the build context. This keeps package-layer cache hits intact when a change only touches `system_files/`.
+- **Stage 2 — system_files overlay and cleanup**: overlays `system_files/`, then runs `build_files/base/00-image-info.sh`, `build_files/shared/build-gnome-extensions.sh`, `build_files/base/17-cleanup.sh`, `build_files/base/19-initramfs.sh`, `build_files/shared/validate-repos.sh`, `build_files/shared/clean-stage.sh`, and `build_files/base/20-tests.sh`.
+
+`ARG SHA_HEAD_SHORT` and `ARG VERSION` are declared between these two stages on purpose. If they move before Stage 1, every commit changes the Stage 1 cache key and forces package-install rebuilds even when only metadata changed.
 
 ## Dev loop
 

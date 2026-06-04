@@ -33,11 +33,11 @@ ARG KERNEL="6.10.10-200.fc40.x86_64"
 ARG UBLUE_IMAGE_TAG="stable"
 ARG IMAGE_FLAVOR=""
 
-# Stage 1: install packages, kernel, and akmods.
+# Stage 1 — Package installs only (cache key: build_files/)
+# Runs the package-install layer (`03-packages.sh`, `04-install-kernel-akmods.sh`,
+# `05-override-install.sh`) before any system_files overlay work.
 # Narrow mount (build_files/ only) enables granular layer caching:
 # a system_files-only PR change gets a cache hit here, saving 20-80 min.
-# NOTE: VERSION and SHA_HEAD_SHORT are intentionally declared AFTER this RUN
-# so they don't bust Stage 1's cache on every commit / daily build.
 RUN --mount=type=cache,dst=/var/cache/libdnf5 \
     --mount=type=cache,dst=/var/cache/rpm-ostree \
     --mount=type=bind,from=ctx,source=/build_files,target=/ctx/build_files \
@@ -57,11 +57,14 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
         /ctx/build_files/base/05-override-install.sh \
     '
 
-# Per-build metadata: declared here so they don't bust Stage 1's cache key.
+# ARGs declared here (between stages) intentionally — placing them before Stage 1
+# would bust its cache on every commit.
 ARG SHA_HEAD_SHORT="dedbeef"
 ARG VERSION=""
 
-# Stage 2: overlay system_files, build extensions, clean up, finalize.
+# Stage 2 — system_files overlay and cleanup (cache key: system_files/)
+# Runs the overlay/finalization layer (`00-image-info.sh`, GNOME extension build,
+# `17-cleanup.sh`, `19-initramfs.sh`, repo validation, stage cleanup, `20-tests.sh`).
 # Narrow mount (system_files/ + build_files/shared) means package-script changes
 # do NOT invalidate this stage when build_files/base is unchanged.
 RUN --mount=type=cache,dst=/var/cache/libdnf5 \
