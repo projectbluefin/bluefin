@@ -6,13 +6,13 @@ Bluefin's CI is split between PR validation, image builds, post-build e2e, weekl
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `pr-validation.yml` | PRs to `testing`, `merge_group` | Fast validation: `just check`, `shellcheck`, `pre-commit` |
+| `pr-validation.yml` | PRs to `testing`, `merge_group` | Fast validation via `validate-pr@v1`: `just check`, `shellcheck`, `hadolint`, `pre-commit` — **no E2E on PRs** |
 | `build-image-testing.yml` | Push to `main`, `merge_group`, dispatch, workflow call | Builds testing images via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Successful `Testing Images` workflow on `main` push | Downloads the testing digest and runs smoke tests in `projectbluefin/testsuite` |
 | `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, manual dispatch | Verifies e2e on current `main`, promotes `main` to `latest` + `stable`, triggers downstream builds |
 | `build-image-stable.yml` | Push to `stable`, dispatch, workflow call | Builds stable images and then runs `generate-release.yml` |
 | `build-image-latest-main.yml` | PR/push to `latest`, `merge_group`, dispatch | Builds latest images |
-| `renovate-automerge.yml` | Successful `PR Validation — testsuite` workflow | Enables squash auto-merge for matching Renovate PRs |
+| `renovate-automerge.yml` | Successful `PR Validation — testsuite` | Enables squash auto-merge (`gh pr merge --auto --squash`) for Renovate/mergeraptor PRs |
 | `bonedigger.yml` | Issue events, issue comments, daily schedule | Runs the Bluefin 🦖 issue lifecycle bot |
 
 ## Centralized actions (`projectbluefin/actions`)

@@ -10,6 +10,26 @@
 - Conventional Commits required on every PR title/commit
 - AI-authored commits must include `Assisted-by: <Model> via <Tool>`
 
+## Git workflow for agents
+
+**Always branch from the remote `projectbluefin/testing`, never from local HEAD.** Local `testing` may carry unpushed commits from previous sessions that will silently pollute your PR.
+
+```bash
+# Correct way to start any new branch:
+git fetch projectbluefin
+git checkout -b my-feature projectbluefin/testing
+```
+
+**One clean squash commit per PR.** Use `git commit --amend` or `git rebase -i` before pushing to ensure the PR contains exactly one commit.
+
+**Always push to the `projectbluefin` remote**, never `origin` (`origin` points to `ublue-os/bluefin`):
+
+```bash
+git push projectbluefin my-feature
+```
+
+**Never `git push` or `git push origin`.** Always name the remote explicitly.
+
 ## Issue tracker
 
 > **All Bluefin issues go in [`projectbluefin/bluefin`](https://github.com/projectbluefin/bluefin/issues).**
