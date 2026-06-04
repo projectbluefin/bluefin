@@ -33,7 +33,7 @@ jobs:
       image_flavors: ${{ steps.detect.outputs.image_flavors }}
       should_build: ${{ steps.detect.outputs.should_build }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - uses: projectbluefin/actions/bootc-build/detect-changes@4ec3db50adc3a2b944e175295d419d78eaa63861 # v1
         id: detect
 
