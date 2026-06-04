@@ -216,29 +216,37 @@ git push projectbluefin --delete <branch>-clean            # clean up temp branc
 
 Same fix as BEHIND — rebase or cherry-pick onto the latest `testing`.
 
-For Renovate/chore PRs with conflicts, trigger a central Renovate run to rebase them automatically:
+For Renovate/chore PRs with conflicts, do both steps together — post a rebase comment on each PR and trigger the central run:
 ```bash
+# Comment on each conflicted PR
+for pr in 101 102 103; do
+  gh pr comment $pr --repo projectbluefin/bluefin --body "@renovate rebase"
+done
+
+# Trigger the central Renovate run
 gh workflow run "Renovate Self-Hosted" --repo projectbluefin/renovate-config
 ```
 
+Renovate will rebase all conflicting PRs within a few minutes. Once they pass `validate`, the automerge workflow fires automatically.
+
 ### Auto-merge cannot be enabled
 
-`testing` has no branch protection. GitHub requires branch protection to enable auto-merge, so `gh pr merge --auto` will fail with "Protected branch rules not configured."
+`testing` has branch protection with `validate` as required check, and `allow_auto_merge` is enabled at the repo level. `gh pr merge --auto --squash` works.
 
-Just squash-merge directly instead:
+If you see "Protected branch rules not configured":
 ```bash
-gh pr merge <number> --repo projectbluefin/bluefin --squash
+# Verify branch protection exists
+gh api repos/projectbluefin/bluefin/branches/testing/protection
+# Verify allow_auto_merge is set
+gh api repos/projectbluefin/bluefin --jq .allow_auto_merge
 ```
 
-For a batch of chore/Renovate PRs:
-```bash
-for pr in 101 102 103; do
-  echo -n "PR #$pr: "
-  gh pr merge $pr --repo projectbluefin/bluefin --squash 2>&1
-done
-```
+### Docs-only changes
 
-PRs that show merge conflicts will need the Renovate rebase trigger above first.
+Docs changes (files under `docs/`, `*.md`) do not need to wait for CI. Open the PR then merge immediately:
+```bash
+gh pr merge <number> --repo projectbluefin/bluefin --squash --admin
+```
 
 ## PR comment policy
 
