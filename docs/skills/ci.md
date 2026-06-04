@@ -34,7 +34,7 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| `pr-validation.yml` | PRs to `testing`, merge_group | Fast gate via **`validate-pr@v1`**: just check, shellcheck, hadolint, pre-commit — **no E2E on PRs** |
+| `pr-validation.yml` | PRs to `testing`, merge_group | Fast gate: **`validate`** (validate-pr@v1: just check, shellcheck, hadolint, pre-commit) + **`unit-tests`** (bats tests/unit/) — **E2E (`testsuite`) only on `merge_group`** |
 | `pr-smoke.yml` | PRs touching build files | Full image build + smoke test |
 | `build-image-testing.yml` | Push to `main`, dispatch | Testing image builds via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Testing build on `main` | Smoke+common continuous e2e gate |
@@ -110,7 +110,9 @@ If `main` advanced during promotion, the workflow aborts on purpose.
 - Stable release generation depends on SBOM assets existing for the images being diffed — testing stream skips SBOM generation; promoted images lack signed SBOMs until a separate SBOM pass runs
 - Bluefin docs-only changes often skip image builds due to path filters; that is usually expected
 - **`testing` branch has branch protection** — required status check: `validate`. `allow_auto_merge` enabled at repo level. `gh pr merge --auto --squash` works. No merge queue.
-- **E2E runs on stable promotion only** — `pr-validation.yml` runs only the fast `validate` job (~2 min). E2E smoke runs in `post-testing-e2e.yml` (after push to `main`) and `weekly-testing-promotion.yml` before promotion to `:stable`.
+- **E2E (`testsuite` job) only runs on `merge_group`** — the `testsuite` job in `pr-validation.yml` has a hard `if: github.event_name == 'merge_group'` guard. There is no `detect-changes` conditional; the guard is unconditional. Per-push PR CI is fast validate + unit-tests only (~2 min). Do not add E2E to per-push PR jobs — each push triggering a 10-min QEMU boot is wasteful and blocks Renovate automerge.
+- **Unit tests live in `tests/unit/`, not `build_files/`** — `build_files/**` is in the detect-changes image path filter; placing test files there causes every PR push to trigger image builds and E2E. Test files belong in `tests/unit/` where they are invisible to the image path filter.
+- **`just test-unit` runs bats unit tests** — calls `bats tests/unit/package-lib_test.bats`. The CI `unit-tests` job invokes `bats` directly (not `just`) because `just` is not available on a bare `ubuntu-latest` runner without the `setup-runner` composite action.
 - **Vulnerability scans must use the build digest, not a mutable tag.** `vulnerability-scan.yml` downloads `image-digest-{stream_name}-{brand_name}-{image_flavor}` from the triggering `workflow_run` and passes `image@sha256:...` to the scanner to avoid TOCTOU. Artifact names for the default bluefin build: `image-digest-testing-bluefin-main`, `image-digest-testing-bluefin-nvidia-open`.
 - Weekly promotion uses retag-only (skopeo copy) for the canonical path; a parallel rebuild pathway also exists via branch push
 - Build callers do not pass `secrets: inherit` — `reusable-build.yml` only needs `GITHUB_TOKEN`, which is automatically available
