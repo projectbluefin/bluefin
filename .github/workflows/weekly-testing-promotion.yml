@@ -9,6 +9,8 @@ concurrency:
   group: weekly-testing-promotion
   cancel-in-progress: false
 
+permissions: {}
+
 jobs:
   # Verify that post-testing-e2e.yml already ran smoke tests on the current
   # main HEAD since every push to main triggers it. If e2e hasn't passed
