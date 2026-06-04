@@ -1,8 +1,9 @@
 #!/usr/bin/env bats
 # Unit tests for build_files/shared/package-lib.sh.
-# Run with: bats build_files/shared/package-lib_test.bats
+# Run with: bats tests/unit/package-lib_test.bats
 
 SCRIPT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
+PACKAGE_LIB="${SCRIPT_DIR}/../../build_files/shared/package-lib.sh"
 
 setup() {
     # Create a temp bin dir with stub commands so real dnf5/rpm are never called.
@@ -31,8 +32,8 @@ EOF
     chmod +x "${STUB_BIN}/dnf5" "${STUB_BIN}/rpm"
 
     # Source the library under test.
-    # shellcheck source=./package-lib.sh
-    source "${SCRIPT_DIR}/package-lib.sh"
+    # shellcheck source=../../build_files/shared/package-lib.sh
+    source "${PACKAGE_LIB}"
 }
 
 teardown() {
