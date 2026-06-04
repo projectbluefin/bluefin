@@ -94,6 +94,19 @@ Bluefin 🦖  ·  issue pipeline
   next action:  ujust verify 42 — three verifies closes the case
 ```
 
+## Agent label checklist — when opening a PR
+
+When an agent opens a PR that fixes an issue, update labels on both the issue and the PR:
+
+**On the linked issue:**
+1. Remove `queue/agent-ready`
+2. Add `queue/claimed`
+
+**On the PR:**
+1. Add `queue/claimed` — signals the work is done and a human is next to review
+
+These steps mark the transition from "available for an agent to pick up" to "awaiting human review". Not applying them leaves the issue appearing unclaimed in the queue and gives reviewers no signal that the PR is ready.
+
 ## Bonedigger commands
 
 | Command | Who uses it | Effect |
