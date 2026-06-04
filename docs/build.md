@@ -28,7 +28,8 @@ Bluefin is a Containerfile-driven rpm-ostree/bootc image build, not a BuildStrea
 | `Containerfile` | Multi-stage image build (`base`) |
 | `Justfile` | Build, validation, tagging, cleanup helpers |
 | `build_files/base/` | Base image scripts, run in numeric order |
-| `build_files/shared/` | Shared helpers such as `build.sh` and `copr-helpers.sh` |
+| `build_files/shared/` | Shared helpers such as `build.sh`, `copr-helpers.sh`, and `package-lib.sh` |
+| `tests/unit/` | Bats unit tests for shared shell libraries (run with `just test-unit` or `bats tests/unit/`) |
 | `system_files/` | Files copied verbatim into the image |
 | `flatpaks/` | Flatpak lists for the image |
 | `brew/` | Homebrew Brewfiles |
@@ -44,6 +45,11 @@ pre-commit run --all-files
 
 just fix
 just check
+
+# Run unit tests for shared shell libraries:
+just test-unit
+# or equivalently:
+bats tests/unit/
 
 # Only when testing container/image changes:
 just build bluefin latest main

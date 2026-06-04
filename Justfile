@@ -34,6 +34,18 @@ check:
     echo "Checking syntax: Justfile"
     {{ just }} --unstable --fmt --check -f Justfile
 
+# Run unit tests for shared build scripts
+[group('Just')]
+test-unit:
+    #!/usr/bin/bash
+    set -euo pipefail
+    if ! command -v bats &>/dev/null; then
+        echo "bats not found — install with: sudo apt-get install bats  OR  npm install -g bats"
+        exit 1
+    fi
+    echo "Running unit tests..."
+    bats tests/unit/package-lib_test.bats
+
 # Fix Just Syntax
 [group('Just')]
 fix:

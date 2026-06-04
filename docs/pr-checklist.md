@@ -50,7 +50,14 @@
 - [ ] Trigger branches are intentional (`testing` for PR validation; `main`/`stable`/`latest` where the current image workflows expect them)
 - [ ] Action pins stay intact or are updated deliberately
 - [ ] Artifact names, workflow names, and branch filters stay consistent across dependent workflows
+- [ ] E2E (`testsuite` job) is gated to `merge_group` only — never add E2E to per-push PR jobs
 - [ ] If behavior changed, this doc set or `docs/ci.md` was updated too
+
+## Shell library changes (`build_files/shared/`)
+
+- [ ] If adding or modifying shell helper functions in `build_files/shared/`, update or add unit tests in `tests/unit/`
+- [ ] Run `just test-unit` or `bats tests/unit/` locally to verify all tests pass
+- [ ] **Do not place test files in `build_files/`** — files there trigger image path filters and will cause E2E to run on every PR push
 
 ## Before asking for review
 

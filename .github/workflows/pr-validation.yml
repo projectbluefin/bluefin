@@ -11,17 +11,6 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  detect-changes:
-    name: Detect changed paths
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    outputs:
-      needs_e2e: ${{ steps.detect.outputs.image_changed }}
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-      - uses: projectbluefin/actions/bootc-build/detect-changes@4ec3db50adc3a2b944e175295d419d78eaa63861 # v1
-        id: detect
-
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -35,15 +24,26 @@ jobs:
       - name: Validate
         uses: projectbluefin/actions/bootc-build/validate-pr@4ec3db50adc3a2b944e175295d419d78eaa63861 # v1
 
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Install bats
+        run: sudo apt-get install -y bats
+
+      - name: Run unit tests
+        run: bats tests/unit/package-lib_test.bats
+
   testsuite:
     name: E2E smoke
-    needs: [detect-changes]
-    # Skip for PRs that only touch non-image paths (e.g. action bumps, workflow edits).
-    # Always run for merge_group to gate merges to main with the full check.
-    if: |
-      always() &&
-      (github.event_name == 'merge_group' ||
-       needs.detect-changes.outputs.needs_e2e == 'true')
+    # Only gate actual merges — not every PR push.
+    if: github.event_name == 'merge_group'
     permissions:
       contents: read
       packages: write  # testsuite pushes screenshot OCI artifacts to GHCR

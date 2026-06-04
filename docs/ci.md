@@ -6,7 +6,7 @@ Bluefin's CI is split between PR validation, image builds, post-build e2e, weekl
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `pr-validation.yml` | PRs to `testing`, `merge_group` | Fast validation via `validate-pr@v1`: `just check`, `shellcheck`, `hadolint`, `pre-commit` — **no E2E on PRs** |
+| `pr-validation.yml` | PRs to `testing`, `merge_group` | Fast validation via `validate-pr@v1`: `just check`, `shellcheck`, `hadolint`, `pre-commit`, **bats unit tests** — **E2E only on `merge_group`** |
 | `build-image-testing.yml` | Push to `main`, `merge_group`, dispatch, workflow call | Builds testing images via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Successful `Testing Images` workflow on `main` push | Downloads the testing digest and runs smoke tests in `projectbluefin/testsuite` |
 | `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, manual dispatch | Verifies e2e on current `main`, promotes `main` to `latest` + `stable`, triggers downstream builds |
@@ -100,8 +100,9 @@ See [`docs/skills/ci.md`](skills/ci.md) → "Shared actions architecture" for th
 
 A normal Bluefin PR should target `testing`.
 
-`pr-validation.yml` runs validation via the shared `bootc-build/validate-pr` action from `projectbluefin/actions`:
+`pr-validation.yml` runs two parallel jobs on every PR push:
 
+**`validate` job** — via the shared `bootc-build/validate-pr` action from `projectbluefin/actions`:
 1. Install `just` (via `taiki-e/install-action`)
 2. Install `shellcheck`
 3. Install `pre-commit`
@@ -110,7 +111,17 @@ A normal Bluefin PR should target `testing`.
 6. Run `hadolint` on `Containerfile`
 7. Run `pre-commit run --all-files`
 
-This workflow is intentionally fast. It validates repo health without doing a full local-style container build. All tool pins (hadolint, install-action) live in `bootc-build/validate-pr` — Renovate bumps them once there, not per-workflow.
+**`unit-tests` job** — fast bats tests for shared shell libraries:
+1. Install `bats` (`apt-get install bats`)
+2. Run `bats tests/unit/package-lib_test.bats`
+
+**`testsuite` job (E2E smoke)** — runs **only on `merge_group`**, never on PR pushes:
+- Uses `run-testsuite.yml` with `suites: smoke`
+- This gates the actual merge; individual PR commits are not blocked waiting for full e2e
+
+This keeps PR feedback fast (~2-3 min) while still gating every merge to `testing` with a smoke test.
+
+> **Note:** `tests/unit/` is intentionally excluded from image path filters. Adding test files to `tests/unit/` does not trigger image builds or E2E on PRs.
 
 ## How testing promotion works
 
