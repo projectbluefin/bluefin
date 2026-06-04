@@ -490,21 +490,24 @@ verify-container container="" registry="ghcr.io/ublue-os" key="":
     #!/usr/bin/bash
     set -eou pipefail
 
-    # In CI, cosign is already installed by a SHA-pinned action.
-    # For local use, install a pinned release from GitHub only if it is missing.
+    # cosign v3+ is required to verify Sigstore Bundle v0.3 signatures (produced by cosign >=v3.0).
+    # The CI runner may ship an older pre-installed cosign; install the pinned release when needed.
+    COSIGN_VERSION="v3.0.6"
+    COSIGN_MAJOR=0
     if command -v cosign >/dev/null 2>&1; then
-        echo "cosign already available: $(cosign version 2>/dev/null | head -1)"
+        COSIGN_MAJOR=$(cosign version 2>/dev/null | awk '/GitVersion:/{gsub(/[^0-9.]/, "", $2); split($2, a, "."); print a[1]+0}')
+    fi
+    if [[ "${COSIGN_MAJOR}" -ge 3 ]]; then
+        echo "cosign v${COSIGN_MAJOR} already available"
     else
-        COSIGN_VERSION="v2.5.0"
         COSIGN_INSTALL_PATH="{{ justfile_directory() }}/.cosign-install"
-
-        echo "Installing cosign ${COSIGN_VERSION}..."
+        echo "Installing cosign ${COSIGN_VERSION} (installed major=${COSIGN_MAJOR} is pre-v3)..."
         trap 'rm -f "${COSIGN_INSTALL_PATH}"' EXIT
         curl -fsSL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" \
             -o "${COSIGN_INSTALL_PATH}"
         chmod +x "${COSIGN_INSTALL_PATH}"
         ${SUDOIF} install -m 0755 "${COSIGN_INSTALL_PATH}" /usr/local/bin/cosign
-        echo "cosign installed: $(cosign version 2>/dev/null | head -1)"
+        echo "cosign installed: $(cosign version 2>/dev/null | awk '/GitVersion:/{print $2}')"
     fi
 
     # Public Key for Container Verification
