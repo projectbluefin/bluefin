@@ -477,19 +477,21 @@ verify-container container="" registry="ghcr.io/ublue-os" key="":
     #!/usr/bin/bash
     set -eou pipefail
 
-    # Get Cosign if Needed
-    if [[ ! $(command -v cosign) ]]; then
-        COSIGN_CONTAINER_ID=$(${SUDOIF} ${PODMAN} create cgr.dev/chainguard/cosign:latest bash)
-        ${SUDOIF} ${PODMAN} cp "${COSIGN_CONTAINER_ID}":/usr/bin/cosign /usr/local/bin/cosign
-        ${SUDOIF} ${PODMAN} rm -f "${COSIGN_CONTAINER_ID}"
-    fi
+    # In CI, cosign is already installed by a SHA-pinned action.
+    # For local use, install a pinned release from GitHub only if it is missing.
+    if command -v cosign >/dev/null 2>&1; then
+        echo "cosign already available: $(cosign version 2>/dev/null | head -1)"
+    else
+        COSIGN_VERSION="v2.5.0"
+        COSIGN_INSTALL_PATH="{{ justfile_directory() }}/.cosign-install"
 
-    # Verify Cosign Image Signatures if needed
-    if [[ -n "${COSIGN_CONTAINER_ID:-}" ]]; then
-        if ! cosign verify --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity=https://github.com/chainguard-images/images/.github/workflows/release.yaml@refs/heads/main cgr.dev/chainguard/cosign >/dev/null; then
-            echo "NOTICE: Failed to verify cosign image signatures."
-            exit 1
-        fi
+        echo "Installing cosign ${COSIGN_VERSION}..."
+        trap 'rm -f "${COSIGN_INSTALL_PATH}"' EXIT
+        curl -fsSL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" \
+            -o "${COSIGN_INSTALL_PATH}"
+        chmod +x "${COSIGN_INSTALL_PATH}"
+        ${SUDOIF} install -m 0755 "${COSIGN_INSTALL_PATH}" /usr/local/bin/cosign
+        echo "cosign installed: $(cosign version 2>/dev/null | head -1)"
     fi
 
     # Public Key for Container Verification
