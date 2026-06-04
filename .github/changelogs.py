@@ -162,9 +162,13 @@ def get_tags(target: str, manifests: dict[str, Any]):
                 tags.remove(tag)
 
     tags = list(sorted(tags))
-    if not len(tags) >= 2:
-        print("No current and previous tags found")
+    if not tags:
+        print("No current tags found")
         exit(1)
+    if len(tags) == 1:
+        # Bootstrap: first release — no previous tag to compare against
+        print(f"Bootstrap release: only one tag found ({tags[0]}), using it as both prev and curr")
+        return tags[0], tags[0]
     return tags[-2], tags[-1]
 
 
