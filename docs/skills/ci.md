@@ -34,8 +34,8 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| `pr-validation.yml` | PRs to `testing`, merge_group | Fast gate via **`validate-pr@v1`**: just check, shellcheck, hadolint, pre-commit; + e2e smoke |
-| `pr-smoke.yml` | PRs touching build files | Full build + smoke test |
+| `pr-validation.yml` | PRs to `testing`, merge_group | Fast gate via **`validate-pr@v1`**: just check, shellcheck, hadolint, pre-commit — **no E2E on PRs** |
+| `pr-smoke.yml` | PRs touching build files | Full image build + smoke test |
 | `build-image-testing.yml` | Push to `main`, dispatch | Testing image builds via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Testing build on `main` | Smoke+common continuous e2e gate |
 | `weekly-testing-promotion.yml` | Tuesday 06:00 UTC | Full e2e → retag to :stable/:latest |
@@ -46,7 +46,7 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 | `run-testsuite.yml` | Called by all e2e workflows | **Canonical testsuite wrapper — always use this, never e2e.yml directly** |
 | `nightly.yml` | 02:00 UTC daily | smoke+common+vanilla-gnome against :latest |
 | `vulnerability-scan.yml` | Testing build + weekly | Grype → SARIF to Security tab |
-| `renovate-automerge.yml` | PR Validation / PR Smoke success | Auto-merge Renovate/mergeraptor by risk tier |
+| `renovate-automerge.yml` | PR Validation success | Auto-merge all Renovate/mergeraptor PRs via `gh pr merge --auto --squash` (no high-risk/smoke distinction) |
 | `e2e-dispatch.yml` | `/e2e` comment (write+ only) | Manual e2e on PR |
 | `generate-release.yml` | Stable build, dispatch | GitHub Release + changelog |
 | `copr-health-monitor.yml` | Daily 07:00 UTC | COPR staleness check |
@@ -99,7 +99,7 @@ If `main` advanced during promotion, the workflow aborts on purpose.
 | `No SBOM referrer found` in release generation | testing stream skips SBOM; promoted images lack signed SBOMs | allow missing SBOMs for diff generation and use intersection-only comparisons |
 | promotion says no passing e2e for current SHA | `post-testing-e2e` has not passed the locked `main` commit | wait or rerun after e2e completes |
 | required check is skipped | path filter skipped the workflow | verify whether skipped is intentional for that workflow |
-| Renovate PR did not automerge | PR lookup missed mergeraptor author or wrong base branch | accept both `renovate[bot]` and `app/mergeraptor` in jq filter; verify branch targeting `testing` |
+| Renovate PR did not automerge | PR lookup missed mergeraptor author, or `testing` branch protection not set up | accept both `renovate[bot]` and `app/mergeraptor` in jq filter; ensure `testing` has branch protection with `validate` required check and `allow_auto_merge=true` at repo level |
 | Weekly promotion cannot find digest artifact | artifact expired before Tuesday promotion window | push fresh commit to `main` to regenerate artifact |
 | Cosign sign/verify fails | Sigstore outage or key rotation | check `check-cosign-key-rotation.yml` issues; retry after Sigstore recovers |
 
@@ -109,7 +109,8 @@ If `main` advanced during promotion, the workflow aborts on purpose.
 - A skipped workflow can still satisfy a required check if GitHub considers it skipped-by-filter
 - Stable release generation depends on SBOM assets existing for the images being diffed — testing stream skips SBOM generation; promoted images lack signed SBOMs until a separate SBOM pass runs
 - Bluefin docs-only changes often skip image builds due to path filters; that is usually expected
-- **Testsuite pin lives in `run-testsuite.yml` only** — all other workflows must call this wrapper; never call `projectbluefin/testsuite/.github/workflows/e2e.yml` directly. To audit: `grep -r "projectbluefin/testsuite" .github/workflows/` — any hit outside `run-testsuite.yml` is a bug.
+- **`testing` branch has branch protection** — required status check: `validate`. `allow_auto_merge` enabled at repo level. `gh pr merge --auto --squash` works. No merge queue.
+- **E2E runs on stable promotion only** — `pr-validation.yml` runs only the fast `validate` job (~2 min). E2E smoke runs in `post-testing-e2e.yml` (after push to `main`) and `weekly-testing-promotion.yml` before promotion to `:stable`.
 - **Vulnerability scans must use the build digest, not a mutable tag.** `vulnerability-scan.yml` downloads `image-digest-{stream_name}-{brand_name}-{image_flavor}` from the triggering `workflow_run` and passes `image@sha256:...` to the scanner to avoid TOCTOU. Artifact names for the default bluefin build: `image-digest-testing-bluefin-main`, `image-digest-testing-bluefin-nvidia-open`.
 - Weekly promotion uses retag-only (skopeo copy) for the canonical path; a parallel rebuild pathway also exists via branch push
 - Build callers do not pass `secrets: inherit` — `reusable-build.yml` only needs `GITHUB_TOKEN`, which is automatically available
