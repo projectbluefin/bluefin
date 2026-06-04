@@ -49,7 +49,7 @@ jobs:
         run: sudo apt-get install -y bats
 
       - name: Run unit tests
-        run: just test-unit
+        run: bats build_files/shared/package-lib_test.bats
 
   testsuite:
     name: E2E smoke
