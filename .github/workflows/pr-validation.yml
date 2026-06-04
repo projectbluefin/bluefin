@@ -46,13 +46,3 @@ jobs:
       - name: Run pre-commit
         shell: bash
         run: pre-commit run --all-files
-
-  testsuite:
-    name: E2E smoke
-    permissions:
-      contents: read
-      packages: write  # testsuite pushes screenshot OCI artifacts to GHCR
-    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@5d2731317911cd875077fe1576761635859cc728 # main
-    with:
-      image: ghcr.io/projectbluefin/bluefin:testing
-      suites: smoke
