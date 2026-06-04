@@ -50,7 +50,7 @@ jobs:
             --workflow post-testing-e2e.yml \
             --branch main \
             --repo "${{ github.repository }}" \
-            --limit 20 \
+            --limit 50 \
             --json headSha,conclusion \
             --jq ".[] | select(.headSha == \"$LOCKED_SHA\") | .conclusion" \
             | head -1)
@@ -79,7 +79,7 @@ jobs:
             --workflow build-image-testing.yml \
             --branch main \
             --repo "${{ github.repository }}" \
-            --limit 20 \
+            --limit 50 \
             --json databaseId,headSha,conclusion \
             --jq ".[] | select(.headSha == \"$LOCKED_SHA\" and .conclusion == \"success\") | .databaseId" \
             | head -1)
