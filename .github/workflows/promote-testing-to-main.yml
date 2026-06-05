@@ -140,43 +140,53 @@ jobs:
 
           PR_JSON=$(gh pr view "$PR_NUMBER" \
             --repo "${{ github.repository }}" \
-            --json url,autoMergeRequest,mergeStateStatus,mergeable)
+            --json url,mergeStateStatus,mergeable)
 
           {
             echo "pr_number=${PR_NUMBER}"
             echo "pr_url=$(jq -r '.url' <<<"$PR_JSON")"
-            echo "auto_merge_enabled=$(jq -r 'if .autoMergeRequest then "true" else "false" end' <<<"$PR_JSON")"
             echo "merge_state_status=$(jq -r '.mergeStateStatus' <<<"$PR_JSON")"
             echo "mergeable=$(jq -r '.mergeable' <<<"$PR_JSON")"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Enable auto-merge
+      - name: Enqueue in merge queue
         if: steps.compare.outputs.sync_needed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.upsert.outputs.pr_number }}
-          AUTO_MERGE_ENABLED: ${{ steps.upsert.outputs.auto_merge_enabled }}
           MERGE_STATE_STATUS: ${{ steps.upsert.outputs.merge_state_status }}
           MERGEABLE: ${{ steps.upsert.outputs.mergeable }}
         run: |
           set -euo pipefail
-
-          if [ "$AUTO_MERGE_ENABLED" = "true" ]; then
-            echo "Auto-merge is already enabled on PR #${PR_NUMBER}"
-            exit 0
-          fi
 
           if [ "$MERGEABLE" = "CONFLICTING" ] || [ "$MERGE_STATE_STATUS" = "DIRTY" ]; then
             echo "ERROR: testing → main PR #${PR_NUMBER} is conflicted (mergeable=${MERGEABLE}, mergeStateStatus=${MERGE_STATE_STATUS})"
             exit 1
           fi
 
-          gh pr merge "$PR_NUMBER" \
+          # main uses a merge queue (ruleset 17070404) — auto-merge is not supported.
+          # Enqueue via GraphQL enqueuePullRequest mutation.
+          NODE_ID=$(gh pr view "$PR_NUMBER" \
             --repo "${{ github.repository }}" \
-            --auto \
-            --squash
+            --json id --jq .id)
 
-          echo "✅ Auto-merge enabled on PR #${PR_NUMBER}"
+          RESULT=$(gh api graphql -f query="mutation {
+            enqueuePullRequest(input: { pullRequestId: \"${NODE_ID}\" }) {
+              mergeQueueEntry { id position }
+            }
+          }" 2>&1) && RC=0 || RC=$?
+
+          if [ "$RC" -eq 0 ]; then
+            POSITION=$(echo "$RESULT" | jq -r '.data.enqueuePullRequest.mergeQueueEntry.position // "unknown"')
+            echo "✅ PR #${PR_NUMBER} enqueued in merge queue at position ${POSITION}"
+          elif echo "$RESULT" | grep -q "Required status check"; then
+            echo "⏳ PR #${PR_NUMBER} cannot be enqueued yet — required checks have not passed (mergeStateStatus=${MERGE_STATE_STATUS}). A maintainer can approve and enqueue once CI passes."
+          elif echo "$RESULT" | grep -q "already in the merge queue"; then
+            echo "PR #${PR_NUMBER} is already in the merge queue"
+          else
+            echo "ERROR: enqueuePullRequest failed: ${RESULT}"
+            exit 1
+          fi
 
   report-failure:
     needs: [promote]
