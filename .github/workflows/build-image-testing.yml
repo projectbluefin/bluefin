@@ -53,12 +53,13 @@ jobs:
       (github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || inputs.pr_number != '') &&
       (github.event_name != 'pull_request' ||
        needs.detect-changes.outputs.should_build == 'true')
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@6274199cfb6666180ac2fd0ad5a41bc8440e0929 # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@c4c25bda265a350b3f17982198eedb5a760ea7fd # v1
     permissions:
       contents: read
       packages: write
       id-token: write
       attestations: write
+      security-events: write
       artifact-metadata: write
     with:
       image_flavors: >-

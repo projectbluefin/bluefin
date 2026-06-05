@@ -22,6 +22,7 @@ permissions:
   packages: write
   id-token: write
   attestations: write
+  security-events: write
   artifact-metadata: write
 
 jobs:
@@ -30,7 +31,7 @@ jobs:
     # Thin caller only: shared build orchestration belongs in projectbluefin/actions.
     # Keep repo-local edits here limited to triggers, permissions, and reusable-build inputs.
     if: github.event_name != 'workflow_dispatch' || github.ref_name == 'latest'
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@6274199cfb6666180ac2fd0ad5a41bc8440e0929 # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@c4c25bda265a350b3f17982198eedb5a760ea7fd # v1
     with:
       stream_name: latest
       # FIXME: enable when ublue-os/akmods has ARM builds
