@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=GNOME Help
+Comment=Open GNOME help pages in the default web browser
+# Translates help:APP/PAGE → https://help.gnome.org/users/APP/stable/PAGE.html
+Exec=bash -c 'uri="$1"; path="${uri#help:}"; path="${path#//}"; app="${path%%/*}"; page="${path#*/}"; xdg-open "https://help.gnome.org/users/${app}/stable/${page}.html"' -- %u
+Type=Application
+MimeType=x-scheme-handler/help;
+NoDisplay=true
+Terminal=false
