@@ -13,8 +13,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   promote:
@@ -26,6 +25,13 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          client-id: ${{ secrets.BLUEFINBOT_APP_ID }}
+          private-key: ${{ secrets.BLUEFINBOT_PRIVATE_KEY }}
 
       - name: Fetch branch refs
         run: git fetch origin main testing
@@ -59,7 +65,7 @@ jobs:
       - name: Find existing promotion PR
         id: existing-pr
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
 
@@ -86,7 +92,7 @@ jobs:
         id: upsert
         if: steps.compare.outputs.sync_needed == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           EXISTING_PR_NUMBER: ${{ steps.existing-pr.outputs.pr_number }}
           MAIN_SHA: ${{ steps.compare.outputs.main_sha }}
           MAIN_TREE: ${{ steps.compare.outputs.main_tree }}
@@ -145,7 +151,7 @@ jobs:
       - name: Enable auto-merge
         if: steps.compare.outputs.sync_needed == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_NUMBER: ${{ steps.upsert.outputs.pr_number }}
           AUTO_MERGE_ENABLED: ${{ steps.upsert.outputs.auto_merge_enabled }}
           MERGE_STATE_STATUS: ${{ steps.upsert.outputs.merge_state_status }}
