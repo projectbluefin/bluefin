@@ -13,6 +13,7 @@ tags := '(
     [stable]=stable
     [latest]=latest
     [testing]=testing
+    [next]=next
 )'
 export SUDOIF := if `id -u` == "0" { "" } else { "sudo" }
 export PODMAN := if path_exists("/usr/bin/podman") == "true" { env("PODMAN", "/usr/bin/podman") } else if path_exists("/usr/bin/docker") == "true" { env("PODMAN", "docker") } else { env("PODMAN", "exit 1 ; ") }
@@ -132,6 +133,12 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
         akmods_flavor="main"
     fi
 
+    # Sealed image flag — the next stream builds on the sealed Fedora Atomic Desktop base
+    SEALED=""
+    if [[ "${tag}" == "next" ]]; then
+        SEALED="1"
+    fi
+
     # Fedora Version
     if [[ {{ ghcr }} == "0" ]]; then
         rm -f /tmp/manifest.json
@@ -141,9 +148,18 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     # Resolve and pin the base image digest first (TOCTOU fix)
     BASE_IMAGE_MAX_RETRIES=5
     BASE_IMAGE_RETRY_DELAY=10
+
+    # The next stream uses the sealed Fedora Atomic Desktop base instead of
+    # the standard Silverblue base. These are test images and are not signed
+    # with official Fedora keys, so cosign verification is skipped.
+    if [[ "${SEALED}" == "1" ]]; then
+        sealed_base_image="ghcr.io/travier/fedora-atomic-desktops-sealed/silverblue"
+    fi
+    resolve_image="${sealed_base_image:-quay.io/fedora-ostree-desktops/silverblue}"
+
     last_digest_error=""
     for attempt in $(seq 1 ${BASE_IMAGE_MAX_RETRIES}); do
-        if inspect_output=$(skopeo inspect --retry-times 3 docker://quay.io/fedora-ostree-desktops/silverblue:"${fedora_version}" 2>&1); then
+        if inspect_output=$(skopeo inspect --retry-times 3 docker://"${resolve_image}":"${fedora_version}" 2>&1); then
             base_image_digest=$(jq -r '.Digest // empty' <<<"${inspect_output}")
             if [[ -n "${base_image_digest:-}" ]]; then
                 break
@@ -154,7 +170,7 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
         fi
 
         if [[ "${attempt}" -eq "${BASE_IMAGE_MAX_RETRIES}" ]]; then
-            echo "ERROR: Could not resolve silverblue digest after ${BASE_IMAGE_MAX_RETRIES} attempts. Refusing to build without a pinned, verified base image."
+            echo "ERROR: Could not resolve ${resolve_image} digest after ${BASE_IMAGE_MAX_RETRIES} attempts. Refusing to build without a pinned, verified base image."
             echo "Last error: ${last_digest_error}"
             exit 1
         fi
@@ -162,12 +178,15 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
         echo "NOTICE: Digest resolution attempt ${attempt}/${BASE_IMAGE_MAX_RETRIES} failed, retrying in ${BASE_IMAGE_RETRY_DELAY}s..."
         sleep "${BASE_IMAGE_RETRY_DELAY}"
     done
-    base_image_ref="quay.io/fedora-ostree-desktops/silverblue:${fedora_version}@${base_image_digest}"
+    base_image_ref="${resolve_image}:${fedora_version}@${base_image_digest}"
 
     # Verify Base Image with cosign — FATAL in CI, skippable locally for dev convenience.
     # A verification failure means the base image cannot be trusted; continuing would launder
     # a potentially compromised image through the Bluefin signing pipeline.
-    if [[ "${SKIP_BASE_VERIFY:-}" == "1" && "${CI:-}" != "true" ]]; then
+    # Sealed test images are not signed with official Fedora keys — skip verification.
+    if [[ "${SEALED}" == "1" ]]; then
+        echo "NOTICE: Sealed test images are not cosign-signed — skipping base image verification"
+    elif [[ "${SKIP_BASE_VERIFY:-}" == "1" && "${CI:-}" != "true" ]]; then
         echo "WARNING: Skipping base image verification (SKIP_BASE_VERIFY=1, local dev only)"
     else
         {{ just }} verify-container "silverblue:${fedora_version}@${base_image_digest}" quay.io/fedora-ostree-desktops "{{ justfile_directory() }}/keys/fedora-ostree.pub" || {
@@ -234,6 +253,9 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
         BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
     fi
     BUILD_ARGS+=("--build-arg" "UBLUE_IMAGE_TAG=${tag}")
+    if [[ "${SEALED}" == "1" ]]; then
+        BUILD_ARGS+=("--build-arg" "SEALED=1")
+    fi
     if [[ "${PODMAN}" =~ docker && "${TERM}" == "dumb" ]]; then
         BUILD_ARGS+=("--progress" "plain")
     fi
@@ -591,7 +613,10 @@ fedora_version image="bluefin" tag="latest" flavor="main" $kernel_pin="":
     set -eou pipefail
     {{ just }} validate {{ image }} {{ tag }} {{ flavor }}
     if [[ ! -f /tmp/manifest.json ]]; then
-        if [[ "{{ tag }}" =~ stable ]]; then
+        if [[ "{{ tag }}" == "next" ]]; then
+            # Sealed images: inspect the sealed Silverblue base to resolve Fedora version
+            skopeo inspect --retry-times 3 docker://ghcr.io/travier/fedora-atomic-desktops-sealed/silverblue:44 > /tmp/manifest.json
+        elif [[ "{{ tag }}" =~ stable ]]; then
             # CoreOS does not uses cosign
             skopeo inspect --retry-times 3 docker://quay.io/fedora/fedora-coreos:stable > /tmp/manifest.json
         elif [[ "{{ tag }}" == "testing" ]]; then

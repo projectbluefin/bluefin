@@ -75,9 +75,12 @@ UNWANTED_PACKAGES=(
     fedora-third-party
     firefox
     gnome-software
-    gnome-software-rpm-ostree
     podman-docker
 )
+# gnome-software-rpm-ostree is already absent on sealed images (no rpm-ostree)
+if [[ "${SEALED:-}" != "1" ]]; then
+    UNWANTED_PACKAGES+=("gnome-software-rpm-ostree")
+fi
 
 for package in "${UNWANTED_PACKAGES[@]}"; do
     if rpm -q "${package}" >/dev/null 2>&1; then
@@ -97,11 +100,14 @@ if [[ "${IMAGE_NAME}" =~ nvidia ]]; then
 fi
 
 IMPORTANT_UNITS=(
-    rpm-ostree-countme.timer
     tailscaled.service
     ublue-system-setup.service
     uupd.timer
   )
+# rpm-ostree-countme is absent on sealed images (no rpm-ostree)
+if [[ "${SEALED:-}" != "1" ]]; then
+    IMPORTANT_UNITS+=("rpm-ostree-countme.timer")
+fi
 
 for unit in "${IMPORTANT_UNITS[@]}"; do
     if ! systemctl is-enabled "$unit" 2>/dev/null | grep -q "^enabled$"; then

@@ -4,6 +4,9 @@ ARG BASE_IMAGE="quay.io/fedora-ostree-desktops/silverblue"
 # BASE_IMAGE_REF is resolved to BASE_IMAGE:FEDORA_MAJOR_VERSION@digest after cosign verify.
 # Defaults to tag-only for local builds where digest is not resolved.
 ARG BASE_IMAGE_REF="${BASE_IMAGE}:${FEDORA_MAJOR_VERSION}"
+# Set to "1" on the next branch to build on the sealed Fedora Atomic Desktop base
+# (systemd-boot + UKI + composefs). Empty or "0" preserves the legacy GRUB/rpm-ostree path.
+ARG SEALED=""
 ARG COMMON_IMAGE="ghcr.io/projectbluefin/common:latest"
 ARG COMMON_IMAGE_SHA=""
 ARG BREW_IMAGE="ghcr.io/ublue-os/brew:latest"
@@ -32,6 +35,7 @@ ARG IMAGE_VENDOR="projectbluefin"
 ARG KERNEL="6.10.10-200.fc40.x86_64"
 ARG UBLUE_IMAGE_TAG="stable"
 ARG IMAGE_FLAVOR=""
+ARG SEALED=""
 
 # Stage 1 — Package installs only (cache key: build_files/)
 # Runs the package-install layer (`03-packages.sh`, `04-install-kernel-akmods.sh`,
@@ -45,6 +49,7 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
     --mount=type=secret,id=GITHUB_TOKEN \
     --mount=type=tmpfs,dst=/boot \
     bash -euo pipefail -c ' \
+        export SEALED="${SEALED:-}" && \
         dnf5 config-manager setopt keepcache=1 && \
         dnf5 config-manager setopt install_weak_deps=0 && \
         dnf5 -y swap fedora-logos generic-logos && \
@@ -77,6 +82,7 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
     --mount=type=secret,id=GITHUB_TOKEN \
     --mount=type=tmpfs,dst=/boot \
     bash -euo pipefail -c ' \
+        export SEALED="${SEALED:-}" && \
         rsync -rvK /ctx/system_files/shared/ / && \
         mkdir -p /tmp/scripts/helpers && \
         install -Dm0755 /ctx/build_files/shared/utils/ghcurl /tmp/scripts/helpers/ghcurl && \

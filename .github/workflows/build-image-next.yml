@@ -1,0 +1,34 @@
+name: Next Images (sealed)
+on:
+  pull_request:
+    branches:
+      - next
+    paths-ignore:
+      - ".github/workflows/*validate*.yml"
+      - "**.md"
+      - "system_files/shared/etc/bazaar/**"
+  push:
+    branches:
+      - next
+    paths-ignore:
+      - ".github/workflows/*validate*.yml"
+      - "**.md"
+      - "system_files/shared/etc/bazaar/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  attestations: write
+  artifact-metadata: write
+
+jobs:
+  build-image-next:
+    name: Build Next Images (sealed)
+    if: github.event_name != 'workflow_dispatch' || github.ref_name == 'next'
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@13e3593568d87cfe075a86e3995930e350f8c5ea # v1
+    secrets: inherit
+    with:
+      stream_name: next
+      architecture: '["x86_64"]'

@@ -59,8 +59,11 @@ fi
 echo "IMAGE_ID=\"${IMAGE_NAME}\"" >> /usr/lib/os-release
 echo "IMAGE_VERSION=\"${VERSION}\"" >> /usr/lib/os-release
 
-# Fix issues caused by ID no longer being fedora
-sed -i "s|^EFIDIR=.*|EFIDIR=\"fedora\"|" /usr/sbin/grub2-switch-to-blscfg
+# Fix issues caused by ID no longer being fedora.
+# Sealed images use systemd-boot, not GRUB — the script may not exist.
+if [[ "${SEALED:-}" != "1" ]]; then
+    sed -i "s|^EFIDIR=.*|EFIDIR=\"fedora\"|" /usr/sbin/grub2-switch-to-blscfg
+fi
 
 # Ship placeholder values — refreshed at runtime by bluefin-stats-refresh.timer
 echo "…" > /usr/share/ublue-os/fastfetch-user-count

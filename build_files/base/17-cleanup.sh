@@ -12,7 +12,10 @@ systemctl enable brew-setup.service
 systemctl enable dconf-update.service
 systemctl enable flatpak-nuke-fedora.service
 systemctl enable input-remapper.service
-systemctl enable rpm-ostree-countme.service
+# rpm-ostree-countme is absent on sealed images (no rpm-ostree)
+if [[ "${SEALED:-}" != "1" ]]; then
+    systemctl enable rpm-ostree-countme.service
+fi
 systemctl enable tailscaled.service
 systemctl enable ublue-system-setup.service
 
@@ -31,8 +34,10 @@ systemctl enable uupd.timer
 # Refresh community stats (user count, Bazaar downloads) for fastfetch
 systemctl enable bluefin-stats-refresh.timer
 
-#disable the old rpm-ostreed-automatic.timer
-systemctl disable rpm-ostreed-automatic.timer
+# rpm-ostreed-automatic.timer is absent on sealed images (no rpm-ostree)
+if [[ "${SEALED:-}" != "1" ]]; then
+    systemctl disable rpm-ostreed-automatic.timer
+fi
 
 # Hide Desktop Files. Hidden removes mime associations
 for file in fish htop nvtop; do
