@@ -206,6 +206,8 @@ When you encounter a CI issue that involves duplicated inline steps, path-filter
 3. CI must pass on this draft PR before the actions PR merges
 4. After the actions PR merges, update this repo to the released `v1` SHA (keep the trailing `# v1` comment)
 
+**Release-action consumer validation pattern:** if the shared action under test expects a semver tag or a `cliff.toml` but this repo does not ship them, add a draft-only manual workflow on the validation branch that creates a temporary local semver tag plus a temporary cliff config before calling the pinned shared action SHA. Link that workflow run in the actions PR as consumer-validation evidence.
+
 Never duplicate an existing shared action inline — doing so creates a second Renovate pin that drifts independently.
 
 ## Hard rules for agents
