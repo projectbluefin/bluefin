@@ -1,6 +1,6 @@
 name: "Bug report"
 description: "Something is broken. You are the only person who can confirm it."
-labels: ["type/bug", "needs-triage"]
+labels: ["kind/bug", "status/triage"]
 type: "Bug"
 body:
   - type: markdown

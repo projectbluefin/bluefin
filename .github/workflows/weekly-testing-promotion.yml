@@ -2,7 +2,7 @@ name: Weekly Testing Promotion
 
 on:
   schedule:
-    - cron: '0 6 * * 2' # Tuesday 06:00 UTC
+    - cron: '0 6 * * 2' # Tuesday 06:00 UTC (08:00 EEST)
   workflow_dispatch:
 
 concurrency:
@@ -12,11 +12,64 @@ concurrency:
 permissions: {}
 
 jobs:
+  # Enforce a minimum 7-day floor between stable promotions to prevent churn.
+  # On workflow_dispatch the floor is bypassed so maintainers can force a
+  # promotion (e.g. after a hotfix or a failed previous run).
+  check-promotion-floor:
+    name: Check 7-day promotion floor
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      should_promote: ${{ steps.floor.outputs.should_promote }}
+    steps:
+      - name: Check days since last stable release
+        id: floor
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "Manual dispatch — bypassing promotion floor."
+            echo "should_promote=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          LAST_RELEASE=$(gh release list \
+            --repo "${{ github.repository }}" \
+            --limit 1 \
+            --json createdAt \
+            --jq '.[0].createdAt // empty')
+
+          if [[ -z "$LAST_RELEASE" ]]; then
+            echo "No previous release found — first promotion, proceeding."
+            echo "should_promote=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          LAST_TS=$(date -d "$LAST_RELEASE" +%s)
+          NOW_TS=$(date +%s)
+          DAYS_SINCE=$(( (NOW_TS - LAST_TS) / 86400 ))
+
+          echo "Last stable release: $LAST_RELEASE (${DAYS_SINCE} days ago)"
+
+          if [[ "$DAYS_SINCE" -lt 7 ]]; then
+            echo "Floor not met (${DAYS_SINCE}/7 days) — skipping promotion this cycle."
+            echo "should_promote=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Floor met (${DAYS_SINCE} days) — proceeding with promotion."
+            echo "should_promote=true" >> "$GITHUB_OUTPUT"
+          fi
+
   # Verify that post-testing-e2e.yml already ran smoke tests on the current
   # main HEAD since every push to main triggers it. If e2e hasn't passed
   # on the current HEAD (e.g., a new push just landed), fail fast rather than
   # promoting untested code.
   verify-e2e:
+    needs: [check-promotion-floor]
+    if: needs.check-promotion-floor.outputs.should_promote == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
