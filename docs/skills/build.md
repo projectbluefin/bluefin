@@ -175,4 +175,6 @@ A `system_files`-only change hits Stage 1 cache and skips the full package insta
 
 ## Lessons learned
 
-<!-- Add reusable build/PR patterns here -->
+### `yelp` is deprecated — do not install it
+
+`yelp` (the GNOME help viewer) is deprecated upstream. Do not add it to the package list as a fix for `help://` URI failures (e.g. the Nautilus Templates tooltip). The correct approach is to override or suppress the `help://` URI handler at the GNOME/desktop level, not to install a deprecated viewer.
