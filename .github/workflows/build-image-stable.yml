@@ -24,7 +24,7 @@ jobs:
     # Thin caller only: shared build orchestration belongs in projectbluefin/actions.
     # Keep repo-local edits here limited to triggers, permissions, and reusable-build inputs.
     if: github.event_name != 'workflow_dispatch' || github.ref_name == 'stable'
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@c4c25bda265a350b3f17982198eedb5a760ea7fd # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@38dc24b919e557a1204e26641887af792bf6cbad # v1
     with:
       # kernel_pin: 6.17.12-300.fc43.x86_64 ## Pin to 6.17 for ZFS compatibility
       stream_name: stable
