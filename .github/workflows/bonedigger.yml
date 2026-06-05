@@ -1,19 +1,23 @@
-name: bonedigger
+name: issue and PR lifecycle
+
 on:
   issues:
     types: [opened, labeled, closed]
   issue_comment:
     types: [created]
+  pull_request:
+    types: [opened]
   schedule:
     - cron: '0 9 * * *'
 
 permissions:
   issues: write
+  pull-requests: write
   contents: read
 
 jobs:
-  bonedigger:
-    uses: projectbluefin/bonedigger/.github/workflows/lifecycle.yml@743f56403af826b148d2841524faa1edb68a4538
+  lifecycle:
+    uses: projectbluefin/common/.github/workflows/lifecycle.yml@c978e1ea5457a605da112b41b5e717b16d06e817
     with:
       brand_name: "Bluefin"
       brand_emoji: "🦖"

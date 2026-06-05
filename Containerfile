@@ -22,7 +22,7 @@ COPY --from=brew /system_files /system_files/shared
 
 ## bluefin image section
 # hadolint ignore=DL3006
-FROM ${BASE_IMAGE_REF} AS base
+FROM ${BASE_IMAGE_REF} AS base-common
 
 ARG AKMODS_FLAVOR="coreos-stable"
 ARG BASE_IMAGE_NAME="silverblue"
@@ -57,14 +57,43 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
         /ctx/build_files/base/05-override-install.sh \
     '
 
-# ARGs declared here (between stages) intentionally — placing them before Stage 1
-# would bust its cache on every commit.
+# hadolint ignore=DL3006
+FROM base-common AS extension-builder
+
+RUN --mount=type=cache,dst=/var/cache/libdnf5 \
+    bash -euo pipefail -c ' \
+        dnf5 -y install glib2-devel meson sassc cmake dbus-devel \
+    '
+
+RUN --mount=type=bind,from=ctx,source=/system_files/shared/usr/share/gnome-shell/extensions,target=/ctx/extensions \
+    --mount=type=bind,from=ctx,source=/build_files/shared/build-gnome-extensions.sh,target=/ctx/build_files/shared/build-gnome-extensions.sh \
+    bash -euo pipefail -c ' \
+        mkdir -p /usr/share/gnome-shell/extensions && \
+        rsync -rvK /ctx/extensions/ /usr/share/gnome-shell/extensions/ && \
+        bash /ctx/build_files/shared/build-gnome-extensions.sh \
+    '
+
+# Per-build metadata: declared here so they don't bust Stage 1's cache key.
 ARG SHA_HEAD_SHORT="dedbeef"
 ARG VERSION=""
 
-# Stage 2 — system_files overlay and cleanup (cache key: system_files/)
-# Runs the overlay/finalization layer (`00-image-info.sh`, GNOME extension build,
-# `17-cleanup.sh`, `19-initramfs.sh`, repo validation, stage cleanup, `20-tests.sh`).
+FROM base-common AS base
+
+ARG AKMODS_FLAVOR="coreos-stable"
+ARG BASE_IMAGE_NAME="silverblue"
+ARG FEDORA_MAJOR_VERSION="44"
+ARG IMAGE_NAME="bluefin"
+ARG IMAGE_VENDOR="projectbluefin"
+ARG KERNEL="6.10.10-200.fc40.x86_64"
+ARG UBLUE_IMAGE_TAG="stable"
+ARG IMAGE_FLAVOR=""
+ARG SHA_HEAD_SHORT="dedbeef"
+ARG VERSION=""
+
+COPY --from=extension-builder /usr/share/gnome-shell/extensions /usr/share/gnome-shell/extensions
+COPY --from=extension-builder /usr/share/glib-2.0/schemas /usr/share/glib-2.0/schemas
+
+# Stage 2: overlay system_files, finalize extensions, clean up, and finalize the image.
 # Narrow mount (system_files/ + build_files/shared) means package-script changes
 # do NOT invalidate this stage when build_files/base is unchanged.
 RUN --mount=type=cache,dst=/var/cache/libdnf5 \
@@ -77,12 +106,12 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
     --mount=type=secret,id=GITHUB_TOKEN \
     --mount=type=tmpfs,dst=/boot \
     bash -euo pipefail -c ' \
-        rsync -rvK /ctx/system_files/shared/ / && \
+        rsync -rvK --exclude="/usr/share/gnome-shell/extensions/***" /ctx/system_files/shared/ / && \
         mkdir -p /tmp/scripts/helpers && \
         install -Dm0755 /ctx/build_files/shared/utils/ghcurl /tmp/scripts/helpers/ghcurl && \
         export PATH="/tmp/scripts/helpers:$PATH" && \
         /ctx/build_files/base/00-image-info.sh && \
-        /ctx/build_files/shared/build-gnome-extensions.sh && \
+        bash /ctx/build_files/shared/finalize-gnome-extensions.sh && \
         /ctx/build_files/base/17-cleanup.sh && \
         /ctx/build_files/base/19-initramfs.sh && \
         /ctx/build_files/shared/validate-repos.sh && \
