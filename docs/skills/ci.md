@@ -34,7 +34,7 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| `pr-validation.yml` | PRs to `testing`, merge_group | Fast gate: **`validate`** (shared `validate-pr`, SHA-pinned in callers: just check, shellcheck, hadolint, pre-commit) + **`unit-tests`** (bats tests/unit/) — **E2E (`testsuite`) only on `merge_group`** |
+| `pr-validation.yml` | PRs to `testing` and `main`, merge_group | Fast gate: **`validate`** (shared `validate-pr`, SHA-pinned in callers: just check, shellcheck, hadolint, pre-commit) + **`unit-tests`** (bats tests/unit/) — **E2E (`testsuite`) only on `merge_group`** |
 | `pr-smoke.yml` | PRs touching build files | Full image build + smoke test |
 | `build-image-testing.yml` | Push to `main`, dispatch | Testing image builds via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Testing build on `main` | Smoke+common continuous e2e gate |
@@ -57,7 +57,7 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 | `cherry-pick-to-stable.yml` | `cherry-pick` label on PR | Backport via GitHub App token |
 | `bonedigger.yml` | Issue events, daily | Issue lifecycle |
 | `moderator.yml` | Issues/comments | AI spam detection |
-| `skill-drift.yml` | PRs to `testing` | Guardrail: workflow/build changes must update matching docs/skills |
+| `skill-drift.yml` | PRs to `testing` (on `testing` branch) / PRs to `main` (on `main` branch) | Guardrail: workflow/build changes must update matching docs/skills. SHA-pinned (`@6274199cfb...`). Includes `.github/actions/**` in code-paths. |
 
 ## Fast checks by symptom
 
@@ -104,6 +104,8 @@ If `main` advanced during promotion, the workflow aborts on purpose.
 | Weekly promotion cannot find digest artifact | artifact expired before Tuesday promotion window | push fresh commit to `main` to regenerate artifact |
 | Cosign sign/verify fails | Sigstore outage or key rotation | check `check-cosign-key-rotation.yml` issues; retry after Sigstore recovers |
 | COPR health monitor reports "no succeeded build" | COPR API changed response format — `latest_succeeded_build` moved to `builds.latest_succeeded` | Verify with raw API: `curl "https://copr.fedorainfracloud.org/api_3/package?ownername=X&projectname=Y&packagename=Z&with_latest_succeeded_build=True"` — if `builds.latest_succeeded` is present the repo is healthy; the monitor handles both formats |
+| `validate` passes but `gh pr merge --squash` on a `main`-targeting PR returns "Required status check is expected" | `strict_required_status_checks_policy: true` — the head branch is behind `main`; the passing check ran on a stale commit | sync `testing` with `main`, push an empty commit to trigger fresh CI, then retry enqueue or use `--admin` bypass |
+| PR targeting `main` has no `validate` CI run | `pr-validation.yml` only triggered on `testing` (pre-fix state) | `pr-validation.yml` must list both `testing` and `main` in `branches:`; verify the workflow on `main` branch has been updated |
 
 ## Non-obvious patterns
 
@@ -112,6 +114,22 @@ If `main` advanced during promotion, the workflow aborts on purpose.
 - Stable release generation depends on SBOM assets existing for the images being diffed — testing stream skips SBOM generation; promoted images lack signed SBOMs until a separate SBOM pass runs
 - Bluefin docs-only changes often skip image builds due to path filters; that is usually expected
 - **`testing` branch has branch protection** — required status check: `validate`. `allow_auto_merge` enabled at repo level. `gh pr merge --auto --squash` works. No merge queue.
+- **`main` branch has a merge queue (ruleset 17070404)** — required approvals: 1. Required check: `validate` (integration_id 15368). Merge method: squash. `strict_required_status_checks_policy: true` — the `validate` check must have passed against a HEAD that is fully up-to-date with `main` before enqueue is accepted. Enqueue via GraphQL:
+  ```bash
+  NODE_ID=$(gh pr view $PR --repo projectbluefin/bluefin --json id --jq .id)
+  gh api graphql -f query="mutation { enqueuePullRequest(input: { pullRequestId: \"${NODE_ID}\" }) { mergeQueueEntry { id position } } }"
+  ```
+  If enqueue returns `"Required status check ... is expected."` despite validate passing, `testing` is behind `main` — sync first (see below). Org admins can bypass: `gh pr merge --squash --admin`.
+- **`testing`/`main` branch sync** — `main` and `testing` can diverge (e.g. after admin pushes to `main`). When `strict_required_status_checks_policy` blocks enqueue, sync testing up to main first:
+  ```bash
+  git checkout testing && git pull projectbluefin testing --ff-only
+  git merge projectbluefin/main --no-edit
+  # resolve conflicts: keep testing's versions for newer digests and pinned SHAs
+  git push projectbluefin testing
+  # then push an empty commit to trigger fresh CI on the promotion PR
+  git commit --allow-empty -m "ci: sync testing with main to unblock promotion"
+  git push projectbluefin testing
+  ```
 - **E2E (`testsuite` job) only runs on `merge_group`** — the `testsuite` job in `pr-validation.yml` has a hard `if: github.event_name == 'merge_group'` guard. There is no `detect-changes` conditional; the guard is unconditional. Per-push PR CI is fast validate + unit-tests only (~2 min). Do not add E2E to per-push PR jobs — each push triggering a 10-min QEMU boot is wasteful and blocks Renovate automerge.
 - **Unit tests live in `tests/unit/`, not `build_files/`** — `build_files/**` is in the detect-changes image path filter; placing test files there causes every PR push to trigger image builds and E2E. Test files belong in `tests/unit/` where they are invisible to the image path filter.
 - **`just test-unit` runs bats unit tests** — calls `bats tests/unit/`. The CI `unit-tests` job invokes `bats` directly (not `just`) because `just` is not available on a bare `ubuntu-latest` runner without the `setup-runner` composite action. Test files: `package-lib_test.bats`, `validate-repos_test.bats`, `copr-helpers_test.bats`.
