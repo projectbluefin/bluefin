@@ -4,7 +4,7 @@
 # Called by: build_files/base/17-cleanup.sh
 
 disable_third_party_repos() {
-    local REPOS_DIR="/etc/yum.repos.d"
+    local REPOS_DIR="${REPOS_DIR:-/etc/yum.repos.d}"
 
     # Specific named repos enabled by build scripts
     for repo in fedora-multimedia tailscale fedora-cisco-openh264; do
