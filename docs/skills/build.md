@@ -151,6 +151,30 @@ uses: projectbluefin/actions/.github/workflows/reusable-build.yml@<SHA>
 | `bootc-build/push-image` | Registry push with retry |
 | `bootc-build/sign-and-publish` | Signing + SBOM attach |
 
+## Containerfile split-RUN architecture — important constraints
+
+The Containerfile uses **two separate `RUN` commands** (as of #112 / split-RUN):
+
+- **Stage 1 RUN:** Package installs — `03-packages.sh`, `04-install-kernel-akmods.sh`, `05-override-install.sh`
+- **Stage 2 RUN:** Overlay + finalization — `00-image-info.sh`, `build-gnome-extensions.sh`, `19-initramfs.sh`, `validate-repos.sh`, `clean-stage.sh`, `20-tests.sh`
+
+### Key constraint: tmpfs does NOT persist between RUN commands
+
+Each `RUN` command in a Containerfile gets its own mount namespace. Files written to `/tmp` or tmpfs in Stage 1 are **gone** in Stage 2. This means:
+
+- **Sentinel file approach for conditional initramfs will not work.** Writing `/tmp/.initramfs-needed` in `04-install-kernel-akmods.sh` (Stage 1) and reading it in `19-initramfs.sh` (Stage 2) silently fails — the file is always absent in Stage 2.
+- The Stage 2 narrow bind-mount already provides coarse caching: a `system_files`-only change gets a Stage 1 cache hit and skips kernel+package reinstall entirely.
+- Issue #131 (conditional initramfs) requires a different design, e.g. comparing kernel RPM versions directly in Stage 2, before implementation.
+
+### Cache invalidation rules
+
+| Change type | Stage 1 cache | Stage 2 cache |
+|---|---|---|
+| `build_files/base/*.sh` change | **BUST** | bust (depends on Stage 1) |
+| `build_files/shared/*.sh` change | hit | **BUST** |
+| `system_files/` change | hit | **BUST** |
+| `image-versions.yml` change | **BUST** | bust |
+
 ## Lessons learned
 
 <!-- Add reusable build/PR patterns here -->

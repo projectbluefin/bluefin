@@ -30,11 +30,11 @@ Retry only failed jobs:
 gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 ```
 
-## Workflow map (high-signal workflows)
+## Workflow map (complete — 23 workflows)
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| `pr-validation.yml` | PRs to `testing`, merge_group | Fast gate: **`validate`** (shared `validate-pr`, SHA-pinned in callers: just check, shellcheck, hadolint, pre-commit) + **`unit-tests`** (bats tests/unit/) — **E2E (`testsuite`) only on `merge_group`** |
+| `pr-validation.yml` | PRs to `testing`, merge_group | Fast gate: **`validate`** (validate-pr@v1: just check, shellcheck, hadolint, pre-commit) + **`unit-tests`** (bats tests/unit/) — **E2E (`testsuite`) only on `merge_group`** |
 | `pr-smoke.yml` | PRs touching build files | Full image build + smoke test |
 | `build-image-testing.yml` | Push to `main`, dispatch | Testing image builds via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Testing build on `main` | Smoke+common continuous e2e gate |
@@ -57,7 +57,6 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 | `cherry-pick-to-stable.yml` | `cherry-pick` label on PR | Backport via GitHub App token |
 | `bonedigger.yml` | Issue events, daily | Issue lifecycle |
 | `moderator.yml` | Issues/comments | AI spam detection |
-| `skill-drift.yml` | PRs to `testing` | Guardrail: workflow/build changes must update matching docs/skills |
 
 ## Fast checks by symptom
 
@@ -102,6 +101,7 @@ If `main` advanced during promotion, the workflow aborts on purpose.
 | required check is skipped | path filter skipped the workflow | verify whether skipped is intentional for that workflow |
 | Renovate PR did not automerge | PR lookup missed mergeraptor author, or `testing` branch protection not set up | accept both `renovate[bot]` and `app/mergeraptor` in jq filter; ensure `testing` has branch protection with `validate` required check and `allow_auto_merge=true` at repo level |
 | Weekly promotion cannot find digest artifact | artifact expired before Tuesday promotion window | push fresh commit to `main` to regenerate artifact |
+| COPR health monitor fires "no succeeded build" | COPR API format changed: check `builds.latest_succeeded` not `latest_succeeded_build` | Verify raw API: `curl "https://copr.fedorainfracloud.org/api_3/package?ownername=X&projectname=Y&packagename=Z&with_latest_succeeded_build=True"` — if `builds.latest_succeeded` is present the repo is fine; update the monitor script |
 | Cosign sign/verify fails | Sigstore outage or key rotation | check `check-cosign-key-rotation.yml` issues; retry after Sigstore recovers |
 
 ## Non-obvious patterns
@@ -118,33 +118,31 @@ If `main` advanced during promotion, the workflow aborts on purpose.
 - Weekly promotion uses retag-only (skopeo copy) for the canonical path; a parallel rebuild pathway also exists via branch push
 - Build callers do not pass `secrets: inherit` — `reusable-build.yml` only needs `GITHUB_TOKEN`, which is automatically available
 
+### COPR API response format (health monitor)
+
+The COPR `package` API endpoint with `with_latest_succeeded_build=True` has two response formats depending on API version:
+- **Old:** `response["latest_succeeded_build"]["submitted_on"]`
+- **New:** `response["builds"]["latest_succeeded"]["submitted_on"]`
+
+The health monitor at `.github/workflows/copr-health-monitor.yml` handles both. If it fires with "no succeeded build", check the raw API response before assuming the COPR is truly broken. PR #316 added the dual-format check.
+
 ## Shared actions architecture (projectbluefin/actions)
 
 Common CI/CD logic lives in reusable GitHub Actions at **https://github.com/projectbluefin/actions** (current release: `v1`). These actions serve bluefin, aurora, bazzite, and any bootc image builder.
 
 | Action | Status | Purpose |
 |---|---|---|
-| `bootc-build/setup-runner` | ✅ released on `v1` | Update podman from Ubuntu resolute, BTRFS mount, install just/cosign/oras/syft |
-| `bootc-build/dnf-cache` | ✅ released on `v1` | Restore/save buildah cache with chmod 777 workaround |
-| `bootc-build/ghcr-cleanup` | ✅ released on `v1` | Parameterized GHCR image retention |
-| `bootc-build/preflight` | ✅ released on `v1` | Validate registry auth, normalize image refs, check required secrets |
-| `bootc-build/detect-changes` | ✅ released on `v1` | Detect changed paths; compute image-flavor build matrix (`image_flavors`, `should_build`) |
-| `bootc-build/validate-pr` | ✅ released on `v1` | PR validation: just check, shellcheck, hadolint, pre-commit — all tool pins live here |
-| `bootc-build/push-image` | ✅ released on `v1` | Push once + skopeo copy for alias tags, digest capture |
-| `bootc-build/sign-and-publish` | ✅ released on `v1` | Cosign sign (keyless or key-based) + Syft SBOM + ORAS attach + attestation |
-| `bootc-build/rechunk` | ✅ released on `v1` | rpm-ostree chunkah rechunking with delta support |
-| `bootc-build/generate-tags` | ✅ released on `v1` | Produce OCI tags from branch, date, Fedora version |
+| `bootc-build/setup-runner` | ✅ live `@v1` | Update podman from Ubuntu resolute, BTRFS mount, install just/cosign/oras/syft |
+| `bootc-build/dnf-cache` | ✅ live `@v1` | Restore/save buildah cache with chmod 777 workaround |
+| `bootc-build/ghcr-cleanup` | ✅ live `@v1` | Parameterized GHCR image retention |
+| `bootc-build/preflight` | ✅ live `@v1` | Validate registry auth, normalize image refs, check required secrets |
+| `bootc-build/detect-changes` | ✅ live `@v1` | Detect changed paths; compute image-flavor build matrix (`image_flavors`, `should_build`) |
+| `bootc-build/validate-pr` | ✅ live `@v1` | PR validation: just check, shellcheck, hadolint, pre-commit — all tool pins live here |
+| `bootc-build/push-image` | ✅ live `@v1` | Push once + skopeo copy for alias tags, digest capture |
+| `bootc-build/sign-and-publish` | ✅ live `@v1` | Cosign sign (keyless or key-based) + Syft SBOM + ORAS attach + attestation |
+| `bootc-build/rechunk` | ✅ live `@v1` | rpm-ostree chunkah rechunking with delta support |
+| `bootc-build/generate-tags` | ✅ live `@v1` | Produce OCI tags from branch, date, Fedora version |
 | `bootc-build/generate-release` | 🔲 planned | Changelog from RPM diff + SBOM comparison |
-
-### Caller pinning rule
-
-Workflow consumers in this repo pin `projectbluefin/actions` references to a full commit SHA and keep the release channel in a trailing comment:
-
-```yaml
-- uses: projectbluefin/actions/bootc-build/setup-runner@13e3593568d87cfe075a86e3995930e350f8c5ea # v1
-```
-
-Floating `@v1` tags are blocked by the repo's `no-floating-action-tags` pre-commit hook. The `# v1` comment is the stable contract; the SHA is the actual pin that Renovate updates.
 
 ### Migration pattern
 
@@ -157,7 +155,7 @@ Replace inline workflow steps with action calls:
     sudo systemctl ...
 
 # After: single action call
-- uses: projectbluefin/actions/bootc-build/setup-runner@<SHA> # v1
+- uses: projectbluefin/actions/bootc-build/setup-runner@v1
   with:
     podman-version: "5.4"
 ```
@@ -166,7 +164,7 @@ Replace inline workflow steps with action calls:
 
 - Each action is independently consumable (no monolithic action bundle)
 - Signing mode is an input (`keyless` or `key-based`), not hardcoded
-- Consumer repos pin SHAs; Renovate tracks updates via the `github-actions` manager and preserves the `# v1` release-channel comment
+- Actions pin to `@v1` semver tags; Renovate tracks updates via `github-actions` manager
 - The full catalog and authoring guide lives at **https://github.com/projectbluefin/actions/tree/main/docs/skills**
 
 ### CI fix workflow for agents
@@ -185,7 +183,7 @@ When you encounter a CI issue that involves duplicated inline steps, path-filter
 1. Open a PR in `projectbluefin/actions` on a feature branch
 2. Open a draft PR here pinned to the feature branch SHA (e.g. `projectbluefin/actions/bootc-build/detect-changes@<SHA>`)
 3. CI must pass on this draft PR before the actions PR merges
-4. After the actions PR merges, update this repo to the released `v1` SHA (keep the trailing `# v1` comment)
+4. After the actions PR merges and `@v1` moves, update this PR to `@v1`
 
 Never duplicate an existing shared action inline — doing so creates a second Renovate pin that drifts independently.
 
@@ -194,8 +192,6 @@ Never duplicate an existing shared action inline — doing so creates a second R
 - **PRs always target `testing`.** Never `main`. If you open a PR targeting `main`, close it and re-open.
 - **Never add shared CI logic to `.github/` or `common`.** New reusable actions go in `projectbluefin/actions` only. See "CI fix workflow for agents" above for the correct sequence.
 - **Never inline a third-party action that is already wrapped in `projectbluefin/actions`.** Use the shared action instead; duplicating the pin creates Renovate drift.
-- **Bluefin workflow files are thin callers.** Local workflow edits should usually stop at triggers, permissions, concurrency, repo-specific constraints, and inputs to shared actions/workflows.
-- **Workflow behavior changes must update `docs/skills/ci.md` in the same PR.** `skill-drift.yml` now runs on PRs to `testing` to enforce this on the real landing branch.
 - **Read the actual workflow files before writing about them.** Stored memory about tags, steps, or behavior can be stale. Open the file and verify.
 - **PATs are forbidden in projectbluefin repos.** Never add `RENOVATE_TOKEN` or any PAT secret. Renovate uses GitHub App auth via `projectbluefin/renovate-config`. Trigger Renovate: `gh workflow run "Renovate Self-Hosted" --repo projectbluefin/renovate-config`
 - **No personal tool artifacts in community files.** This repo is shared; do not include powerlevel ratings, personal skill patterns, or client-specific references in `docs/`.
@@ -224,33 +220,14 @@ When adding `if: github.event_name != 'pull_request'` to the rechunk step, the "
 
 `pr-validation.yml` already runs `just check` as a required check before merge. Running it in every matrix cell wastes ~60-120s per build with zero added value. Remove it from `reusable-build.yml`; keep it only in `pr-validation.yml`.
 
-### Pre-production security audit — 14 tracked findings
+## Pre-production security audit — all 14 findings RESOLVED
 
-Full adversarial review of all 23 workflow files. Findings live in GitHub Issues — search label `area/ci` + `kind/bug`.
+Full adversarial review of all 23 workflow files completed 2026-06. All implementation findings are resolved; #225 remains open only as documented tech debt pending maintainer decision.
 
-**Blocking (P1) — fix before relying on production pipeline:**
-
-| Issue | File | Finding |
-|---|---|---|
-| #210 | `reusable-build.yml` L26 | Architecture default `"['x86_64']"` — invalid JSON (single quotes). Fix: `'["x86_64"]'` |
-| #211 | `weekly-testing-promotion.yml` | Tests only `bluefin-main`, promotes ALL flavors incl. `nvidia-open` without e2e coverage |
-| #212 | `reusable-build.yml` L515 | Digest artifact retention `1d`. Weekly Tuesday run fails if no push in 24h. Raise to `7d` |
-| #213 | `reusable-build.yml` L209+ | Testing stream skips SBOM (`if: inputs.stream_name != 'testing'`). Promoted :stable/:latest lack signed SBOMs. Breaks `generate-release.yml` |
-| #214 | `Justfile` | Base image cosign verify is `\|\| echo "WARNING...Continuing"` — non-fatal. Compromised base flows through |
-| #215 | `Justfile` | Cosign bootstrapped from `cgr.dev/chainguard/cosign:latest` (unverified tag). Use SHA-pinned `sigstore/cosign-installer` instead |
-
-**Non-blocking (P2):**
-
-| Issue | File | Finding |
-|---|---|---|
-| #218 | `weekly-testing-promotion.yml` | No `cosign verify` before retag — unsigned digest can reach production |
-| #219 | `weekly-testing-promotion.yml` L12-15 | `contents/actions/packages: write` at workflow level — over-broad for read-only jobs |
-| #220 | `build-image-*.yml` | All callers use `secrets: inherit` — only `GITHUB_TOKEN` needed |
-| #221 | `vulnerability-scan.yml` L48 | Scans `:testing` tag not build digest (TOCTOU) — **fixed PR #263** |
-| #222 | `pr-smoke.yml` L83-87 | PR builds push under official `ghcr.io/projectbluefin/` namespace |
-| #223 | `pr-validation.yml` L55 | Stale testsuite SHA; `nightly.yml`, `pr-smoke.yml`, `pr-validation.yml` all bypassed wrapper — **fixed PR #262** |
-| #224 | `pr-validation.yml` L28 | `pip install pre-commit` unpinned |
-| #225 | `build-image-stable.yml` | Parallel rebuild pathway coexists with retag-only promotion (dual provenance) — needs maintainer decision |
+**Resolved (all closed except documented tech debt #225):**
+- #210–#215: Blocking P1 issues (invalid JSON, untested nvidia-open, digest retention, missing SBOMs, non-fatal cosign, unverified cosign bootstrap)
+- #218–#224: Non-blocking hardening (signature verification before promotion, permissions scoping, explicit secrets, digest-based vuln scan, PR namespace isolation, centralized testsuite pin, tool version pins)
+- #225: Dual production pathway — documented as tech debt, needs maintainer decision
 
 **Verified-good — do not remove:**
 - All action pins use SHA (not floating tags)
