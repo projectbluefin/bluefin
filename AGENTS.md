@@ -48,6 +48,7 @@ projectbluefin/actions  ←── shared CI: composite actions + reusable-build.
 - Merge method: **squash only**.
 - No WIP PRs.
 - Max 4 open PRs per agent.
+- **`main` uses a merge queue (ruleset 17070404):** PRs targeting `main` need 1 approval + `validate` passing on an up-to-date HEAD. Enqueue via GraphQL (see `docs/skills/ci.md` → "Non-obvious patterns"). The automated testing→main promotion PR is authored by `github-actions`; approve it as maintainer, then enqueue or use `--admin` bypass.
 
 ## Data donation
 
@@ -71,7 +72,7 @@ Non-compliance = rejection.
 - Keep open PR count at 4 or fewer.
 - Do not open WIP PRs.
 - **NEVER interact with repos outside the [`projectbluefin`](https://github.com/projectbluefin) org.** Do not open, comment on, or modify issues, PRs, or code in `ublue-os`, `coreos`, or any other org. Only `projectbluefin/*` repos are in scope.
-- **Agents MUST NOT push directly to `main`.** All changes via PR from a feature branch. Branch protection enforces this.
+- **Agents MUST NOT push directly to `main` unless breaking a bootstrap deadlock.** All normal changes go via PR from a feature branch. Exception: when a CI configuration bug on `main` prevents any PR from passing required checks (bootstrap deadlock), an org-admin direct push is permitted to unblock — document the reason in the commit message.
 - **Production promotion** (`weekly-testing-promotion.yml`) requires 2 distinct human approvals in the GitHub `production` Environment before `:stable` is updated. No agent may trigger, approve, or bypass this gate. Every admin bypass is permanently logged in Environment deployment history.
 - **`.github/workflows/`, `Justfile`, and `build_files/` are CODEOWNERS-protected** — PRs touching these paths require maintainer review.
 
