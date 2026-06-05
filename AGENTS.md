@@ -95,6 +95,7 @@ Non-compliance = rejection.
 
 - **`build_files/shared/build.sh` is dead code.** It is an unused orchestrator left over from the pre-Stage-1/2 split. The Containerfile calls scripts directly. Do not update, test, or reference it.
 - **`/tmp` does not persist across RUN instructions.** Each `RUN` gets a fresh tmpfs. Sentinel or marker files that must survive Stage 1 → Stage 2 must be written to the committed filesystem (e.g. `/lib/modules/<kver>/`, `/var/cache/`). Note: `clean-stage.sh` removes all of `/var/*` except `cache/`, so `/var/cache/` subdirs are the safest persistent scratch space.
+- **Initramfs marker file:** `04-install-kernel-akmods.sh` runs dracut in Stage 1 and touches `/lib/modules/<kver>/.bluefin-initramfs-done`. `19-initramfs.sh` in Stage 2 skips dracut when the marker is present (Stage 1 cache hit). Set `FORCE_INITRAMFS=1` to regenerate unconditionally (weekly/stable CI does this).
 
 ## BATS unit test conventions
 
@@ -105,6 +106,23 @@ Tests live in `tests/unit/`. Run with `bats tests/unit/` (or a single file). The
   ```bash
   sed -e "s|/usr/bin/dracut|dracut|g" original.sh > patched.sh
   ```
+- **`source /ctx/...` paths** don't exist outside a container build. Replace inline with a no-op stub during patching:
+  ```bash
+  sed -e "s|source /ctx/build_files/shared/foo.sh|my_func() { :; }|g" original.sh > patched.sh
+  ```
+  If the sourced file defines multiple functions, write a minimal stub script to `${TEST_ROOT}/` and replace the source path instead.
 - **`local` is only valid inside functions.** Never use `local var=…` at the top level of a stub script.
 - **Inline env vars before `run` don't export.** `FOO=1 run bash script` does NOT make `FOO` visible inside the script. Use `export FOO=1` on its own line before `run`.
 - **Library scripts** (those that define functions) are tested by sourcing them. **Imperative scripts** (those that execute directly) are tested by running them as a subprocess with a `FAKE_ROOT` or `CLEAN_ROOT` prefix variable for filesystem paths.
+- **Tested scripts inventory** (as of current HEAD):
+
+  | Test file | Script under test |
+  |---|---|
+  | `19-initramfs_test.bats` | `build_files/base/19-initramfs.sh` |
+  | `17-cleanup_test.bats` | `build_files/base/17-cleanup.sh` |
+  | `18-workarounds_test.bats` | `build_files/base/18-workarounds.sh` |
+  | `clean-stage_test.bats` (name may vary) | `build_files/shared/clean-stage.sh` |
+  | `copr-helpers_test.bats` | `build_files/shared/copr-helpers.sh` |
+  | `disable-repos_test.bats` | `build_files/shared/disable-repos.sh` |
+  | `package-lib_test.bats` | `build_files/shared/package-lib.sh` |
+  | `validate-repos_test.bats` | `build_files/shared/validate-repos.sh` |
