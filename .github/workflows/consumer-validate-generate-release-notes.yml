@@ -1,6 +1,12 @@
 name: Consumer validate shared generate-release-notes action
 
 on:
+  pull_request:
+    branches:
+      - testing
+    paths:
+      - .github/workflows/consumer-validate-generate-release-notes.yml
+      - docs/skills/ci.md
   workflow_dispatch:
 
 permissions: {}
