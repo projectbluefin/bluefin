@@ -53,7 +53,7 @@ jobs:
       (github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || inputs.pr_number != '') &&
       (github.event_name != 'pull_request' ||
        needs.detect-changes.outputs.should_build == 'true')
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@fix/sha-skew # validation branch: projectbluefin/actions
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@134eb70d5e79636e3b19cd178b280f29b4dd5c57 # v1
     permissions:
       contents: read
       packages: write
