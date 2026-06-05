@@ -51,8 +51,18 @@ jobs:
       image: ${{ needs.e2e.outputs.image }}
       suites: smoke,common
 
+  run-upgrade-test:
+    needs: [e2e]
+    permissions:
+      packages: write
+      contents: read
+    uses: projectbluefin/actions/.github/workflows/upgrade-test.yml@0527fe28c462e3f53cb1f6674c429562861e316c # main
+    with:
+      image: ${{ needs.e2e.outputs.image }}
+      suites: lifecycle
+
   report-failure:
-    needs: [e2e, run-e2e]
+    needs: [e2e, run-e2e, run-upgrade-test]
     if: failure() && needs.e2e.outputs.image != ''
     runs-on: ubuntu-latest
     timeout-minutes: 5

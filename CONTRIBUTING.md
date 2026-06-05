@@ -1,5 +1,15 @@
 # Contributing to Bluefin
 
+## Prerequisites
+
+Install the tools used by the local validation flow before opening a PR:
+
+- `just` — install with `brew install just` or your OS package manager
+- `pre-commit` — install with `pip install pre-commit`, then run `pre-commit install`
+- `podman` / `buildah` — required for local image builds; see [docs/build.md](docs/build.md) for build details
+
+`just check` validates Justfile syntax and related script checks. `pre-commit run --all-files` runs the repository linting and formatting hooks.
+
 ## Branch and stream workflow
 
 ### I want to submit a fix or feature — what do I do?
@@ -17,7 +27,7 @@ just check                    # Justfile and script syntax validation
 pre-commit run --all-files    # Lint / format checks
 ```
 
-Both must pass. The PR template has a checklist — fill it out honestly.
+Both must pass. For local image build requirements and commands, see [docs/build.md](docs/build.md). The PR template has a checklist — fill it out honestly.
 
 ### Merge method
 
