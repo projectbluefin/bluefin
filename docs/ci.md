@@ -137,7 +137,7 @@ Current automation works like this:
 1. A push to `testing` runs `promote-testing-to-main.yml`
 2. That workflow compares the `testing` and `main` tree hashes, upserts a single `testing` → `main` PR, and enables squash auto-merge
 3. The comparison is tree-based rather than `git log main..testing`, so squash merges do not cause already-promoted commits to be re-proposed
-4. Because the PR is created with `GITHUB_TOKEN`, it intentionally relies on `merge_group` gating rather than `pull_request` CI on PR creation
+4. The workflow uses the Bluefin bot GitHub App token so the `testing` → `main` PR fires normal `pull_request` CI before merge queue entry
 5. Once the promotion PR merges to `main`, `build-image-testing.yml` builds the testing images
 6. `post-testing-e2e.yml` waits for that build, downloads `image-digest-testing-bluefin-main`, and runs the `smoke,common` suites from `projectbluefin/testsuite`
 7. `weekly-testing-promotion.yml` (Tuesday 06:00 UTC) locks the current `main` SHA
