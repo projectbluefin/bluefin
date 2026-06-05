@@ -2,7 +2,7 @@
 
 ## Git hook setup
 
-After cloning, install the pre-push guard to prevent accidentally pushing to `origin` (which points to `ublue-os/bluefin`):
+After cloning, install the pre-push guard that blocks accidental `git push origin`:
 
 ```bash
 bash .github/scripts/install-hooks.sh

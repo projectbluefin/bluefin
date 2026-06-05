@@ -22,13 +22,13 @@ git checkout -b my-feature projectbluefin/testing
 
 **One clean squash commit per PR.** Use `git commit --amend` or `git rebase -i` before pushing to ensure the PR contains exactly one commit.
 
-**Always push to the `projectbluefin` remote**, never `origin` (`origin` points to `ublue-os/bluefin`):
+**Always push to the `projectbluefin` remote**, not `origin` — a pre-push hook blocks `git push origin` by name:
 
 ```bash
 git push projectbluefin my-feature
 ```
 
-**Never `git push` or `git push origin`.** Always name the remote explicitly.
+**Never `git push` or `git push origin`.** The pre-push hook enforces `projectbluefin` as the required remote name.
 
 ## Issue tracker
 
