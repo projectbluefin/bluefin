@@ -183,6 +183,8 @@ jobs:
             echo "⏳ PR #${PR_NUMBER} cannot be enqueued yet — required checks have not passed (mergeStateStatus=${MERGE_STATE_STATUS}). A maintainer can approve and enqueue once CI passes."
           elif echo "$RESULT" | grep -q "already in the merge queue"; then
             echo "PR #${PR_NUMBER} is already in the merge queue"
+          elif echo "$RESULT" | grep -qi "forbidden\|not accessible by integration"; then
+            echo "⚠️ PR #${PR_NUMBER} is open and ready. GITHUB_TOKEN cannot enqueue — a maintainer must approve then run: gh pr merge ${PR_NUMBER} --squash --admin"
           else
             echo "ERROR: enqueuePullRequest failed: ${RESULT}"
             exit 1
