@@ -49,6 +49,7 @@ projectbluefin/actions  ←── shared CI: composite actions + reusable-build.
 - No WIP PRs.
 - Max 4 open PRs per agent.
 - **`main` uses a merge queue (ruleset 17070404):** PRs targeting `main` need 1 approval + `validate` passing on an up-to-date HEAD. Enqueue via GraphQL (see `docs/skills/ci.md` → "Non-obvious patterns"). The automated testing→main promotion PR is authored by `github-actions`; approve it as maintainer, then enqueue or use `--admin` bypass.
+- **Never use `gh pr merge --auto` on `main`-targeting PRs.** `--auto` calls `enablePullRequestAutoMerge` which is blocked by the merge queue. Use `enqueuePullRequest` GraphQL or `gh pr merge --squash --admin` to unblock.
 
 ## Data donation
 
