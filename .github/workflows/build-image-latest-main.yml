@@ -31,7 +31,7 @@ jobs:
     # Thin caller only: shared build orchestration belongs in projectbluefin/actions.
     # Keep repo-local edits here limited to triggers, permissions, and reusable-build inputs.
     if: github.event_name != 'workflow_dispatch' || github.ref_name == 'latest'
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@c4c25bda265a350b3f17982198eedb5a760ea7fd # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@fd9b891a09fe23a6fa81220bb5bc2ed945c8fe29 # v1
     with:
       stream_name: latest
       # FIXME: enable when ublue-os/akmods has ARM builds
