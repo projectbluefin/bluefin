@@ -15,7 +15,7 @@ This installs a `pre-push` hook that blocks `git push origin` and reminds you to
 Bluefin is a Containerfile-driven rpm-ostree/bootc image build, not a BuildStream repo.
 
 - `Containerfile` is the top-level build definition
-- Multi-stage flow: `common` / `brew` inputs → `ctx` → `base`
+- Multi-stage flow: `common` / `brew` inputs → `ctx` → `base-common` → `extension-builder` → `base`
 - `build_files/shared/build.sh` orchestrates the numbered scripts in `build_files/base/`
 - `Justfile` is the operator interface for validation, local builds, tagging, and helper commands
 
