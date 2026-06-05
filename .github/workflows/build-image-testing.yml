@@ -42,7 +42,7 @@ jobs:
       (github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || inputs.pr_number != '') &&
       (github.event_name != 'pull_request' ||
        needs.detect-changes.outputs.should_build == 'true')
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@6274199cfb6666180ac2fd0ad5a41bc8440e0929 # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@0fb0f4bddd89a2fe15a326460c05592bb3cb7186 # PR #75 consumer test
     permissions:
       contents: read
       packages: write
