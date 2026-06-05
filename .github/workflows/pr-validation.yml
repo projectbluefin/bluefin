@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Validate
-        uses: projectbluefin/actions/bootc-build/validate-pr@6274199cfb6666180ac2fd0ad5a41bc8440e0929 # v1
+        uses: projectbluefin/actions/bootc-build/validate-pr@352163f5de4fed4b9b8a85e52dcaed2c4e18e321 # projectbluefin/actions fix/precommit-sha-pin
 
   unit-tests:
     name: Unit tests
