@@ -103,6 +103,7 @@ If `main` advanced during promotion, the workflow aborts on purpose.
 | Renovate PR did not automerge | PR lookup missed mergeraptor author, or `testing` branch protection not set up | accept both `renovate[bot]` and `app/mergeraptor` in jq filter; ensure `testing` has branch protection with `validate` required check and `allow_auto_merge=true` at repo level |
 | Weekly promotion cannot find digest artifact | artifact expired before Tuesday promotion window | push fresh commit to `main` to regenerate artifact |
 | Cosign sign/verify fails | Sigstore outage or key rotation | check `check-cosign-key-rotation.yml` issues; retry after Sigstore recovers |
+| COPR health monitor reports "no succeeded build" | COPR API changed response format — `latest_succeeded_build` moved to `builds.latest_succeeded` | Verify with raw API: `curl "https://copr.fedorainfracloud.org/api_3/package?ownername=X&projectname=Y&packagename=Z&with_latest_succeeded_build=True"` — if `builds.latest_succeeded` is present the repo is healthy; the monitor handles both formats |
 
 ## Non-obvious patterns
 
@@ -113,7 +114,7 @@ If `main` advanced during promotion, the workflow aborts on purpose.
 - **`testing` branch has branch protection** — required status check: `validate`. `allow_auto_merge` enabled at repo level. `gh pr merge --auto --squash` works. No merge queue.
 - **E2E (`testsuite` job) only runs on `merge_group`** — the `testsuite` job in `pr-validation.yml` has a hard `if: github.event_name == 'merge_group'` guard. There is no `detect-changes` conditional; the guard is unconditional. Per-push PR CI is fast validate + unit-tests only (~2 min). Do not add E2E to per-push PR jobs — each push triggering a 10-min QEMU boot is wasteful and blocks Renovate automerge.
 - **Unit tests live in `tests/unit/`, not `build_files/`** — `build_files/**` is in the detect-changes image path filter; placing test files there causes every PR push to trigger image builds and E2E. Test files belong in `tests/unit/` where they are invisible to the image path filter.
-- **`just test-unit` runs bats unit tests** — calls `bats tests/unit/package-lib_test.bats`. The CI `unit-tests` job invokes `bats` directly (not `just`) because `just` is not available on a bare `ubuntu-latest` runner without the `setup-runner` composite action.
+- **`just test-unit` runs bats unit tests** — calls `bats tests/unit/`. The CI `unit-tests` job invokes `bats` directly (not `just`) because `just` is not available on a bare `ubuntu-latest` runner without the `setup-runner` composite action. Test files: `package-lib_test.bats`, `validate-repos_test.bats`, `copr-helpers_test.bats`.
 - **Vulnerability scans must use the build digest, not a mutable tag.** `vulnerability-scan.yml` downloads `image-digest-{stream_name}-{brand_name}-{image_flavor}` from the triggering `workflow_run` and passes `image@sha256:...` to the scanner to avoid TOCTOU. Artifact names for the default bluefin build: `image-digest-testing-bluefin-main`, `image-digest-testing-bluefin-nvidia-open`.
 - Weekly promotion uses retag-only (skopeo copy) for the canonical path; a parallel rebuild pathway also exists via branch push
 - Build callers do not pass `secrets: inherit` — `reusable-build.yml` only needs `GITHUB_TOKEN`, which is automatically available
@@ -224,33 +225,9 @@ When adding `if: github.event_name != 'pull_request'` to the rechunk step, the "
 
 `pr-validation.yml` already runs `just check` as a required check before merge. Running it in every matrix cell wastes ~60-120s per build with zero added value. Remove it from `reusable-build.yml`; keep it only in `pr-validation.yml`.
 
-### Pre-production security audit — 14 tracked findings
+### Security posture — verified-good
 
-Full adversarial review of all 23 workflow files. Findings live in GitHub Issues — search label `area/ci` + `kind/bug`.
-
-**Blocking (P1) — fix before relying on production pipeline:**
-
-| Issue | File | Finding |
-|---|---|---|
-| #210 | `reusable-build.yml` L26 | Architecture default `"['x86_64']"` — invalid JSON (single quotes). Fix: `'["x86_64"]'` |
-| #211 | `weekly-testing-promotion.yml` | Tests only `bluefin-main`, promotes ALL flavors incl. `nvidia-open` without e2e coverage |
-| #212 | `reusable-build.yml` L515 | Digest artifact retention `1d`. Weekly Tuesday run fails if no push in 24h. Raise to `7d` |
-| #213 | `reusable-build.yml` L209+ | Testing stream skips SBOM (`if: inputs.stream_name != 'testing'`). Promoted :stable/:latest lack signed SBOMs. Breaks `generate-release.yml` |
-| #214 | `Justfile` | Base image cosign verify is `\|\| echo "WARNING...Continuing"` — non-fatal. Compromised base flows through |
-| #215 | `Justfile` | Cosign bootstrapped from `cgr.dev/chainguard/cosign:latest` (unverified tag). Use SHA-pinned `sigstore/cosign-installer` instead |
-
-**Non-blocking (P2):**
-
-| Issue | File | Finding |
-|---|---|---|
-| #218 | `weekly-testing-promotion.yml` | No `cosign verify` before retag — unsigned digest can reach production |
-| #219 | `weekly-testing-promotion.yml` L12-15 | `contents/actions/packages: write` at workflow level — over-broad for read-only jobs |
-| #220 | `build-image-*.yml` | All callers use `secrets: inherit` — only `GITHUB_TOKEN` needed |
-| #221 | `vulnerability-scan.yml` L48 | Scans `:testing` tag not build digest (TOCTOU) — **fixed PR #263** |
-| #222 | `pr-smoke.yml` L83-87 | PR builds push under official `ghcr.io/projectbluefin/` namespace |
-| #223 | `pr-validation.yml` L55 | Stale testsuite SHA; `nightly.yml`, `pr-smoke.yml`, `pr-validation.yml` all bypassed wrapper — **fixed PR #262** |
-| #224 | `pr-validation.yml` L28 | `pip install pre-commit` unpinned |
-| #225 | `build-image-stable.yml` | Parallel rebuild pathway coexists with retag-only promotion (dual provenance) — needs maintainer decision |
+Full adversarial review of all 23 workflow files completed. All findings resolved. Current verified-good state:
 
 **Verified-good — do not remove:**
 - All action pins use SHA (not floating tags)

@@ -151,6 +151,30 @@ uses: projectbluefin/actions/.github/workflows/reusable-build.yml@<SHA>
 | `bootc-build/push-image` | Registry push with retry |
 | `bootc-build/sign-and-publish` | Signing + SBOM attach |
 
+## Containerfile split-RUN architecture
+
+The Containerfile uses two separate `RUN` commands:
+
+- **Stage 1:** Package installs — `03-packages.sh`, `04-install-kernel-akmods.sh`, `05-override-install.sh`. Cache key: `build_files/`.
+- **Stage 2:** Overlay + finalization — `00-image-info.sh`, `build-gnome-extensions.sh`, `19-initramfs.sh`, `validate-repos.sh`, `clean-stage.sh`, `20-tests.sh`. Cache key: `system_files/` + `build_files/shared/`.
+
+### tmpfs does not persist between RUN commands
+
+Each `RUN` gets its own mount namespace. Files written to `/tmp` in Stage 1 are gone in Stage 2. Sentinel files (e.g. `/tmp/.initramfs-needed`) placed by kernel install scripts in Stage 1 will never be readable by `19-initramfs.sh` in Stage 2.
+
+### Cache invalidation
+
+| Change type | Stage 1 | Stage 2 |
+|---|---|---|
+| `build_files/base/*.sh` | **bust** | bust |
+| `build_files/shared/*.sh` | hit | **bust** |
+| `system_files/` | hit | **bust** |
+| `image-versions.yml` | **bust** | bust |
+
+A `system_files`-only change hits Stage 1 cache and skips the full package install (~20–80 min saved).
+
 ## Lessons learned
 
-<!-- Add reusable build/PR patterns here -->
+### `yelp` is deprecated — do not install it
+
+`yelp` (the GNOME help viewer) is deprecated upstream. Do not add it to the package list as a fix for `help://` URI failures (e.g. the Nautilus Templates tooltip). The correct approach is to override or suppress the `help://` URI handler at the GNOME/desktop level, not to install a deprecated viewer.
