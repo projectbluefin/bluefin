@@ -82,6 +82,7 @@ FEDORA_PACKAGES=(
     git-credential-libsecret
     glow
     gnome-tweaks
+    yelp
     google-noto-sans-balinese-fonts
     google-noto-sans-cjk-fonts
     google-noto-sans-javanese-fonts
@@ -227,7 +228,6 @@ EXCLUDED_PACKAGES=(
     google-noto-sans-cjk-vf-fonts
     podman-docker
     totem-video-thumbnailer
-    yelp
 )
 
 # Remove excluded packages if they are installed
