@@ -76,9 +76,8 @@ Non-compliance = rejection.
 - **Production promotion** (`weekly-testing-promotion.yml`) requires 2 distinct human approvals in the GitHub `production` Environment before `:stable` is updated. No agent may trigger, approve, or bypass this gate. Every admin bypass is permanently logged in Environment deployment history.
 - **`.github/workflows/`, `Justfile`, and `build_files/` are CODEOWNERS-protected** — PRs touching these paths require maintainer review.
 
-  > **⚠️ Git remote trap — confirmed incident 2026-06-01:** In this repo, `origin`
-  > points to `ublue-os/bluefin` (the forbidden org). A bare `git push` or
-  > `git push origin` silently violates this rule. **Always push explicitly:**
+  > **⚠️ Git remote trap:** A pre-push hook blocks any push to a remote named
+  > `origin` regardless of its URL. **Always push explicitly:**
   > `git push projectbluefin <branch>`. Verify with `git remote -v` before any push.
 
 ## PR comment policy

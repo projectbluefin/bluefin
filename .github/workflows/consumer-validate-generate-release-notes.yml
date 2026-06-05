@@ -1,0 +1,65 @@
+name: Consumer validate shared generate-release-notes action
+
+on:
+  pull_request:
+    branches:
+      - testing
+    paths:
+      - .github/workflows/consumer-validate-generate-release-notes.yml
+      - docs/skills/ci.md
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  validate-release-notes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Create temporary semver tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          git tag -f v0.0.0
+
+      - name: Write temporary git-cliff config
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > cliff-consumer-validation.toml <<'EOF'
+          [changelog]
+          body = """
+          {% for group, commits in commits | group_by(attribute=\"group\") %}
+          ### {{ group | upper_first }}
+          {% for commit in commits %}
+          - {{ commit.message | split(pat=\"\\n\") | first }}
+          {% endfor %}
+          {% endfor %}
+          """
+          trim = true
+
+          [git]
+          conventional_commits = true
+          filter_unconventional = false
+          split_commits = false
+          EOF
+
+      - name: Run shared generate-release-notes action
+        uses: projectbluefin/actions/bootc-build/generate-release-notes@2497c3a7e0a7bbeeb36ac10bc2b487e7812ab562 # consumer-validation
+        with:
+          tag: v0.0.0
+          output-file: CHANGELOG.md
+          config: cliff-consumer-validation.toml
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Assert changelog exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s CHANGELOG.md

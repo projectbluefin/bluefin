@@ -59,6 +59,7 @@ jobs:
       packages: write
       id-token: write
       attestations: write
+      security-events: write
       artifact-metadata: write
     with:
       image_flavors: >-
