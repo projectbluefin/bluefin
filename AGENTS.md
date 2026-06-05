@@ -79,9 +79,10 @@ Non-compliance = rejection.
   > `git push origin` silently violates this rule. **Always push explicitly:**
   > `git push projectbluefin <branch>`. Verify with `git remote -v` before any push.
 
-## PR comment policy
+## PR and issue comment policy
 
-- One comment per PR event, max; combine findings.
+- One comment per PR or issue event, max; combine all findings into a single post.
+- Do not follow a `gh issue close` (or `gh pr close`) with a separate explanatory comment — put the explanation in the close reason or a single combined comment before closing.
 - Do not duplicate GitHub UI state.
 - Test reports: what ran, pass/fail, blockers only.
 - No diff summaries.
