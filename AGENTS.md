@@ -88,3 +88,21 @@ Non-compliance = rejection.
 - No diff summaries.
 - `@mentions` only when asking for a specific action.
 - If nothing actionable needs saying, post nothing.
+
+## Build internals — known traps
+
+- **`build_files/shared/build.sh` is dead code.** It is an unused orchestrator left over from the pre-Stage-1/2 split. The Containerfile calls scripts directly. Do not update, test, or reference it.
+- **`/tmp` does not persist across RUN instructions.** Each `RUN` gets a fresh tmpfs. Sentinel or marker files that must survive Stage 1 → Stage 2 must be written to the committed filesystem (e.g. `/lib/modules/<kver>/`, `/var/cache/`). Note: `clean-stage.sh` removes all of `/var/*` except `cache/`, so `/var/cache/` subdirs are the safest persistent scratch space.
+
+## BATS unit test conventions
+
+Tests live in `tests/unit/`. Run with `bats tests/unit/` (or a single file). The pattern used across all test files:
+
+- **Sandbox setup:** each `setup()` creates `${SCRIPT_DIR}/.bats-sandbox/<name>.<test_num>.$$` and tears it down in `teardown()`.
+- **Stubs:** put stub executables in `${TEST_ROOT}/stub-bin/` and prepend to `PATH`. Scripts that call commands via **absolute paths** (e.g. `/usr/bin/dracut`, `/usr/bin/rpm`) bypass `PATH` — patch them out with `sed` before running:
+  ```bash
+  sed -e "s|/usr/bin/dracut|dracut|g" original.sh > patched.sh
+  ```
+- **`local` is only valid inside functions.** Never use `local var=…` at the top level of a stub script.
+- **Inline env vars before `run` don't export.** `FOO=1 run bash script` does NOT make `FOO` visible inside the script. Use `export FOO=1` on its own line before `run`.
+- **Library scripts** (those that define functions) are tested by sourcing them. **Imperative scripts** (those that execute directly) are tested by running them as a subprocess with a `FAKE_ROOT` or `CLEAN_ROOT` prefix variable for filesystem paths.
