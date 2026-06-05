@@ -50,7 +50,7 @@ jobs:
             build_ts=$(echo "${response}" | python3 -c "
           import json,sys
           d=json.load(sys.stdin)
-          b = d.get('latest_succeeded_build')
+          b = d.get('latest_succeeded_build') or (d.get('builds') or {}).get('latest_succeeded')
           print(b['submitted_on'] if b else 0)
           " 2>/dev/null || echo "0")
 

@@ -20,15 +20,16 @@ permissions:
 jobs:
   build-image-stable:
     name: Build Stable Images
+    # Thin caller only: shared build orchestration belongs in projectbluefin/actions.
+    # Keep repo-local edits here limited to triggers, permissions, and reusable-build inputs.
     if: github.event_name != 'workflow_dispatch' || github.ref_name == 'stable'
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@13e3593568d87cfe075a86e3995930e350f8c5ea # v1
-    secrets: inherit
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@6274199cfb6666180ac2fd0ad5a41bc8440e0929 # v1
     with:
- #    kernel_pin: 6.17.12-300.fc43.x86_64 ## Pin to 6.17 for ZFS compatibility
-     stream_name: stable
-     # FIXME: enable when ublue-os/akmods has ARM builds
-     # architecture: '["aarch64","x86_64"]'
-     architecture: '["x86_64"]'
+      # kernel_pin: 6.17.12-300.fc43.x86_64 ## Pin to 6.17 for ZFS compatibility
+      stream_name: stable
+      # FIXME: enable when ublue-os/akmods has ARM builds
+      # architecture: '["aarch64","x86_64"]'
+      architecture: '["x86_64"]'
 
   generate-release:
     name: Generate Release

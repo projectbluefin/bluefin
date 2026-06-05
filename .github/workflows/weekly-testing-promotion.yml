@@ -286,6 +286,17 @@ jobs:
           echo "✅ Promoted ${PROMOTED} image(s) to :latest and :stable"
           echo "Tested artifacts are now live — no rebuild was triggered."
 
+  generate-release:
+    name: Generate release notes
+    needs: [promote-to-latest-and-stable]
+    if: needs.promote-to-latest-and-stable.result == 'success'
+    permissions:
+      contents: write
+      actions: read
+    uses: ./.github/workflows/generate-release.yml
+    with:
+      stream_name: '["stable"]'
+
   report-failure:
     needs: [verify-e2e, e2e, e2e-nvidia-open, promote-to-latest-and-stable]
     if: always() && failure() && needs.verify-e2e.outputs.image != ''

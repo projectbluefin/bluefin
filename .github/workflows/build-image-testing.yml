@@ -31,12 +31,14 @@ jobs:
       should_build: ${{ steps.detect.outputs.should_build }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-      - uses: projectbluefin/actions/bootc-build/detect-changes@4ec3db50adc3a2b944e175295d419d78eaa63861 # v1
+      - uses: projectbluefin/actions/bootc-build/detect-changes@6274199cfb6666180ac2fd0ad5a41bc8440e0929 # v1
         id: detect
 
   build-image-testing:
     name: Build Testing Images
     needs: [detect-changes]
+    # Thin caller only: shared build orchestration belongs in projectbluefin/actions.
+    # Keep repo-local edits here limited to triggers, permissions, and reusable-build inputs.
     if: |
       always() &&
       (github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || inputs.pr_number != '') &&

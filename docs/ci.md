@@ -7,6 +7,7 @@ Bluefin's CI is split between PR validation, image builds, post-build e2e, weekl
 | Workflow | Trigger | What it does |
 |---|---|---|
 | `pr-validation.yml` | PRs to `testing`, `merge_group` | Fast validation via `validate-pr@v1`: `just check`, `shellcheck`, `hadolint`, `pre-commit`, **bats unit tests** — **E2E only on `merge_group`** |
+| `promote-testing-to-main.yml` | Push to `testing`, daily 23:00 UTC, manual dispatch | Upserts the long-lived `testing` → `main` promotion PR and enables squash auto-merge |
 | `build-image-testing.yml` | Push to `main`, `merge_group`, dispatch, workflow call | Builds testing images via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Successful `Testing Images` workflow on `main` push | Downloads the testing digest and runs smoke tests in `projectbluefin/testsuite` |
 | `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, manual dispatch | Verifies e2e on current `main`, promotes `main` to `latest` + `stable`, triggers downstream builds |
@@ -125,20 +126,25 @@ This keeps PR feedback fast (~2-3 min) while still gating every merge to `testin
 
 ## How testing promotion works
 
-There are two different branch roles to keep straight:
+There are three different branch roles to keep straight:
 
 - **Contribution branch:** PRs land on `testing`
-- **Image promotion branch flow in current workflows:** `main` → `latest` / `stable`
+- **Testing image branch:** `main` builds the `:testing` stream
+- **Production promotion branch flow:** `main` → `latest` / `stable`
 
 Current automation works like this:
 
-1. A push to `main` runs `build-image-testing.yml`
-2. `post-testing-e2e.yml` waits for that build, downloads `image-digest-testing-bluefin-main`, and runs the `smoke,common` suites from `projectbluefin/testsuite`
-3. `weekly-testing-promotion.yml` (Tuesday 06:00 UTC) locks the current `main` SHA
-4. It verifies `post-testing-e2e` already passed for that exact SHA
-5. It reruns broader `developer,vanilla-gnome,software,common` suites against the locked digest
-6. If `main` did not advance during testing, it retags all testing digests → `:latest` and `:stable` via skopeo copy (no rebuild)
-7. Branch push triggers on `latest`/`stable` also rebuild from source (dual pathway — see #225)
+1. A push to `testing` runs `promote-testing-to-main.yml`
+2. That workflow compares the `testing` and `main` tree hashes, upserts a single `testing` → `main` PR, and enables squash auto-merge
+3. The comparison is tree-based rather than `git log main..testing`, so squash merges do not cause already-promoted commits to be re-proposed
+4. The workflow uses the Bluefin bot GitHub App token so the `testing` → `main` PR fires normal `pull_request` CI before merge queue entry
+5. Once the promotion PR merges to `main`, `build-image-testing.yml` builds the testing images
+6. `post-testing-e2e.yml` waits for that build, downloads `image-digest-testing-bluefin-main`, and runs the `smoke,common` suites from `projectbluefin/testsuite`
+7. `weekly-testing-promotion.yml` (Tuesday 06:00 UTC) locks the current `main` SHA
+8. It verifies `post-testing-e2e` already passed for that exact SHA
+9. It reruns broader `developer,vanilla-gnome,software,common` suites against the locked digest
+10. If `main` did not advance during testing, it retags all testing digests → `:latest` and `:stable` via skopeo copy (no rebuild)
+11. Branch push triggers on `latest`/`stable` also rebuild from source (dual pathway — see #225)
 
 The weekly promotion workflow refuses to promote untested code. It uses SHA-locked digests throughout, not mutable tags.
 
@@ -163,6 +169,7 @@ grep -rn "projectbluefin/testsuite" .github/workflows/ | grep -v "run-testsuite.
 
 - `.github/renovate.json5` is configured with `baseBranchPatterns: ["testing"]`
 - `renovate-automerge.yml` searches for matching PRs with `--base testing`
+- `promote-testing-to-main.yml` is the bridge from Renovate's `testing` branch to the `main` branch that feeds testing image builds
 - Matches both `renovate[bot]` and `app/mergeraptor` — both login names appear in practice
 - Risk-tiered: PRs with `renovate/high-risk` label wait for PR Smoke Test; low-risk merge after PR Validation
 - If Renovate PRs stop auto-merging, verify the trigger workflow name matches (`PR Validation — testsuite` or `PR Smoke Test`) and that author filter includes both bot names
@@ -279,6 +286,7 @@ GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, t
 |---|---|---|
 | `pr-validation.yml` | PRs to `testing`, `merge_group` | Fast validation: `just check`, `shellcheck`, `pre-commit`, e2e smoke |
 | `pr-smoke.yml` | PRs touching build files | Full image build + smoke test |
+| `promote-testing-to-main.yml` | Push to `testing`, daily 23:00 UTC, dispatch | Upserts the long-lived `testing` → `main` PR and enables squash auto-merge |
 | `build-image-testing.yml` | Push to `main`, `merge_group`, dispatch | Builds testing images via `reusable-build.yml` |
 | `post-testing-e2e.yml` | Successful `Testing Images` on `main` push | Smoke+common e2e gate; opens issue on failure |
 | `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, dispatch | Full e2e → retag testing digests to :latest/:stable |

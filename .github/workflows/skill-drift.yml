@@ -2,7 +2,7 @@ name: Skill Drift
 
 on:
   pull_request:
-    branches: [main]
+    branches: [testing]
 
 permissions:
   contents: read
