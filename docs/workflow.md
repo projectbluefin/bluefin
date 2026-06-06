@@ -229,21 +229,22 @@ gh workflow run "Renovate Self-Hosted" --repo projectbluefin/renovate-config
 
 Renovate will rebase all conflicting PRs within a few minutes. Once they pass `validate`, the automerge workflow fires automatically.
 
-### Testing→main promotion PR is CONFLICTING
+### Testing→main promotion PR is BEHIND or CONFLICTING
 
-The automated `promote-testing-to-main.yml` opens a PR from `testing` → `main`. Because `main` uses squash merges, git eventually sees `testing` as diverged from `main` even though the content is the same. When this happens the promotion PR shows `mergeStateStatus: DIRTY` and `issue #NNN: testing→main promotion conflict` is auto-opened.
+**BEHIND (automated):** `sync-main-to-testing.yml` fires on every push to `main` and merges `main` back into `testing`, keeping them in sync. The next promotion PR will open clean. No manual action needed in normal operation.
 
-Fix: merge `main` into `testing` directly (no PR needed — this is a maintainer-only operation):
+**CONFLICTING (manual fix required):** A commit was pushed directly to `main` bypassing `testing`, severing the git merge base. `sync-main-to-testing.yml` aborts on conflict. Fix:
 
 ```bash
 git fetch projectbluefin
 git checkout -B testing projectbluefin/testing
-git merge projectbluefin/main -m "chore: merge main into testing to unblock promotion"
-# Resolve any conflicts, keeping the testing version for any workflow fixes
+git merge projectbluefin/main --allow-unrelated-histories -X ours \
+  -m "ci: sync testing with main to resolve squash-merge history gap"
+# Resolve any conflicts, keeping the testing version for workflow SHA pins
 git push projectbluefin testing
 ```
 
-Then close the conflict issue. The promotion workflow will re-run on the next schedule and succeed.
+The promotion workflow will re-run on the next schedule and succeed.
 
 ### Auto-merge cannot be enabled
 

@@ -83,12 +83,7 @@ git --no-pager status --short
 git --no-pager diff --stat
 ```
 
-Sync `testing` from `main` when needed:
-```bash
-git checkout testing
-git merge origin/main --no-edit
-git push origin testing
-```
+**Branch sync is automated.** `sync-main-to-testing.yml` fires on every push to `main` and merges `main` → `testing`. No manual sync needed in normal operation.
 
 ## Non-obvious patterns
 
