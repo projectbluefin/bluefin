@@ -378,7 +378,7 @@ jobs:
         if: github.event_name != 'pull_request'
         id: merge
         run: |
-          DIGESTS=$(cat /tmp/digests/*.txt | jq -Rs 'split("\n") | map(select(length > 0)) | map(split("=")) | map({(.[0]): .[1]}) | add')
+          DIGESTS=$(cat /tmp/digests/*.txt | jq -Rsc 'split("\n") | map(select(length > 0)) | map(split("=")) | map({(.[0]): .[1]}) | add')
           echo "digests=${DIGESTS}" >> "$GITHUB_OUTPUT"
 
       - name: Set empty digests
