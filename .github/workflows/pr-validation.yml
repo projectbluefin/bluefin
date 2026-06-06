@@ -23,7 +23,7 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
           HEAD_REF: ${{ github.head_ref }}
         run: |
-          if [[ "$BASE_REF" == "main" && "$HEAD_REF" != "testing" ]]; then
+          if [[ "$BASE_REF" == "main" && "$HEAD_REF" != "testing" && "$HEAD_REF" != "auto/promote-testing-to-main" ]]; then
             echo "ERROR: PRs must target 'testing', not 'main'."
             echo "The testing→main promotion is handled automatically by promote-testing-to-main.yml."
             echo "Re-open this PR with base 'testing'."
