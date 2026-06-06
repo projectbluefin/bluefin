@@ -1,0 +1,23 @@
+name: Sync main → testing
+
+# After each squash-merge promotion (testing→main), the squash commit lands
+# on main but not in testing, leaving testing BEHIND. This workflow merges
+# main back into testing automatically so the next promotion PR is not blocked.
+#
+# Reusable logic lives in projectbluefin/actions. This is a thin caller.
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: sync-main-to-testing
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Keep testing up-to-date with main
+    uses: projectbluefin/actions/.github/workflows/reusable-sync-branches.yml@1b6ae6a57f589db7175c3748ff93337ba63457ce # v1
+    permissions:
+      contents: write

@@ -101,17 +101,11 @@ Same digest-promotion model. `weekly-testing-promotion.yml` resolves `:testing` 
 **Current state:** `scheduled-lts-release.yml` dispatches fresh weekly builds from the `lts` branch (rebuilds from source — violates build-once principle).
 **Target state:** digest promotion matching bluefin/dakota — tracked in [bluefin-lts#77](https://github.com/projectbluefin/bluefin-lts/issues/77), unblocked since PR #73 merged.
 
-### Testing→main squash history gap — now automated (bluefin only)
+### Testing→main squash history gap (bluefin only)
 
-`sync-main-to-testing.yml` fires on every push to `main` (via `projectbluefin/actions` `reusable-sync-branches.yml@v1`) and merges `main` back into `testing`. The BEHIND state after each squash-merge promotion is resolved automatically — no manual action needed in normal operation.
+`promote-testing-to-main.yml` squash-merges `testing → main`. Because the feature PRs were already squash-merged into `testing`, the squash on `main` creates a new SHA — the graphs diverge. Every subsequent sync requires a merge commit to reconnect them, making the promotion PR show the full accumulated history (50+ commits) instead of just the new work.
 
-**CONFLICTING still requires manual fix** — happens only when a commit is pushed directly to `main` bypassing `testing`, severing the git merge base. The sync workflow aborts on conflict. Fix:
-```bash
-git checkout testing && git pull projectbluefin testing --ff-only
-git merge projectbluefin/main --allow-unrelated-histories -X ours \
-  -m "ci: sync testing with main to resolve squash-merge history gap"
-git push projectbluefin testing
-```
+This is a known gap tracked in [#368](https://github.com/projectbluefin/bluefin/issues/368). The long-term fix (per [common#516](https://github.com/projectbluefin/common/issues/516)) is to replace the git-branch PR with branch fast-forward only, aligning with the dakota model.
 
 ## Common failure modes
 

@@ -150,11 +150,13 @@ Current automation works like this:
 
 The weekly promotion workflow refuses to promote untested code. It uses SHA-locked digests throughout, not mutable tags.
 
-### Squash-merge history gap — promotion PR shows BEHIND or CONFLICTING
+### Squash-merge history gap — promotion PR shows CONFLICTING
 
-**Normal case (BEHIND) — automated:** `sync-main-to-testing.yml` fires on every push to `main` and merges `main` back into `testing`. The next promotion PR will not be `BEHIND`. No manual action needed.
+**Symptom:** The auto-created `testing` → `main` promotion PR shows "This branch has conflicts" even though the file changes do not actually conflict.
 
-**Exceptional case (CONFLICTING) — manual fix required:** Happens when a commit is pushed directly to `main` bypassing `testing`, severing the git merge base entirely. `sync-main-to-testing.yml` will abort on conflict and exit 1. Fix manually:
+**Root cause:** After a squash merge, `testing` and `main` share no git merge base. Any commit pushed directly to `main` (bypassing `testing`) severs the common ancestor entirely. GitHub marks the PR as CONFLICTING and refuses to merge it — even `gh pr merge --admin` is blocked.
+
+**Fix:**
 
 ```bash
 git checkout testing && git pull projectbluefin testing --ff-only
@@ -320,8 +322,7 @@ GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, t
 | Renovate auto-merge finds no PR | Author filter mismatch (renovate[bot] vs app/mergeraptor) | Check jq filter in `renovate-automerge.yml` includes both |
 | `generate-release.yml` fails with "No SBOM referrer found" | Testing stream skips SBOM; promoted images lack referrers | See `allow_missing_sbom=True` pattern in skill Learnings |
 | Cosign sign/verify fails | Sigstore Fulcio/Rekor outage or key rotation | Check `check-cosign-key-rotation.yml` issues; retry after Sigstore recovers |
-| Promotion PR shows BEHIND | Normal post-squash divergence | `sync-main-to-testing.yml` handles this automatically on every push to `main`; if stuck, run `git merge projectbluefin/main` on `testing` manually |
-| Promotion PR shows CONFLICTING | Commit pushed directly to `main` bypassing `testing`, severing merge base | `sync-main-to-testing.yml` will abort; fix manually with `git merge --allow-unrelated-histories -X ours` — see "Squash-merge history gap" above |
+| Promotion PR shows CONFLICTING | Commit landed directly on `main` without going through `testing`, severing git merge base | Run `git merge projectbluefin/main --allow-unrelated-histories -X ours` on `testing` and push — see "Squash-merge history gap" above |
 | Trivy scan crashes: "No SARIF file found" | Image reference passed to scan no longer exists — `tag-images` untags the default tag | Verify `tag-images` Justfile recipe re-applies the default tag after alias-tag loop; scan must use `oci-archive:/tmp/scan-image.tar` |
 
 ## Complete workflow inventory
