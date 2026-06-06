@@ -270,11 +270,15 @@ jobs:
         with:
           name: image-digest-${{ inputs.stream_name }}-${{ matrix.base_name }}-${{ matrix.image_flavor }}
           path: /tmp/digests/
-          retention-days: 1
+          retention-days: 7
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
         if: github.event_name != 'pull_request'
+
+      - name: Fix sigstore cache permissions
+        if: github.event_name != 'pull_request'
+        run: sudo chown -R "$(id -u):$(id -g)" "${HOME}/.sigstore" 2>/dev/null || true
 
       - name: Sign container image
         if: github.event_name != 'pull_request'
@@ -312,6 +316,10 @@ jobs:
           sbom_digest=$(oras discover --format json "${IMAGE}@${DIGEST}" | jq -r '.referrers[] | select(.artifactType == "application/vnd.spdx+json") | .digest')
 
           echo "sbom_digest=${sbom_digest}" >> $GITHUB_OUTPUT
+
+      - name: Fix sigstore cache permissions before SBOM sign
+        if: github.event_name != 'pull_request'
+        run: sudo chown -R "$(id -u):$(id -g)" "${HOME}/.sigstore" 2>/dev/null || true
 
       - name: Sign SBOM OCI Artifact
         if: github.event_name != 'pull_request'
