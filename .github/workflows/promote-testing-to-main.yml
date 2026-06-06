@@ -77,13 +77,14 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Only force-push if testing's tree has changed — avoids kicking a
-          # queued PR out of the merge queue on every push to testing.
+          # Rebuild when testing's tree changed OR main has advanced past the squash branch's parent.
           CURRENT_TREE=$(git rev-parse "origin/${PROMOTION_BRANCH}^{tree}" 2>/dev/null || echo "none")
+          CURRENT_PARENT=$(git rev-parse "origin/${PROMOTION_BRANCH}^1" 2>/dev/null || echo "none")
           TESTING_TREE="${{ steps.compare.outputs.testing_tree }}"
+          MAIN_SHA="${{ steps.compare.outputs.main_sha }}"
 
-          if [ "$CURRENT_TREE" = "$TESTING_TREE" ]; then
-            echo "Squash branch already reflects testing tree — skipping update"
+          if [ "$CURRENT_TREE" = "$TESTING_TREE" ] && [ "$CURRENT_PARENT" = "$MAIN_SHA" ]; then
+            echo "Squash branch is up to date — skipping update"
           else
             echo "Updating squash promotion branch…"
             git checkout -B "$PROMOTION_BRANCH" origin/main
