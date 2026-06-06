@@ -68,11 +68,13 @@ Renovate tracks SHA pins automatically (`config:best-practices` includes `github
 
 ### Build workflow
 
-The shared image build engine is at `.github/workflows/reusable-build.yml` in `projectbluefin/actions`. The internal copy has been deleted — all three stream callers delegate to the centralised workflow:
+The shared image build engine is at `.github/workflows/reusable-build.yml` in `projectbluefin/actions`. The `testing` and `main` stream callers delegate to it:
 
 ```yaml
 uses: projectbluefin/actions/.github/workflows/reusable-build.yml@<SHA>
 ```
+
+> **⚠️ `stable` branch exception:** The `stable` branch maintains its **own local copy** of `.github/workflows/reusable-build.yml` (a diverged legacy version). `build-image-stable.yml` calls `uses: ./.github/workflows/reusable-build.yml` (self-referential). Fixes landed in `projectbluefin/actions` do NOT automatically apply to `stable`. When CI breaks on `stable`, hotfix directly on the `stable` branch — cherry-picking from `testing` will conflict because `testing` does not have that file.
 
 - Matrix: `bluefin`
 - Flavors: `main`, `nvidia-open`
