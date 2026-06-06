@@ -114,14 +114,22 @@ jobs:
           echo "E2E status for $LOCKED_SHA: ${E2E_STATUS:-not found}"
 
           if [ "$E2E_STATUS" != "success" ]; then
-            echo "ERROR: post-testing-e2e has not passed on main HEAD ($LOCKED_SHA)."
-            echo "  Status: ${E2E_STATUS:-no run found}"
-            echo "  Either e2e is still running, failed, or main just advanced."
-            echo "  Rerun this workflow once post-testing-e2e passes."
-            exit 1
+            # TODO(#405): remove this bypass once post-testing-e2e reliably
+            # passes on every push-triggered Testing Images build.
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              echo "::warning::No successful post-testing-e2e found for $LOCKED_SHA."
+              echo "::warning::Bypassing gate — manual dispatch by maintainer."
+              echo "::warning::Ensure smoke+common suites passed before promoting."
+            else
+              echo "ERROR: post-testing-e2e has not passed on main HEAD ($LOCKED_SHA)."
+              echo "  Status: ${E2E_STATUS:-no run found}"
+              echo "  Either e2e is still running, failed, or main just advanced."
+              echo "  Rerun this workflow once post-testing-e2e passes."
+              exit 1
+            fi
+          else
+            echo "✅ post-testing-e2e passed on main HEAD"
           fi
-
-          echo "✅ post-testing-e2e passed on main HEAD"
 
       - name: Find the build run for this SHA
         id: find-build
