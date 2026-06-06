@@ -112,6 +112,7 @@ This is a known gap tracked in [#368](https://github.com/projectbluefin/bluefin/
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `startup_failure` with zero jobs | unsupported permissions scope in that environment | compare `permissions:` with a known-good upstream run |
+| Testing Images runner timeout / job cancelled after 20+ min | Syft SBOM scan running for testing stream — both outer SBOM steps AND `sign-and-publish` internal Syft each scan the full image | Ensure `reusable-build.yml` has `stream_name != 'testing'` guard on all 4 outer SBOM steps AND passes `generate-sbom: false` to `sign-and-publish` for testing. Fixed in actions#123 + actions#124. |
 | `No SBOM referrer found` in release generation | testing stream skips SBOM; promoted images lack signed SBOMs | allow missing SBOMs for diff generation and use intersection-only comparisons |
 | promotion says no passing e2e for current SHA | `post-testing-e2e` has not passed the locked `main` commit | wait or rerun after e2e completes |
 | required check is skipped | path filter skipped the workflow | verify whether skipped is intentional for that workflow |
