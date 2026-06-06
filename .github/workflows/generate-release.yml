@@ -1,3 +1,5 @@
+name: Generate Release
+
 on:
   workflow_call:
     inputs:
@@ -7,8 +9,6 @@ on:
         required: true
   workflow_dispatch:
     inputs:
-      handwritten:
-        description: "Small Changelog about changes in this build"
       stream_name:
         description: "Release Tag (e.g. stable)"
         required: true
@@ -18,7 +18,6 @@ on:
 
 permissions: {}
 
-name: Generate Release
 jobs:
   generate-release:
     runs-on: ubuntu-latest
@@ -29,52 +28,74 @@ jobs:
       fail-fast: false
       matrix:
         version: ${{ fromJson( inputs.stream_name ) }}
+    # Only create releases for the stable stream on scheduled Tuesday builds,
+    # workflow_dispatch, or workflow_call (not on every push).
+    if: >-
+      contains(fromJson('["stable"]'), matrix.version) &&
+      (github.event.schedule == '0 1 * * TUE' ||
+       contains(fromJson('["workflow_dispatch", "workflow_call"]'), github.event_name))
 
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-        with:
-          fetch-depth: 500
 
-      - name: Install just
-        uses: taiki-e/install-action@427262525d42141333caf43b602cf574dd6a6381 # just
-        with:
-          tool: just
-
-      - name: Check Just Syntax
-        shell: bash
+      - name: Resolve release metadata
+        id: meta
+        env:
+          STREAM: ${{ matrix.version }}
         run: |
-          just check
+          set -euo pipefail
+          DATE="$(date -u +%Y%m%d)"
+          TAG="${STREAM}-${DATE}"
+          TITLE="${TAG}: Stable"
+          echo "tag=${TAG}"     >> "$GITHUB_OUTPUT"
+          echo "title=${TITLE}" >> "$GITHUB_OUTPUT"
 
-      - name: Install ORAS
-        uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3 # v2.0.0
-
-      - name: Generate Release Text
-        id: generate-release-text
-        shell: bash
+      - name: Get image digest
+        id: digest
+        env:
+          STREAM: ${{ matrix.version }}
         run: |
-          just changelogs "${{ matrix.version }}" "${{ inputs.handwritten }}"
-          source ./output.env
-          {
-            echo "title=${TITLE}"
-            echo "tag=${TAG}"
-          } >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          DIGEST=$(skopeo inspect --format '{{.Digest}}' \
+            docker://ghcr.io/projectbluefin/bluefin:"${STREAM}" 2>/dev/null || echo "")
+          if [[ -z "${DIGEST}" ]]; then
+            echo "::warning::Could not fetch digest for bluefin:${STREAM} — using placeholder"
+            DIGEST="sha256:unknown"
+          fi
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
 
-      - name: Download SBOM release assets
-        if: contains(fromJson('["stable"]'), matrix.version) && (github.event.schedule == '0 1 * * TUE' || contains(fromJson('["workflow_dispatch", "workflow_call"]'), github.event_name))
+      # The build workflow uploads one SBOM artifact per image variant.
+      # We use the main (non-nvidia) variant as the canonical SBOM for the release.
+      - name: Download SBOM artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          pattern: sbom-*
-          path: release-assets
-          merge-multiple: true
+          name: sbom-bluefin
+          path: sbom-current
 
-      - name: Create Release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
-        if: contains(fromJson('["stable"]'), matrix.version) && (github.event.schedule == '0 1 * * TUE' || contains(fromJson('["workflow_dispatch", "workflow_call"]'), github.event_name))
+      - name: Create release
+        uses: projectbluefin/actions/bootc-build/create-release@622073d27a051f1eed7b874b9b71710141a5e60e
         with:
-          name: ${{ steps.generate-release-text.outputs.title }}
-          tag_name: ${{ steps.generate-release-text.outputs.tag }}
-          body_path: ./changelog.md
-          files: release-assets/*.sbom.json
-          make_latest: ${{ matrix.version == 'stable' }}
-          prerelease: false
+          sbom-path:            sbom-current/bluefin.sbom.json
+          tag:                  ${{ steps.meta.outputs.tag }}
+          title:                ${{ steps.meta.outputs.title }}
+          image:                ghcr.io/projectbluefin/bluefin
+          digest:               ${{ steps.digest.outputs.digest }}
+          repo:                 ${{ github.repository }}
+          project-name:         Bluefin
+          accent-color:         "#0ea5e9"
+          badge-label:          Stable
+          sbom-filename:        bluefin.spdx.json
+          cert-identity-regexp: >-
+            ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
+          notable-packages: >-
+            [
+              {"sbom_name": "kernel",          "label": "Kernel"},
+              {"sbom_name": "gnome-shell",      "label": "GNOME"},
+              {"sbom_name": "mesa-filesystem",  "label": "Mesa"},
+              {"sbom_name": "podman",           "label": "Podman"},
+              {"sbom_name": "nvidia-driver",    "label": "Nvidia"},
+              {"sbom_name": "bootc",            "label": "bootc"}
+            ]
+          docs-url:             https://docs.projectbluefin.io/changelogs
+          github-token:         ${{ secrets.GITHUB_TOKEN }}
