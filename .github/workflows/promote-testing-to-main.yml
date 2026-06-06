@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
     outputs:
       sync_needed: ${{ steps.compare.outputs.sync_needed }}
@@ -34,6 +34,11 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Fetch branch refs
         run: git fetch origin main testing
@@ -64,17 +69,45 @@ jobs:
             echo "sync_needed=${SYNC_NEEDED}"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Create or update squash promotion branch
+        id: squash-branch
+        if: steps.compare.outputs.sync_needed == 'true'
+        env:
+          PROMOTION_BRANCH: auto/promote-testing-to-main
+        run: |
+          set -euo pipefail
+
+          # Only force-push if testing's tree has changed — avoids kicking a
+          # queued PR out of the merge queue on every push to testing.
+          CURRENT_TREE=$(git rev-parse "origin/${PROMOTION_BRANCH}^{tree}" 2>/dev/null || echo "none")
+          TESTING_TREE="${{ steps.compare.outputs.testing_tree }}"
+
+          if [ "$CURRENT_TREE" = "$TESTING_TREE" ]; then
+            echo "Squash branch already reflects testing tree — skipping update"
+          else
+            echo "Updating squash promotion branch…"
+            git checkout -B "$PROMOTION_BRANCH" origin/main
+            git merge --squash origin/testing
+            git commit -m "chore: promote testing to main"
+            git push --force origin "$PROMOTION_BRANCH"
+            echo "✅ Squash branch updated: 1 commit, exact testing tree"
+          fi
+
+          echo "branch=${PROMOTION_BRANCH}" >> "$GITHUB_OUTPUT"
+
       - name: Find existing promotion PR
         id: existing-pr
+        if: steps.compare.outputs.sync_needed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          PROMOTION_BRANCH: ${{ steps.squash-branch.outputs.branch }}
         run: |
           set -euo pipefail
 
           PR_NUMBER=$(gh pr list \
             --repo "${{ github.repository }}" \
             --base main \
-            --head testing \
+            --head "$PROMOTION_BRANCH" \
             --state open \
             --json number,url \
             --jq '.[0].number // empty')
@@ -84,7 +117,7 @@ jobs:
             echo "Found existing PR #${PR_NUMBER}: ${PR_URL}"
           else
             PR_URL=""
-            echo "No open testing → main PR found"
+            echo "No open promotion PR found"
           fi
 
           echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
@@ -96,6 +129,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           EXISTING_PR_NUMBER: ${{ steps.existing-pr.outputs.pr_number }}
+          PROMOTION_BRANCH: ${{ steps.squash-branch.outputs.branch }}
           MAIN_SHA: ${{ steps.compare.outputs.main_sha }}
           MAIN_TREE: ${{ steps.compare.outputs.main_tree }}
           TESTING_SHA: ${{ steps.compare.outputs.testing_sha }}
@@ -118,7 +152,8 @@ jobs:
           - Main tree: ${MAIN_TREE}
           - Workflow run: ${RUN_URL}
 
-          The workflow compares branch tree hashes so squash merges do not cause already-promoted commits to be re-proposed.
+          The workflow squashes all pending testing commits into one so this PR
+          always shows a clean single-commit diff, regardless of squash-merge history.
           EOF
           )
 
@@ -132,7 +167,7 @@ jobs:
             PR_URL=$(gh pr create \
               --repo "${{ github.repository }}" \
               --base main \
-              --head testing \
+              --head "$PROMOTION_BRANCH" \
               --title "$TITLE" \
               --body "$PR_BODY")
             PR_NUMBER="${PR_URL##*/}"
