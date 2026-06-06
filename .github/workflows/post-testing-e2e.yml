@@ -135,11 +135,11 @@ jobs:
             });
             const dup = existing.data.find(i => i.title === title);
             if (dup) {
-              await github.rest.issues.createComment({
+              await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: dup.number,
-                body: `Failure recurred in run ${runUrl} for image \`${image}\``,
+                body: `## E2E Smoke Test Failure\n\n**Image:** \`${image}\`\n**Commit:** ${sha}\n**Run:** ${runUrl}\n**Suites:** smoke,common\n\n_Automatically opened by post-testing-e2e.yml_`,
               });
             } else {
               await github.rest.issues.create({
