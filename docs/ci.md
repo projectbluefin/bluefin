@@ -8,6 +8,7 @@ Bluefin's CI is split between PR validation, image builds, post-build e2e, weekl
 |---|---|---|
 | `pr-validation.yml` | PRs to `testing`, `merge_group` | Fast validation via `validate-pr@v1`: `just check`, `shellcheck`, `hadolint`, `pre-commit`, **bats unit tests** — **E2E only on `merge_group`** |
 | `promote-testing-to-main.yml` | Push to `testing`, daily 23:00 UTC, manual dispatch | Upserts the long-lived `testing` → `main` promotion PR and enables squash auto-merge |
+| `sync-main-to-testing.yml` | Push to `main` | Merges `main` back into `testing` after each squash-merge promotion to prevent the next PR from opening `BEHIND` |
 | `build-image-testing.yml` | Push to `main`, `merge_group`, dispatch, workflow call | Builds testing images via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Successful `Testing Images` workflow on `main` push | Downloads the testing digest and runs smoke tests in `projectbluefin/testsuite` |
 | `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, manual dispatch | Verifies e2e on current `main`, promotes `main` to `latest` + `stable`, triggers downstream builds |
@@ -139,6 +140,7 @@ Current automation works like this:
 3. The comparison is tree-based rather than `git log main..testing`, so squash merges do not cause already-promoted commits to be re-proposed
 4. The workflow uses the Bluefin bot GitHub App token so the `testing` → `main` PR fires normal `pull_request` CI before merge queue entry
 5. Once the promotion PR merges to `main`, `build-image-testing.yml` builds the testing images
+5a. `sync-main-to-testing.yml` fires on that same push to `main`, merges `main` back into `testing`, and keeps the branches in sync so the next promotion PR is not `BEHIND`
 6. `post-testing-e2e.yml` waits for that build, downloads `image-digest-testing-bluefin-main`, and runs the `smoke,common` suites from `projectbluefin/testsuite`
 7. `weekly-testing-promotion.yml` (Tuesday 06:00 UTC) locks the current `main` SHA
 8. It verifies `post-testing-e2e` already passed for that exact SHA
@@ -148,13 +150,11 @@ Current automation works like this:
 
 The weekly promotion workflow refuses to promote untested code. It uses SHA-locked digests throughout, not mutable tags.
 
-### Squash-merge history gap — promotion PR shows CONFLICTING
+### Squash-merge history gap — promotion PR shows BEHIND or CONFLICTING
 
-**Symptom:** The auto-created `testing` → `main` promotion PR shows "This branch has conflicts" even though the file changes do not actually conflict.
+**Normal case (BEHIND) — automated:** `sync-main-to-testing.yml` fires on every push to `main` and merges `main` back into `testing`. The next promotion PR will not be `BEHIND`. No manual action needed.
 
-**Root cause:** After a squash merge, `testing` and `main` share no git merge base. Any commit pushed directly to `main` (bypassing `testing`) severs the common ancestor entirely. GitHub marks the PR as CONFLICTING and refuses to merge it — even `gh pr merge --admin` is blocked.
-
-**Fix:**
+**Exceptional case (CONFLICTING) — manual fix required:** Happens when a commit is pushed directly to `main` bypassing `testing`, severing the git merge base entirely. `sync-main-to-testing.yml` will abort on conflict and exit 1. Fix manually:
 
 ```bash
 git checkout testing && git pull projectbluefin testing --ff-only
@@ -320,7 +320,8 @@ GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, t
 | Renovate auto-merge finds no PR | Author filter mismatch (renovate[bot] vs app/mergeraptor) | Check jq filter in `renovate-automerge.yml` includes both |
 | `generate-release.yml` fails with "No SBOM referrer found" | Testing stream skips SBOM; promoted images lack referrers | See `allow_missing_sbom=True` pattern in skill Learnings |
 | Cosign sign/verify fails | Sigstore Fulcio/Rekor outage or key rotation | Check `check-cosign-key-rotation.yml` issues; retry after Sigstore recovers |
-| Promotion PR shows CONFLICTING | Commit landed directly on `main` without going through `testing`, severing git merge base | Run `git merge projectbluefin/main --allow-unrelated-histories -X ours` on `testing` and push — see "Squash-merge history gap" above |
+| Promotion PR shows BEHIND | Normal post-squash divergence | `sync-main-to-testing.yml` handles this automatically on every push to `main`; if stuck, run `git merge projectbluefin/main` on `testing` manually |
+| Promotion PR shows CONFLICTING | Commit pushed directly to `main` bypassing `testing`, severing merge base | `sync-main-to-testing.yml` will abort; fix manually with `git merge --allow-unrelated-histories -X ours` — see "Squash-merge history gap" above |
 | Trivy scan crashes: "No SARIF file found" | Image reference passed to scan no longer exists — `tag-images` untags the default tag | Verify `tag-images` Justfile recipe re-applies the default tag after alias-tag loop; scan must use `oci-archive:/tmp/scan-image.tar` |
 
 ## Complete workflow inventory
@@ -330,6 +331,7 @@ GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, t
 | `pr-validation.yml` | PRs to `testing`, `merge_group` | Fast validation: `just check`, `shellcheck`, `pre-commit`, e2e smoke |
 | `pr-smoke.yml` | PRs touching build files | Full image build + smoke test |
 | `promote-testing-to-main.yml` | Push to `testing`, daily 23:00 UTC, dispatch | Upserts the long-lived `testing` → `main` PR and enables squash auto-merge |
+| `sync-main-to-testing.yml` | Push to `main` | Merges `main` → `testing` after each squash-merge promotion; prevents `BEHIND` on next promotion PR |
 | `build-image-testing.yml` | Push to `main`, `merge_group`, dispatch | Builds testing images via `reusable-build.yml` |
 | `post-testing-e2e.yml` | Successful `Testing Images` on `main` push | Smoke+common e2e gate; opens issue on failure |
 | `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, dispatch | Full e2e → retag testing digests to :latest/:stable |
