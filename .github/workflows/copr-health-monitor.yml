@@ -71,7 +71,7 @@ jobs:
 
           # COPRs used by build_files/base/03-packages.sh
           check_copr_package "che"      "nerd-fonts" "nerd-fonts"
-          check_copr_package "ublue-os" "packages"   "ublue-update"
+          check_copr_package "ublue-os" "packages"   "uupd"
 
           if [[ ${#FAILURES[@]} -gt 0 ]]; then
             echo "failed=true" >> "$GITHUB_OUTPUT"
@@ -111,6 +111,6 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: `ci: COPR health check failed — ${new Date().toISOString().slice(0,10)}`,
-              body: `## COPR Health Check Failure\n\nThe daily COPR health monitor detected problems:\n\n\`\`\`\n${failures}\n\`\`\`\n\n## Impact\n\nBuild failures are likely if the affected COPR repo is unavailable or packages are stale.\n\n## COPRs checked\n- \`che/nerd-fonts\` — nerd-fonts\n- \`ublue-os/packages\` — ublue-update\n\n_Automated detection by copr-health-monitor.yml_`,
+              body: `## COPR Health Check Failure\n\nThe daily COPR health monitor detected problems:\n\n\`\`\`\n${failures}\n\`\`\`\n\n## Impact\n\nBuild failures are likely if the affected COPR repo is unavailable or packages are stale.\n\n## COPRs checked\n- \`che/nerd-fonts\` — nerd-fonts\n- \`ublue-os/packages\` — uupd\n\n_Automated detection by copr-health-monitor.yml_`,
               labels: ['area/copr', 'kind/bug', 'priority/p1'],
             });
