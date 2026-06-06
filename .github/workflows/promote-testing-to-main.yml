@@ -190,6 +190,37 @@ jobs:
             exit 1
           fi
 
+  close-failure-issue:
+    needs: [promote]
+    if: needs.promote.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Close open failure issue if present
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const title = 'ci: testing→main promotion conflict';
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'area/ci,kind/bug',
+              state: 'open',
+            });
+            const open = existing.data.find(i => i.title === title);
+            if (open) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: open.number,
+                state: 'closed',
+                state_reason: 'completed',
+              });
+              core.info(`Closed stale failure issue #${open.number}`);
+            }
+
   report-failure:
     needs: [promote]
     if: always() && failure()
@@ -208,6 +239,7 @@ jobs:
             const testingSha = '${{ needs.promote.outputs.testing_sha }}' || 'unknown';
             const prUrl = '${{ needs.promote.outputs.pr_url }}';
             const title = 'ci: testing→main promotion conflict';
+            const body = `## Testing → Main Promotion Conflict\n\n**Run:** ${runUrl}\n**Merge state status:** ${mergeStateStatus}\n**Mergeable:** ${mergeable}\n**Testing SHA:** \`${testingSha}\`${prUrl ? `\n**PR:** ${prUrl}` : ''}\n\n_Automatically opened by promote-testing-to-main.yml_`;
 
             const existing = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -216,10 +248,8 @@ jobs:
               state: 'open',
             });
             const dup = existing.data.find(i => i.title === title);
-            const body = `## Testing → Main Promotion Conflict\n\n**Run:** ${runUrl}\n**Merge state status:** ${mergeStateStatus}\n**Mergeable:** ${mergeable}\n**Testing SHA:** \`${testingSha}\`${prUrl ? `\n**PR:** ${prUrl}` : ''}\n\n_Automatically opened by promote-testing-to-main.yml_`;
-
             if (dup) {
-              await github.rest.issues.createComment({
+              await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: dup.number,
@@ -231,6 +261,6 @@ jobs:
                 repo: context.repo.repo,
                 title,
                 body,
-                labels: ['area/ci', 'kind/bug'],
+                labels: ['area/ci', 'kind/bug', 'priority/p1'],
               });
             }
