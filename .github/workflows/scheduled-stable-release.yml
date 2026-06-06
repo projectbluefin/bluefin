@@ -1,0 +1,104 @@
+name: Scheduled Stable Release
+
+# Weekly gated release — fires every Tuesday at 06:00 UTC.
+# Maintainers must approve via the production environment gate before the
+# release is created. workflow_dispatch is available for out-of-band cuts.
+on:
+  schedule:
+    - cron: '0 6 * * 2'  # Weekly on Tuesday at 6 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: scheduled-stable-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: https://ghcr.io/projectbluefin/bluefin:stable
+    steps:
+      - name: Find latest stable build run
+        id: build_run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          RUN=$(gh run list \
+            --workflow build-images.yml \
+            --branch main \
+            --status success \
+            --limit 1 \
+            --json headSha,databaseId \
+            --repo ${{ github.repository }} \
+            --jq '.[0]')
+          SHA=$(echo "$RUN" | jq -r '.headSha')
+          RUN_ID=$(echo "$RUN" | jq -r '.databaseId')
+          echo "sha=$SHA"       >> "$GITHUB_OUTPUT"
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Resolve release metadata
+        id: meta
+        run: |
+          set -euo pipefail
+          DATE="$(date -u +%Y%m%d)"
+          TAG="stable-${DATE}"
+          TITLE="${TAG}: Stable"
+          echo "tag=${TAG}"     >> "$GITHUB_OUTPUT"
+          echo "title=${TITLE}" >> "$GITHUB_OUTPUT"
+
+      - name: Get image digest
+        id: digest
+        run: |
+          set -euo pipefail
+          DIGEST=$(skopeo inspect --format '{{.Digest}}' \
+            docker://ghcr.io/projectbluefin/bluefin:stable 2>/dev/null || echo "")
+          if [[ -z "${DIGEST}" ]]; then
+            echo "::warning::Could not fetch digest for bluefin:stable — using placeholder"
+            DIGEST="sha256:unknown"
+          fi
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Download SBOM from latest build run
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: sbom-bluefin
+          run-id: ${{ steps.build_run.outputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: sbom-current
+
+      - name: Create release
+        uses: projectbluefin/actions/bootc-build/create-release@622073d27a051f1eed7b874b9b71710141a5e60e
+        with:
+          sbom-path:            sbom-current/bluefin.sbom.json
+          tag:                  ${{ steps.meta.outputs.tag }}
+          title:                ${{ steps.meta.outputs.title }}
+          image:                ghcr.io/projectbluefin/bluefin
+          digest:               ${{ steps.digest.outputs.digest }}
+          repo:                 ${{ github.repository }}
+          project-name:         Bluefin
+          accent-color:         "#0ea5e9"
+          badge-label:          Stable
+          sbom-filename:        bluefin.spdx.json
+          cert-identity-regexp: >-
+            ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
+          notable-packages: >-
+            [
+              {"sbom_name": "kernel",          "label": "Kernel"},
+              {"sbom_name": "gnome-shell",      "label": "GNOME"},
+              {"sbom_name": "mesa-filesystem",  "label": "Mesa"},
+              {"sbom_name": "podman",           "label": "Podman"},
+              {"sbom_name": "nvidia-driver",    "label": "Nvidia"},
+              {"sbom_name": "bootc",            "label": "bootc"}
+            ]
+          docs-url:             https://docs.projectbluefin.io/changelogs
+          github-token:         ${{ secrets.GITHUB_TOKEN }}

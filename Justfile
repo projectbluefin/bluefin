@@ -716,6 +716,9 @@ tag-images image_name="" default_tag="" tags="":
         ${PODMAN} tag $IMAGE {{ image_name }}:${tag}
     done
 
+    # Re-apply the default tag so local operations (e.g. vulnerability scan) can still find it
+    ${PODMAN} tag $IMAGE {{ image_name }}:{{ default_tag }}
+
 
     # Show Images
     ${PODMAN} images
