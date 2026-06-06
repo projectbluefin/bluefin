@@ -35,9 +35,9 @@ jobs:
           set -euo pipefail
           gh run download "${{ github.event.workflow_run.id }}" \
             --repo "${{ github.repository }}" \
-            --name "image-digest-testing-bluefin-main" \
+            --name "image-digest-testing-bluefin-main-x86_64" \
             --dir /tmp/digest
-          DIGEST=$(grep "=" /tmp/digest/main-bluefin.txt | head -1 | cut -d= -f2-)
+          DIGEST=$(grep "=" /tmp/digest/main-bluefin-x86_64.txt | head -1 | cut -d= -f2-)
           echo "image=ghcr.io/${{ github.repository_owner }}/bluefin@${DIGEST}" >> "$GITHUB_OUTPUT"
           echo "Testing image: ghcr.io/${{ github.repository_owner }}/bluefin@${DIGEST}"
 
@@ -61,8 +61,57 @@ jobs:
       image: ${{ needs.e2e.outputs.image }}
       suites: lifecycle
 
-  report-failure:
+  promote-to-testing:
+    # Promote all tested flavors to :testing only after e2e passes.
+    # This ensures :testing always points to a digest that has passed gate e2e.
     needs: [e2e, run-e2e, run-upgrade-test]
+    if: >-
+      needs.run-e2e.result == 'success' &&
+      needs.run-upgrade-test.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      packages: write
+    steps:
+      - name: Download all testing image digests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run download "${{ github.event.workflow_run.id }}" \
+            --repo "${{ github.repository }}" \
+            --pattern "image-digest-testing-*" \
+            --dir /tmp/all-digests
+
+      - name: Log in to GHCR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+      - name: Promote verified digests to :testing
+        run: |
+          set -euo pipefail
+          REGISTRY="ghcr.io/${{ github.repository_owner }}"
+          PROMOTED=0
+
+          while IFS= read -r -d '' f; do
+            # Each file contains: IMAGE_NAME=sha256:... (= format, one digest per image per arch)
+            while IFS='=' read -r image_name digest; do
+              [[ -z "${image_name}" || -z "${digest}" || "${image_name}" == *"|"* ]] && continue
+              SRC="docker://${REGISTRY}/${image_name}@${digest}"
+              DST="docker://${REGISTRY}/${image_name}:testing"
+              echo "Promoting ${image_name}@${digest} → :testing"
+              skopeo copy --all "${SRC}" "${DST}"
+              echo "  ✅ ${image_name}:testing updated"
+              PROMOTED=$((PROMOTED + 1))
+            done < "$f"
+          done < <(find /tmp/all-digests -name "*.txt" -print0)
+
+          echo "✅ Promoted ${PROMOTED} flavor(s) to :testing"
+
+  report-failure:
+    needs: [e2e, run-e2e, run-upgrade-test, promote-to-testing]
     if: failure() && needs.e2e.outputs.image != ''
     runs-on: ubuntu-latest
     timeout-minutes: 5
