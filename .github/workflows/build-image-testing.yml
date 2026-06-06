@@ -53,7 +53,7 @@ jobs:
       (github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || inputs.pr_number != '') &&
       (github.event_name != 'pull_request' ||
        needs.detect-changes.outputs.should_build == 'true')
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@7e634a74009e630a76ca30877f3d77fab9e1c383 # feat/gate-testing-stream-tag
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@2d87fecc5716d0b750a7729ebbc72995f9e92b8a # fix/trivy-oci-archive-scan
     permissions:
       contents: read
       packages: write
