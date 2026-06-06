@@ -148,6 +148,29 @@ Current automation works like this:
 
 The weekly promotion workflow refuses to promote untested code. It uses SHA-locked digests throughout, not mutable tags.
 
+### Squash-merge history gap — promotion PR shows CONFLICTING
+
+**Symptom:** The auto-created `testing` → `main` promotion PR shows "This branch has conflicts" even though the file changes do not actually conflict.
+
+**Root cause:** After a squash merge, `testing` and `main` share no git merge base. Any commit pushed directly to `main` (bypassing `testing`) severs the common ancestor entirely. GitHub marks the PR as CONFLICTING and refuses to merge it — even `gh pr merge --admin` is blocked.
+
+**Fix:**
+
+```bash
+git checkout testing && git pull projectbluefin testing --ff-only
+git merge projectbluefin/main --allow-unrelated-histories -s recursive -X ours \
+  -m "ci: sync testing with main to resolve squash-merge history gap
+
+<explain what commit landed directly on main and why>
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+git push projectbluefin testing
+```
+
+The `-X ours` strategy keeps `testing`'s version for any file that exists on both sides (e.g. pinned SHAs in workflow files). After the push, `promote-testing-to-main.yml` fires and creates a fresh, mergeable promotion PR.
+
+**Prevention:** Never push commits directly to `main` unless breaking a bootstrap deadlock. All changes go through `testing`.
+
 ### Testsuite pin management
 
 The canonical testsuite pin lives in **one place only**: `.github/workflows/run-testsuite.yml`. All other workflows must call this wrapper — never call `projectbluefin/testsuite/.github/workflows/e2e.yml` directly. Renovate maintains the single pin automatically.
@@ -164,6 +187,24 @@ grep -rn "projectbluefin/testsuite" .github/workflows/ | grep -v "run-testsuite.
 - **Weekly promotion path:** Retags testing digests which lack SBOMs
 - **Attestation:** `actions/attest` runs on all non-PR builds regardless of stream
 - **SBOM verification:** `oras discover --format json ghcr.io/projectbluefin/IMAGE@DIGEST | jq '.referrers[] | select(.artifactType == "application/vnd.spdx+json")'`
+
+### Vulnerability scan — Trivy and the podman socket
+
+`reusable-build.yml` builds images with `sudo podman build`, storing them in **root's** podman storage. Trivy runs as the runner user (uid 1001) and cannot reach root-owned images via the rootless socket (`/run/user/1001/podman/podman.sock`).
+
+**Fix (already in place):** Before scanning, export the image to an OCI archive and point Trivy at that:
+
+```yaml
+- name: Export image for scanning
+  run: sudo podman save --format oci-archive -o /tmp/scan-image.tar "$IMAGE_NAME:$DEFAULT_TAG"
+
+- name: Scan image for vulnerabilities
+  uses: projectbluefin/actions/bootc-build/scan-image@v1
+  with:
+    image: oci-archive:/tmp/scan-image.tar
+```
+
+If `upload-sarif` fails with "No SARIF file found", the scan step crashed before producing output — usually the wrong image reference was passed. Check whether `tag-images` in `Justfile` still re-applies the default tag after its alias-tag loop.
 
 ## Renovate and automation notes
 
@@ -279,6 +320,8 @@ GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, t
 | Renovate auto-merge finds no PR | Author filter mismatch (renovate[bot] vs app/mergeraptor) | Check jq filter in `renovate-automerge.yml` includes both |
 | `generate-release.yml` fails with "No SBOM referrer found" | Testing stream skips SBOM; promoted images lack referrers | See `allow_missing_sbom=True` pattern in skill Learnings |
 | Cosign sign/verify fails | Sigstore Fulcio/Rekor outage or key rotation | Check `check-cosign-key-rotation.yml` issues; retry after Sigstore recovers |
+| Promotion PR shows CONFLICTING | Commit landed directly on `main` without going through `testing`, severing git merge base | Run `git merge projectbluefin/main --allow-unrelated-histories -X ours` on `testing` and push — see "Squash-merge history gap" above |
+| Trivy scan crashes: "No SARIF file found" | Image reference passed to scan no longer exists — `tag-images` untags the default tag | Verify `tag-images` Justfile recipe re-applies the default tag after alias-tag loop; scan must use `oci-archive:/tmp/scan-image.tar` |
 
 ## Complete workflow inventory
 
