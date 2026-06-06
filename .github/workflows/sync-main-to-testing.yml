@@ -21,3 +21,21 @@ jobs:
     uses: projectbluefin/actions/.github/workflows/reusable-sync-branches.yml@1b6ae6a57f589db7175c3748ff93337ba63457ce # v1
     permissions:
       contents: write
+
+  cleanup-squash-branch:
+    name: Delete squash promotion branch
+    needs: [sync]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Delete auto/promote-testing-to-main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/${{ github.repository }}/git/refs/heads/auto/promote-testing-to-main \
+            -X DELETE 2>/dev/null \
+            && echo "✅ Deleted squash promotion branch" \
+            || echo "Branch already deleted or does not exist — nothing to do"
