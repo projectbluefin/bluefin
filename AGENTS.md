@@ -84,12 +84,23 @@ Non-compliance = rejection.
 ## PR and issue comment policy
 
 - One comment per PR or issue event, max; combine all findings into a single post.
+- **To add information to an issue or PR you authored, edit the body — do not add a new comment.** Use `gh api repos/projectbluefin/<repo>/issues/<n> -X PATCH --field body=@file`. A new comment is only appropriate as a reply to someone else or for a distinct event.
 - Do not follow a `gh issue close` (or `gh pr close`) with a separate explanatory comment — put the explanation in the close reason or a single combined comment before closing.
 - Do not duplicate GitHub UI state.
 - Test reports: what ran, pass/fail, blockers only.
 - No diff summaries.
 - `@mentions` only when asking for a specific action.
 - If nothing actionable needs saying, post nothing.
+
+## Analysis vs. implementation
+
+When asked an analysis question ("what's the fix?", "how should we handle X?", "is there a better approach?"), **answer the question — do not implement**. Only write or change code when explicitly asked to make the change. Discussing a solution and implementing it are separate steps; wait for the user to cross that line.
+
+## Cross-repo file placement
+
+Static system files (udev rules, sysctl, modprobe configs, setup hooks) belong in `projectbluefin/common`, not in this repo. Before creating anything under `system_files/`, check `common` first.
+
+**Never commit directly to `projectbluefin/common`.** Any change there requires a branch + PR, regardless of which repo you are working from. Treat a local checkout of `common` as a separate protected repo — branch, commit, push, open PR.
 
 ## Build internals — known traps
 
