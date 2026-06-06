@@ -83,14 +83,28 @@ shellcheck build_files/**/*.sh
 
 ## Promotion pipeline mental model
 
-1. Push to `main`
-2. `build-image-testing.yml` publishes testing images
-3. `post-testing-e2e.yml` smoke-tests that exact digest
-4. `weekly-testing-promotion.yml` verifies the same `main` SHA still passed e2e
-5. Promotion fast-forwards `latest` and `stable`
-6. Branch-specific build workflows rebuild those streams
+### Bluefin (this repo)
 
-If `main` advanced during promotion, the workflow aborts on purpose.
+1. Push to `testing` → `build-image-testing.yml` publishes `:testing` images (gated behind post-build e2e)
+2. `post-testing-e2e.yml` smoke-tests that exact digest
+3. `weekly-testing-promotion.yml` (Tuesday 06:00 UTC) locks the `:testing` digest, verifies e2e passed, cosign-verifies, skopeo-copies → `:stable` / `:latest`
+4. 7-day floor enforced; `workflow_dispatch` bypasses it
+5. A separate `promote-testing-to-main.yml` keeps the `testing → main` git branch in sync via a squash-merge PR (see **testing→main squash history gap** below)
+
+### Dakota
+
+Same digest-promotion model. `weekly-testing-promotion.yml` resolves `:testing` digest, runs e2e, cosign-verifies, skopeo-copies → `:latest` / `:stable`. No git branch PR.
+
+### Bluefin LTS
+
+**Current state:** `scheduled-lts-release.yml` dispatches fresh weekly builds from the `lts` branch (rebuilds from source — violates build-once principle).
+**Target state:** digest promotion matching bluefin/dakota — tracked in [bluefin-lts#77](https://github.com/projectbluefin/bluefin-lts/issues/77), unblocked since PR #73 merged.
+
+### Testing→main squash history gap (bluefin only)
+
+`promote-testing-to-main.yml` squash-merges `testing → main`. Because the feature PRs were already squash-merged into `testing`, the squash on `main` creates a new SHA — the graphs diverge. Every subsequent sync requires a merge commit to reconnect them, making the promotion PR show the full accumulated history (50+ commits) instead of just the new work.
+
+This is a known gap tracked in [#368](https://github.com/projectbluefin/bluefin/issues/368). The long-term fix (per [common#516](https://github.com/projectbluefin/common/issues/516)) is to replace the git-branch PR with branch fast-forward only, aligning with the dakota model.
 
 ## Common failure modes
 
@@ -134,7 +148,7 @@ If `main` advanced during promotion, the workflow aborts on purpose.
 - **Unit tests live in `tests/unit/`, not `build_files/`** — `build_files/**` is in the detect-changes image path filter; placing test files there causes every PR push to trigger image builds and E2E. Test files belong in `tests/unit/` where they are invisible to the image path filter.
 - **`just test-unit` runs bats unit tests** — calls `bats tests/unit/`. The CI `unit-tests` job invokes `bats` directly (not `just`) because `just` is not available on a bare `ubuntu-latest` runner without the `setup-runner` composite action. Test files: `package-lib_test.bats`, `validate-repos_test.bats`, `copr-helpers_test.bats`.
 - **Vulnerability scans must use the build digest, not a mutable tag.** `vulnerability-scan.yml` downloads `image-digest-{stream_name}-{brand_name}-{image_flavor}` from the triggering `workflow_run` and passes `image@sha256:...` to the scanner to avoid TOCTOU. Artifact names for the default bluefin build: `image-digest-testing-bluefin-main`, `image-digest-testing-bluefin-nvidia-open`.
-- Weekly promotion uses retag-only (skopeo copy) for the canonical path; a parallel rebuild pathway also exists via branch push
+- Weekly promotion uses retag-only (skopeo copy) for the canonical path — **no rebuild at promotion time**. The parallel rebuild pathway via branch push (`build-image-stable.yml`, `build-image-latest-main.yml`) is a secondary mechanism and does not gate the weekly release.
 - Build callers do not pass `secrets: inherit` — `reusable-build.yml` only needs `GITHUB_TOKEN`, which is automatically available
 
 ## Shared actions architecture (projectbluefin/actions)
