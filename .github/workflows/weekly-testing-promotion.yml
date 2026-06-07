@@ -348,7 +348,7 @@ jobs:
     name: Generate release notes
     needs: [promote-to-latest-and-stable]
     if: needs.promote-to-latest-and-stable.result == 'success'
-    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@beb89cf1f8d2fa8b8be76e5ed5e3132457415212 # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@d290241b8b7a6721be8855d1d94cdb8209652080 # v1
     with:
       stream_name: stable
       image: ghcr.io/projectbluefin/bluefin
@@ -368,7 +368,6 @@ jobs:
           {"sbom_name": "bootc",            "label": "bootc"}
         ]
       docs_url: https://docs.projectbluefin.io/changelogs
-    secrets: inherit
 
   close-failure-issue:
     name: Close stale failure issue on success
