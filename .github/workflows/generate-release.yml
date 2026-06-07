@@ -66,13 +66,26 @@ jobs:
 
       # The build workflow uploads one SBOM artifact per image variant.
       # We use the main (non-nvidia) variant as the canonical SBOM for the release.
+      # TODO(#424): testing-stream builds skip SBOM generation, so this artifact
+      # is absent on the weekly-promotion path. continue-on-error prevents a hard
+      # failure; the create-release step is guarded to only run when the SBOM is
+      # present. Remove continue-on-error once #424 is resolved.
       - name: Download SBOM artifact
+        id: download-sbom
+        continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: sbom-bluefin
           path: sbom-current
 
+      - name: Warn if SBOM unavailable
+        if: steps.download-sbom.outcome != 'success'
+        run: |
+          echo "::warning::SBOM artifact not found — release will be created without SBOM attachment."
+          echo "::warning::See https://github.com/projectbluefin/bluefin/issues/424 for tracking."
+
       - name: Create release
+        if: steps.download-sbom.outcome == 'success'
         uses: projectbluefin/actions/bootc-build/create-release@622073d27a051f1eed7b874b9b71710141a5e60e
         with:
           sbom-path:            sbom-current/bluefin.sbom.json
@@ -98,3 +111,31 @@ jobs:
             ]
           docs-url:             https://docs.projectbluefin.io/changelogs
           github-token:         ${{ secrets.GITHUB_TOKEN }}
+
+      # Fallback: create a minimal release when SBOM is unavailable (weekly promotion path).
+      # TODO(#424): remove once SBOM generation is enabled for the testing→stable path.
+      - name: Create release (no SBOM)
+        if: steps.download-sbom.outcome != 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          TITLE: ${{ steps.meta.outputs.title }}
+          DIGEST: ${{ steps.digest.outputs.digest }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/release-notes.md <<'NOTES'
+          ## Release
+
+          Image digest and verification instructions below.
+
+          > SBOM not attached on this release — see #424 for tracking.
+          > Full release card will be restored once SBOM generation is re-enabled for the promotion path.
+          NOTES
+          # Append digest line (can't use variable expansion inside heredoc single-quotes)
+          echo "" >> /tmp/release-notes.md
+          echo "**Image:** \`ghcr.io/projectbluefin/bluefin@${DIGEST}\`" >> /tmp/release-notes.md
+          sed -i "s|## Release|## ${TITLE}|" /tmp/release-notes.md
+          gh release create "${TAG}" \
+            --repo "${{ github.repository }}" \
+            --title "${TITLE}" \
+            --notes-file /tmp/release-notes.md
