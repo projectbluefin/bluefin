@@ -11,40 +11,7 @@ permissions:
 
 jobs:
   automerge:
-    name: Auto-merge Renovate PRs
-    runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success'
-    steps:
-      - name: Find Renovate PR for this commit
-        id: find-pr
-        env:
-          GH_TOKEN: ${{ github.token }}
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-        run: |
-          PR_JSON=$(gh pr list \
-            --repo ${{ github.repository }} \
-            --base testing \
-            --state open \
-            --json number,headRefOid,author \
-            --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | select(.author.login == \"renovate[bot]\" or .author.login == \"app/mergeraptor\")")
-
-          if [ -z "$PR_JSON" ]; then
-            echo "No open Renovate/Mergeraptor PR found for SHA $HEAD_SHA — skipping"
-            echo "pr_number=" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          PR_NUMBER=$(echo "$PR_JSON" | jq -r '.number')
-          echo "Found PR #${PR_NUMBER}"
-          echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
-
-      - name: Enable auto-merge
-        if: steps.find-pr.outputs.pr_number != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh pr merge ${{ steps.find-pr.outputs.pr_number }} \
-            --auto \
-            --squash \
-            --repo ${{ github.repository }}
-          echo "✅ Auto-merge enabled on PR #${{ steps.find-pr.outputs.pr_number }}"
+    uses: projectbluefin/actions/.github/workflows/reusable-renovate-automerge.yml@fcd2a6bac15f2037df2e62572eef7a70fd25759f # v1
+    with:
+      head_sha: ${{ github.event.workflow_run.head_sha }}
