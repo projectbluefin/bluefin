@@ -88,7 +88,7 @@ just clean
 
 | Image | Streams | Flavors |
 |---|---|---|
-| `bluefin` | `gts`, `stable`, `latest`, `beta` | `main`, `nvidia-open` |
+| `bluefin` | `gts`, `stable`, `latest`, `beta` | `main`, `nvidia` |
 
 The current branch automation also carries a `testing` stream in local/CI recipes; use the release and CI docs for branch-specific pipeline behavior.
 

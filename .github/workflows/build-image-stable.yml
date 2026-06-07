@@ -35,9 +35,24 @@ jobs:
   generate-release:
     name: Generate Release
     needs: [build-image-stable]
-    permissions:
-      contents: write
-      actions: read
-    uses: ./.github/workflows/generate-release.yml
+    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@fcd2a6bac15f2037df2e62572eef7a70fd25759f # v1
     with:
-      stream_name: '["stable"]'
+      stream_name: stable
+      image: ghcr.io/projectbluefin/bluefin
+      generate_sbom_inline: true
+      project_name: Bluefin
+      badge_label: Stable
+      accent_color: "#0ea5e9"
+      cert_identity_regexp: >-
+        ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
+      notable_packages: >-
+        [
+          {"sbom_name": "kernel",          "label": "Kernel"},
+          {"sbom_name": "gnome-shell",      "label": "GNOME"},
+          {"sbom_name": "mesa-filesystem",  "label": "Mesa"},
+          {"sbom_name": "podman",           "label": "Podman"},
+          {"sbom_name": "nvidia-driver",    "label": "Nvidia"},
+          {"sbom_name": "bootc",            "label": "bootc"}
+        ]
+      docs_url: https://docs.projectbluefin.io/changelogs
+    secrets: inherit

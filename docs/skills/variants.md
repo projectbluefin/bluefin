@@ -25,7 +25,7 @@
 | Flavor | Use case |
 |---|---|
 | `main` | standard AMD/Intel/open-driver path |
-| `nvidia-open` | NVIDIA open kernel module path |
+| `nvidia` | NVIDIA open kernel module path (published image: `bluefin-nvidia`) |
 
 ### Streams in this repo
 
@@ -40,7 +40,7 @@
 
 ```text
 ghcr.io/projectbluefin/bluefin:testing-main
-ghcr.io/projectbluefin/bluefin:stable-nvidia-open
+ghcr.io/projectbluefin/bluefin:stable-nvidia
 ```
 
 ## Build matrix touchpoints
@@ -55,7 +55,7 @@ ghcr.io/projectbluefin/bluefin:stable-nvidia-open
 |---|---|
 | normal desktop image | `bluefin` |
 | default driver stack | `main` |
-| NVIDIA open kernel module path | `nvidia-open` |
+| NVIDIA open kernel module path | `nvidia` (image: `bluefin-nvidia`) |
 | pre-promotion testing image | `testing-*` |
 | promoted user-facing stream | `latest-*` or `stable-*` |
 
