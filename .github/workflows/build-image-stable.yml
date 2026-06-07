@@ -35,9 +35,9 @@ jobs:
   generate-release:
     name: Generate Release
     needs: [build-image-stable]
-    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@d290241b8b7a6721be8855d1d94cdb8209652080 # v1
+    uses: ./.github/workflows/generate-release.yml
     with:
-      stream_name: stable
+      stream_name: '["stable"]'
       image: ghcr.io/projectbluefin/bluefin
       generate_sbom_inline: true
       project_name: Bluefin
