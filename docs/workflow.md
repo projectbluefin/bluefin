@@ -30,6 +30,46 @@ git push projectbluefin my-feature
 
 **Never `git push` or `git push origin`.** The pre-push hook enforces `projectbluefin` as the required remote name.
 
+## Docs and skills update policy
+
+**`docs/` changes push directly to `main` — no PR required.** Documentation-only commits (changes under `docs/`) bypass the `testing` → `main` promotion cycle. Push directly:
+
+```bash
+git add docs/
+git commit -m "docs: <describe the change>"
+git push projectbluefin HEAD:main
+```
+
+**Only update project docs in `docs/`.** Never modify personal skill files (`~/.agents/skills/`) unless the user explicitly asks. Never open a PR for a docs-only change.
+
+## Production-down protocol
+
+When the user indicates production is down or the factory is blocked, use `--admin` bypass without asking for authorization:
+
+```bash
+# Merge a PR without waiting for checks
+gh pr merge <PR> --repo projectbluefin/bluefin --squash --admin
+
+# Dispatch a workflow immediately
+gh workflow run weekly-testing-promotion.yml --repo projectbluefin/bluefin
+```
+
+Do not stop mid-task to request permission for merges, tag-pushes, or workflow dispatches when production is actively broken.
+
+## Waiting on CI runs
+
+Use `gh run watch` to block until a build completes — do not write custom polling loops (they die in detached shells):
+
+```bash
+# Block until done; exit 1 on failure
+gh run watch <RUN_ID> --repo projectbluefin/bluefin --exit-status
+
+# Then dispatch the promotion
+gh workflow run weekly-testing-promotion.yml --repo projectbluefin/bluefin
+```
+
+
+
 ## Issue tracker
 
 > **All Bluefin issues go in [`projectbluefin/bluefin`](https://github.com/projectbluefin/bluefin/issues).**

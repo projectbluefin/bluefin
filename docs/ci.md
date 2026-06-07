@@ -237,6 +237,26 @@ Every production image has:
 - `keys/ublue-os-brew.pub` — brew layer signing key
 - `check-cosign-key-rotation.yml` — weekly monitor, opens P1 issue on mismatch
 
+### Cosign certificate identity regexp
+
+The `--certificate-identity-regexp` used in any `cosign verify` command **must match the workflow that actually calls `cosign sign`**. For images built via `projectbluefin/actions/reusable-build.yml`, the signing identity is:
+
+```
+https://github.com/projectbluefin/actions/.github/workflows/reusable-build.yml@...
+```
+
+Always use the same regexp as `sign-and-publish/action.yml`'s default — never hardcode `github.repository` (e.g. `projectbluefin/bluefin`) alone:
+
+```yaml
+# WRONG — only matches the caller repo, not the shared actions repo that signs
+--certificate-identity-regexp "https://github.com/${{ github.repository }}/.github/workflows/"
+
+# CORRECT — matches the full set of repos that can sign
+--certificate-identity-regexp "https://github.com/${{ github.repository_owner }}/(bluefin|bluefin-lts|aurora|actions)/.github/workflows/"
+```
+
+Before writing or editing any `cosign verify` command, read `projectbluefin/actions/bootc-build/sign-and-publish/action.yml` to confirm the `certificate-identity-regexp` default and cosign version. The verify must be ≥ as broad as the sign step.
+
 ### Known gaps
 
 | Gap | Description |
@@ -321,6 +341,8 @@ GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, t
 | Post-testing e2e cannot find a digest | Artifact name or upstream build output changed | Verify `build-image-testing.yml` and `reusable-build.yml` still publish `image-digest-testing-bluefin-main` |
 | Weekly promotion aborts because `main` advanced | New commits landed during e2e | Rerun `weekly-testing-promotion.yml` after e2e is green again |
 | Weekly promotion cannot download digest artifact | Artifact expired before the Tuesday window | Trigger a fresh push to `main` to get a new artifact |
+| `verify-e2e` fails: "No successful build run found for SHA" | Promotion dispatched while testing build still in-progress | Wait: `gh run watch <build-run-id> --repo projectbluefin/bluefin --exit-status` then dispatch |
+| `promote-to-latest-and-stable` cosign verify fails | `--certificate-identity-regexp` too narrow — images signed by `projectbluefin/actions`, not `projectbluefin/bluefin` | Use `(bluefin\|bluefin-lts\|aurora\|actions)` regexp — see Security → Cosign certificate identity regexp |
 | Renovate auto-merge finds no PR | Author filter mismatch (renovate[bot] vs app/mergeraptor) | Check jq filter in `renovate-automerge.yml` includes both |
 | `generate-release.yml` fails with "No SBOM referrer found" | Testing stream skips SBOM; promoted images lack referrers | See `allow_missing_sbom=True` pattern in skill Learnings |
 | Cosign sign/verify fails | Sigstore Fulcio/Rekor outage or key rotation | Check `check-cosign-key-rotation.yml` issues; retry after Sigstore recovers |
