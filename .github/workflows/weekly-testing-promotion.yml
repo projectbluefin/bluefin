@@ -299,7 +299,7 @@ jobs:
             REF="${REGISTRY}/${IMAGE_NAME}@${DIGEST}"
             echo "Verifying signature: ${REF}"
             if ! cosign verify \
-              --certificate-identity-regexp "https://github.com/${{ github.repository }}/.github/workflows/" \
+              --certificate-identity-regexp "https://github.com/${{ github.repository_owner }}/(bluefin|bluefin-lts|aurora|actions)/.github/workflows/" \
               --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
               "${REF}" 2>/dev/null; then
               echo "::error::Signature verification FAILED for ${IMAGE_NAME}@${DIGEST}"
