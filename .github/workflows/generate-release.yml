@@ -1,0 +1,181 @@
+name: Generate Release
+
+on:
+  workflow_call:
+    inputs:
+      stream_name:
+        description: "Stream tag to release (e.g. '\"stable\"' or '[\"stable\"]')"
+        type: string
+        required: true
+      image:
+        description: "Full GHCR image URL without tag"
+        default: "ghcr.io/projectbluefin/bluefin"
+        required: false
+        type: string
+      project_name:
+        description: "Project display name"
+        default: "Bluefin"
+        required: false
+        type: string
+      badge_label:
+        description: "Release card badge label"
+        default: "Stable"
+        required: false
+        type: string
+      accent_color:
+        description: "Release card accent color"
+        default: "#0ea5e9"
+        required: false
+        type: string
+      cert_identity_regexp:
+        description: "cosign certificate identity regexp"
+        default: >-
+          ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
+        required: false
+        type: string
+      notable_packages:
+        description: "JSON array of notable packages for the release card"
+        default: "[]"
+        required: false
+        type: string
+      docs_url:
+        description: "URL for changelog documentation"
+        default: "https://docs.projectbluefin.io/changelogs"
+        required: false
+        type: string
+      sbom_artifact:
+        description: "SBOM artifact name to download (artifact mode only)"
+        default: "sbom-bluefin"
+        required: false
+        type: string
+      generate_sbom_inline:
+        description: "Generate SBOM inline with Syft instead of downloading from artifact"
+        default: false
+        required: false
+        type: boolean
+      syft_version:
+        description: "Syft version for inline SBOM generation"
+        default: "v1.44.0"
+        required: false
+        type: string
+  workflow_dispatch:
+    inputs:
+      stream_name:
+        description: "Stream tag to release"
+        required: true
+        type: choice
+        options:
+          - '["stable"]'
+      generate_sbom_inline:
+        description: "Generate SBOM inline with Syft"
+        required: false
+        type: boolean
+        default: false
+
+permissions: {}
+
+jobs:
+  generate-release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      actions: read
+    environment:
+      name: production
+      url: ${{ inputs.image }}:stable
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{ fromJson(inputs.stream_name) }}
+    if: >-
+      contains(inputs.stream_name, 'stable') &&
+      contains(fromJson('["workflow_dispatch", "workflow_call"]'), github.event_name)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Resolve release metadata
+        id: meta
+        env:
+          STREAM_NAME: ${{ matrix.version }}
+          BADGE_LABEL: ${{ inputs.badge_label }}
+        run: |
+          set -euo pipefail
+          DATE="$(date -u +%Y%m%d)"
+          TAG="${STREAM_NAME}-${DATE}"
+          TITLE="${TAG}: ${BADGE_LABEL}"
+          echo "tag=${TAG}"     >> "$GITHUB_OUTPUT"
+          echo "title=${TITLE}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve image basename
+        id: image_name
+        env:
+          IMAGE: ${{ inputs.image }}
+        run: |
+          set -euo pipefail
+          IMAGE_NAME="$(basename "${IMAGE}")"
+          echo "image_name=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Get image digest
+        id: digest
+        env:
+          IMAGE: ${{ inputs.image }}
+          STREAM_NAME: ${{ matrix.version }}
+        run: |
+          set -euo pipefail
+          DIGEST=$(skopeo inspect --format '{{.Digest}}' \
+            "docker://${IMAGE}:${STREAM_NAME}" 2>/dev/null || echo "")
+          if [[ -z "${DIGEST}" ]]; then
+            echo "::warning::Could not fetch digest for ${IMAGE}:${STREAM_NAME} — using placeholder"
+            DIGEST="sha256:unknown"
+          fi
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Install Syft
+        id: setup-syft
+        if: inputs.generate_sbom_inline == true
+        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0
+        with:
+          syft-version: ${{ inputs.syft_version }}
+
+      - name: Generate SBOM inline from promoted image
+        if: inputs.generate_sbom_inline == true
+        env:
+          IMAGE: ${{ inputs.image }}
+          STREAM_NAME: ${{ matrix.version }}
+          IMAGE_NAME: ${{ steps.image_name.outputs.image_name }}
+          SYFT_CMD: ${{ steps.setup-syft.outputs.cmd }}
+        run: |
+          set -euo pipefail
+          mkdir -p sbom-current
+          "${SYFT_CMD}" "${IMAGE}:${STREAM_NAME}" \
+            -o spdx-json="sbom-current/${IMAGE_NAME}.sbom.json"
+          echo "SBOM generated: $(wc -c < "sbom-current/${IMAGE_NAME}.sbom.json") bytes"
+
+      - name: Download SBOM artifact
+        if: inputs.generate_sbom_inline == false
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: ${{ inputs.sbom_artifact }}
+          path: sbom-current
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release
+        uses: projectbluefin/actions/bootc-build/create-release@d290241b8b7a6721be8855d1d94cdb8209652080
+        with:
+          sbom-path: sbom-current/${{ steps.image_name.outputs.image_name }}.sbom.json
+          tag: ${{ steps.meta.outputs.tag }}
+          title: ${{ steps.meta.outputs.title }}
+          image: ${{ inputs.image }}
+          digest: ${{ steps.digest.outputs.digest }}
+          repo: ${{ github.repository }}
+          project-name: ${{ inputs.project_name }}
+          accent-color: ${{ inputs.accent_color }}
+          badge-label: ${{ inputs.badge_label }}
+          sbom-filename: ${{ steps.image_name.outputs.image_name }}.spdx.json
+          cert-identity-regexp: ${{ inputs.cert_identity_regexp }}
+          notable-packages: ${{ inputs.notable_packages }}
+          docs-url: ${{ inputs.docs_url }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
