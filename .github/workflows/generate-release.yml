@@ -64,13 +64,25 @@ jobs:
           fi
           echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
 
-      # The build workflow uploads one SBOM artifact per image variant.
-      # We use the main (non-nvidia) variant as the canonical SBOM for the release.
-      - name: Download SBOM artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+      # Generate SBOM inline from the promoted :stable image using Syft.
+      # The reusable-build skips SBOM for the testing stream (by design), so
+      # the weekly-promotion path has no artifact to download. Syft runs against
+      # the exact image that was just retagged to :stable, giving us a fresh SBOM
+      # without requiring a rebuild. Uses the same Syft version as reusable-build.yml.
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0
         with:
-          name: sbom-bluefin
-          path: sbom-current
+          syft-version: v1.44.0
+
+      - name: Generate SBOM from promoted image
+        env:
+          STREAM: ${{ matrix.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p sbom-current
+          syft "ghcr.io/projectbluefin/bluefin:${STREAM}" \
+            -o spdx-json=sbom-current/bluefin.sbom.json
+          echo "SBOM generated: $(wc -c < sbom-current/bluefin.sbom.json) bytes"
 
       - name: Create release
         uses: projectbluefin/actions/bootc-build/create-release@622073d27a051f1eed7b874b9b71710141a5e60e

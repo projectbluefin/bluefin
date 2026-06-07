@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   release:
-    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@023c4fcb2f7885ab348222e3eabe600f5b76a317
+    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@3390565c71befe1a6c9300d52f998d5246b9e6de
     with:
       stream_name: stable
       build_workflow: build-image-stable.yml
