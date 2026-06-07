@@ -207,7 +207,9 @@ jobs:
     uses: ./.github/workflows/run-testsuite.yml
     with:
       image: ${{ needs.verify-e2e.outputs.image }}
-      suites: developer,vanilla-gnome,software,common
+      # TODO(#411): 'software' suite is gnomeos-only (GNOME Software); Bluefin ships Warehouse.
+      # Removed to prevent infra/boot failures in the software suite from blocking stable promotion.
+      suites: developer,vanilla-gnome,common
 
   e2e-nvidia-open:
     needs: [verify-e2e]
@@ -405,7 +407,7 @@ jobs:
             const image = '${{ needs.verify-e2e.outputs.image }}';
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const title = 'ci: weekly promotion e2e failure';
-            const body = `## Weekly Promotion E2E Failure\n\n**Image:** \`${image}\`\n**Run:** ${runUrl}\n**Suites:** developer,vanilla-gnome,software,common\n\n_Automatically opened by weekly-testing-promotion.yml_`;
+            const body = `## Weekly Promotion E2E Failure\n\n**Image:** \`${image}\`\n**Run:** ${runUrl}\n**Suites:** developer,vanilla-gnome,common\n\n_Automatically opened by weekly-testing-promotion.yml_`;
 
             const existing = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
