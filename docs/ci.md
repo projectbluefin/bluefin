@@ -188,7 +188,7 @@ grep -rn "projectbluefin/testsuite" .github/workflows/ | grep -v "run-testsuite.
 
 - **Testing builds:** SBOM generation is skipped (runner time budget)
 - **Stable/latest direct builds:** Full SBOM via Syft → ORAS attach → cosign sign
-- **Weekly promotion path:** Retags testing digests which lack SBOMs
+- **Weekly promotion path:** Retags testing digests which lack SBOMs; `generate-release.yml` falls back to a no-SBOM release — see #424
 - **Attestation:** `actions/attest` runs on all non-PR builds regardless of stream
 - **SBOM verification:** `oras discover --format json ghcr.io/projectbluefin/IMAGE@DIGEST | jq '.referrers[] | select(.artifactType == "application/vnd.spdx+json")'`
 
@@ -257,11 +257,23 @@ Always use the same regexp as `sign-and-publish/action.yml`'s default — never 
 
 Before writing or editing any `cosign verify` command, read `projectbluefin/actions/bootc-build/sign-and-publish/action.yml` to confirm the `certificate-identity-regexp` default and cosign version. The verify must be ≥ as broad as the sign step.
 
+### Cosign installer — always use the action, never curl
+
+Any workflow step that calls `cosign verify` must install cosign via `sigstore/cosign-installer`, **not** a raw `curl` download. Cosign v3 (installed by `sigstore/cosign-installer@v4.1.2`) uses a new signature bundle format that v2.x binaries cannot verify. If a hardcoded version string like `v2.5.0` appears in a `curl` block, the verification will silently fail for all images.
+
+```yaml
+# CORRECT — pin the same SHA used in projectbluefin/actions reusable-build
+- name: Install cosign
+  uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+```
+
+Keep this SHA in sync with whatever `projectbluefin/actions` pins. Renovate tracks it.
+
 ### Known gaps
 
 | Gap | Description |
 |-----|-------------|
-| Testing stream skips SBOM | Promoted `:stable`/`:latest` images lack signed SBOMs; `generate-release.yml` must tolerate missing referrers |
+| Testing stream skips SBOM | Promoted `:stable`/`:latest` images lack signed SBOMs; `generate-release.yml` uses `continue-on-error` workaround — see #424 |
 | Weekly promotion tests one flavor | Only `bluefin-main` is e2e-verified before all flavors are promoted |
 
 ## Build caching
