@@ -348,7 +348,7 @@ jobs:
     name: Generate release notes
     needs: [promote-to-latest-and-stable]
     if: needs.promote-to-latest-and-stable.result == 'success'
-    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@fcd2a6bac15f2037df2e62572eef7a70fd25759f # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@599328cbb21d05094f6851b6da32c85f3a5363de # v1
     with:
       stream_name: stable
       image: ghcr.io/projectbluefin/bluefin
