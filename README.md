@@ -30,17 +30,17 @@ Primary Bluefin desktop image for most systems.
 # Stable — recommended
 sudo bootc switch ghcr.io/ublue-os/bluefin:stable --enforce-container-sigpolicy
 # Stable — NVIDIA
-sudo bootc switch ghcr.io/ublue-os/bluefin-nvidia-open:stable --enforce-container-sigpolicy
+sudo bootc switch ghcr.io/projectbluefin/bluefin-nvidia:stable --enforce-container-sigpolicy
 
 # Stable Daily — tracks Fedora stable, daily rebuilds
 sudo bootc switch ghcr.io/ublue-os/bluefin:stable-daily --enforce-container-sigpolicy
 # Stable Daily — NVIDIA
-sudo bootc switch ghcr.io/ublue-os/bluefin-nvidia-open:stable-daily --enforce-container-sigpolicy
+sudo bootc switch ghcr.io/projectbluefin/bluefin-nvidia:stable-daily --enforce-container-sigpolicy
 
 # Latest — tracks Fedora latest
 sudo bootc switch ghcr.io/ublue-os/bluefin:latest --enforce-container-sigpolicy
 # Latest — NVIDIA
-sudo bootc switch ghcr.io/ublue-os/bluefin-nvidia-open:latest --enforce-container-sigpolicy
+sudo bootc switch ghcr.io/projectbluefin/bluefin-nvidia:latest --enforce-container-sigpolicy
 ```
 
 ## Getting Started
