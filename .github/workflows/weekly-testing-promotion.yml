@@ -79,7 +79,7 @@ jobs:
       testing_sha: ${{ steps.lock-sha.outputs.sha }}
       build_run_id: ${{ steps.find-build.outputs.run_id }}
       image: ${{ steps.get-digest.outputs.image }}
-      nvidia_open_image: ${{ steps.get-nvidia-digest.outputs.image }}
+      nvidia_image: ${{ steps.get-nvidia-digest.outputs.image }}
     steps:
       - name: Lock main HEAD SHA
         id: lock-sha
@@ -173,7 +173,7 @@ jobs:
           echo "image=ghcr.io/${{ github.repository_owner }}/bluefin@${DIGEST}" >> "$GITHUB_OUTPUT"
           echo "Promoting: ghcr.io/${{ github.repository_owner }}/bluefin@${DIGEST}"
 
-      - name: Get nvidia-open digest for e2e gate
+      - name: Get nvidia digest for e2e gate
         id: get-nvidia-digest
         env:
           GH_TOKEN: ${{ github.token }}
@@ -184,20 +184,20 @@ jobs:
           mkdir -p "$DIGEST_DIR"
           gh run download "${{ steps.find-build.outputs.run_id }}" \
             --repo "${{ github.repository }}" \
-            --name "image-digest-testing-bluefin-nvidia-open-x86_64" \
+            --name "image-digest-testing-bluefin-nvidia-x86_64" \
             --dir "$DIGEST_DIR" 2>/dev/null || {
-            echo "::warning::nvidia-open digest not found — skipping nvidia-open promotion gate"
+            echo "::warning::nvidia digest not found — skipping nvidia promotion gate"
             echo "image=" >> "$GITHUB_OUTPUT"
             exit 0
           }
           DIGEST=$(grep -hoE 'sha256:[0-9a-f]{64}' "$DIGEST_DIR"/*.txt | head -1)
           if [[ -z "$DIGEST" ]]; then
-            echo "::warning::Could not extract nvidia-open digest — skipping gate"
+            echo "::warning::Could not extract nvidia digest — skipping gate"
             echo "image=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          echo "image=ghcr.io/${{ github.repository_owner }}/bluefin-nvidia-open@${DIGEST}" >> "$GITHUB_OUTPUT"
-          echo "Found nvidia-open digest: ${DIGEST}"
+          echo "image=ghcr.io/${{ github.repository_owner }}/bluefin-nvidia@${DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "Found nvidia digest: ${DIGEST}"
 
   e2e:
     needs: [verify-e2e]
@@ -211,15 +211,15 @@ jobs:
       # Removed to prevent infra/boot failures in the software suite from blocking stable promotion.
       suites: developer,vanilla-gnome,common
 
-  e2e-nvidia-open:
+  e2e-nvidia:
     needs: [verify-e2e]
-    if: needs.verify-e2e.outputs.nvidia_open_image != ''
+    if: needs.verify-e2e.outputs.nvidia_image != ''
     permissions:
       packages: write
       contents: read
     uses: ./.github/workflows/run-testsuite.yml
     with:
-      image: ${{ needs.verify-e2e.outputs.nvidia_open_image }}
+      image: ${{ needs.verify-e2e.outputs.nvidia_image }}
       suites: smoke,common
     secrets: inherit
 
@@ -229,10 +229,10 @@ jobs:
       needs.verify-e2e.result == 'success' &&
       needs.e2e.result == 'success' &&
       (
-        needs.verify-e2e.outputs.nvidia_open_image == '' ||
-        needs.e2e-nvidia-open.result == 'success'
+        needs.verify-e2e.outputs.nvidia_image == '' ||
+        needs.e2e-nvidia.result == 'success'
       )
-    needs: [e2e, e2e-nvidia-open, verify-e2e]
+    needs: [e2e, e2e-nvidia, verify-e2e]
     environment: production
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -388,7 +388,7 @@ jobs:
             }
 
   report-failure:
-    needs: [verify-e2e, e2e, e2e-nvidia-open, promote-to-latest-and-stable]
+    needs: [verify-e2e, e2e, e2e-nvidia, promote-to-latest-and-stable]
     if: always() && failure() && needs.verify-e2e.outputs.image != ''
     runs-on: ubuntu-latest
     timeout-minutes: 5

@@ -78,7 +78,7 @@ uses: projectbluefin/actions/.github/workflows/reusable-build.yml@<SHA>
 > **⚠️ `stable` branch exception:** The `stable` branch maintains its **own local copy** of `.github/workflows/reusable-build.yml` (a diverged legacy version). `build-image-stable.yml` calls `uses: ./.github/workflows/reusable-build.yml` (self-referential). Fixes landed in `projectbluefin/actions` do NOT automatically apply to `stable`. When CI breaks on `stable`, hotfix directly on the `stable` branch — cherry-picking from `testing` will conflict because `testing` does not have that file.
 
 - Matrix: `bluefin`
-- Flavors: `main`, `nvidia-open`
+- Flavors: `main`, `nvidia`
 - Default architecture: `x86_64`
 - Builds with `just build-ghcr`, then rechunks, retags, runs secureboot checks, and generates tags
 - On non-PR events it pushes to GHCR, signs images with cosign, uploads SBOMs, and emits attestations
@@ -290,7 +290,7 @@ Each matrix job saves and restores `/var/tmp/buildah-cache-*` via `actions/cache
 ```
 Example: `Linux-x86_64-buildah-main-bluefin-44`
 
-The `image_flavor` segment (`main` / `nvidia-open`) is critical — without it, parallel jobs sharing the same image name write to the same key and GitHub's cache API rejects all-but-one save with "Unable to reserve cache, another job may be creating this cache".
+The `image_flavor` segment (`main` / `nvidia`) is critical — without it, parallel jobs sharing the same image name write to the same key and GitHub's cache API rejects all-but-one save with "Unable to reserve cache, another job may be creating this cache".
 
 **Restore-key fallback** (broadest-to-narrowest):
 1. `Linux-x86_64-buildah-main-bluefin-44` (exact hit)
@@ -323,7 +323,7 @@ Each matrix job saves and restores `/var/tmp/buildah-cache-*` via `actions/cache
 ```
 Example: `Linux-x86_64-buildah-main-bluefin-44`
 
-The `image_flavor` segment (`main` / `nvidia-open`) is critical — without it, parallel jobs sharing the same image name write to the same key and GitHub's cache API rejects all-but-one save with "Unable to reserve cache, another job may be creating this cache".
+The `image_flavor` segment (`main` / `nvidia`) is critical — without it, parallel jobs sharing the same image name write to the same key and GitHub's cache API rejects all-but-one save with "Unable to reserve cache, another job may be creating this cache".
 
 **Restore-key fallback** (broadest-to-narrowest):
 1. `Linux-x86_64-buildah-main-bluefin-44` (exact hit)

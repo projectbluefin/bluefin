@@ -7,7 +7,7 @@ images := '(
 )'
 flavors := '(
     [main]=main
-    [nvidia-open]=nvidia-open
+    [nvidia]=nvidia
 )'
 tags := '(
     [stable]=stable
@@ -191,7 +191,7 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
     if [[ "${akmods_flavor}" =~ coreos ]]; then
         {{ just }} verify-container "akmods-zfs:${akmods_flavor}-${fedora_version}-${kernel_release}"
     fi
-    if [[ "${flavor}" =~ nvidia-open ]]; then
+    if [[ "${flavor}" =~ nvidia ]]; then
         {{ just }} verify-container "akmods-nvidia-open:${akmods_flavor}-${fedora_version}-${kernel_release}"
     fi
 
@@ -790,6 +790,6 @@ retag-nvidia-on-ghcr working_tag="" stream="" dry_run="1":
         echo "$GITHUB_PAT" | podman login -u $GITHUB_USERNAME --password-stdin ghcr.io
         skopeo="skopeo"
     fi
-    for image in bluefin-nvidia-open; do
+    for image in bluefin-nvidia; do
       $skopeo copy docker://ghcr.io/projectbluefin/${image}:{{ working_tag }} docker://ghcr.io/projectbluefin/${image}:{{ stream }}
     done
