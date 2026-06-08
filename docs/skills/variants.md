@@ -56,12 +56,12 @@ ghcr.io/projectbluefin/bluefin:stable-nvidia
 | normal desktop image | `bluefin` |
 | default driver stack | `main` |
 | NVIDIA open kernel module path | `nvidia` (image: `bluefin-nvidia`) |
-| pre-promotion testing image | `testing-*` |
-| promoted user-facing stream | `latest-*` or `stable-*` |
+| pre-promotion testing image | `testing` |
+| promoted user-facing stream | `stable` |
 
 ## Non-obvious patterns
 
-- This repo currently builds `testing`, `latest`, and `stable`; do not assume older stream names are active here
+- This repo builds two streams: `testing` (daily from `main`) and `stable` (weekly gated promotion)
 - LTS is a separate repo and workflow model
 - For development, do **not** rely on the VS Code Flatpak; use the Homebrew package instead
 
