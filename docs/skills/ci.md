@@ -39,13 +39,12 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 | `pr-smoke.yml` | PRs touching build files | Full image build + smoke test |
 | `build-image-testing.yml` | Push to `main`, dispatch | Testing image builds via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Testing build on `main` | Smoke+common continuous e2e gate |
-| `weekly-testing-promotion.yml` | Tuesday 06:00 UTC | Full e2e → retag to :stable/:latest |
+| `weekly-testing-promotion.yml` | Tuesday 06:00 UTC | Full e2e → retag to :stable |
 | `build-image-stable.yml` | Push to `stable`, dispatch | Stable rebuild |
-| `build-image-latest-main.yml` | Push to `latest`, dispatch | Latest rebuild |
 | `build-images.yml` | Manual dispatch | Rebuild all streams |
 | ~~`reusable-build.yml`~~ (deleted) | Replaced by `projectbluefin/actions/.github/workflows/reusable-build.yml` | **All build callers now use the centralized workflow — no local copy** |
 | `run-testsuite.yml` | Called by all e2e workflows | **Canonical testsuite wrapper — always use this, never e2e.yml directly** |
-| `nightly.yml` | 02:00 UTC daily | smoke+common+vanilla-gnome against :latest |
+| `nightly.yml` | 02:00 UTC daily | smoke+common+vanilla-gnome against :testing |
 | `vulnerability-scan.yml` | Testing build + weekly | Grype → SARIF to Security tab |
 | `renovate-automerge.yml` | PR Validation success | Auto-merge all Renovate/mergeraptor PRs via `gh pr merge --auto --squash` (no high-risk/smoke distinction) |
 | `e2e-dispatch.yml` | `/e2e` comment (write+ only) | Manual e2e on PR |

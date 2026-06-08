@@ -100,7 +100,7 @@ All claims below map to one or more of these axes.
 
 **`ublue-os/bluefin`:** Workflow files retrieved read-only via
 `gh api repos/ublue-os/bluefin/contents/...`. Run data: `gh run list --repo ublue-os/bluefin`
-for both `build-image-stable.yml` and `build-image-latest-main.yml`. Window: 10 most
+for `build-image-stable.yml`. Window: 10 most
 recent runs per workflow. No issues, PRs, or code in `ublue-os` were modified.
 
 ### Limitations
@@ -218,7 +218,7 @@ TRIGGER: push to branch / schedule / PR / merge_group
          │
          ▼
 ┌──────────────────────────────────────────────────────────────┐
-│  build-image-stable.yml  /  build-image-latest-main.yml      │
+│  build-image-stable.yml      │
 │  (no preflight; no change detection; no e2e gate)            │
 │                                                               │
 │  All 4 jobs start within ~1.4 min of each other:            │
@@ -876,7 +876,7 @@ Run 26762439959 | success | 29.2 min | 2026-05-29
 Run 26770091750 | failure |  6.0 min | 2026-05-31 (fast-fail: upstream issue)
 ```
 
-**Legacy pipeline runs (`ublue-os/bluefin`, `build-image-latest-main.yml`):**
+**Legacy pipeline runs (`ublue-os/bluefin`):**
 
 ```
 Run 26706561851 | success | 36.4 min
@@ -928,12 +928,12 @@ Each variant has an isolated key with two fallback levels.
 ### C. Workflow file inventory
 
 **Legacy `ublue-os/bluefin` (10 files):**
-`build-image-beta.yml`, `build-image-latest-main.yml`, `build-image-stable.yml`,
+`build-image-beta.yml`, `build-image-stable.yml`,
 `build-images.yml`, `clean.yml`, `generate-release.yml`, `moderator.yml`,
 `reusable-build.yml`, `scorecard.yml`, `validate-renovate.yml`
 
 **Current `projectbluefin/bluefin` (24 files):**
-`bonedigger.yml`, `build-image-latest-main.yml`, `build-image-stable.yml`,
+`bonedigger.yml`, `build-image-stable.yml`,
 `build-image-testing.yml`, `build-images.yml`, `cache-maintenance.yml`,
 `cherry-pick-to-stable.yml`, `check-cosign-key-rotation.yml`, `clean.yml`,
 `copr-health-monitor.yml`, `e2e-dispatch.yml`, `generate-release.yml`,

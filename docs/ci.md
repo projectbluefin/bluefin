@@ -11,9 +11,8 @@ Bluefin's CI is split between PR validation, image builds, post-build e2e, weekl
 | `sync-main-to-testing.yml` | Push to `main` | Merges `main` back into `testing` after each squash-merge promotion to prevent the next PR from opening `BEHIND` |
 | `build-image-testing.yml` | Push to `main`, `merge_group`, dispatch, workflow call | Builds testing images via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Successful `Testing Images` workflow on `main` push | Downloads the testing digest and runs smoke tests in `projectbluefin/testsuite` |
-| `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, manual dispatch | Verifies e2e on current `main`, promotes `main` to `latest` + `stable`, triggers downstream builds |
+| `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, manual dispatch | Verifies e2e on current `main`, promotes `main` to `:stable`, triggers downstream builds |
 | `build-image-stable.yml` | Push to `stable`, dispatch, workflow call | Builds stable images and then runs `generate-release.yml` |
-| `build-image-latest-main.yml` | PR/push to `latest`, `merge_group`, dispatch | Builds latest images |
 | `renovate-automerge.yml` | Successful `PR Validation — testsuite` | Enables squash auto-merge (`gh pr merge --auto --squash`) for Renovate/mergeraptor PRs |
 | `bonedigger.yml` | Issue events, issue comments, daily schedule | Runs the Bluefin 🦖 issue lifecycle bot |
 
@@ -374,11 +373,10 @@ GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, t
 | `sync-main-to-testing.yml` | Push to `main` | Merges `main` → `testing` after each squash-merge promotion; prevents `BEHIND` on next promotion PR |
 | `build-image-testing.yml` | Push to `main`, `merge_group`, dispatch | Builds testing images via `reusable-build.yml` |
 | `post-testing-e2e.yml` | Successful `Testing Images` on `main` push | Smoke+common e2e gate; opens issue on failure |
-| `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, dispatch | Full e2e → retag testing digests to :latest/:stable |
+| `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, dispatch | Full e2e → retag testing digests to :stable |
 | `build-image-stable.yml` | Push to `stable`, dispatch | Rebuild stable + generate release |
-| `build-image-latest-main.yml` | Push/PR to `latest`, dispatch | Rebuild latest |
 | `build-images.yml` | Manual dispatch only | Rebuild all streams |
-| `nightly.yml` | 02:00 UTC daily | smoke+common+vanilla-gnome against :latest |
+| `nightly.yml` | 02:00 UTC daily | smoke+common+vanilla-gnome against :testing |
 | `vulnerability-scan.yml` | Testing build + Monday 08:00 UTC | Grype scan → SARIF to Security tab |
 | `renovate-automerge.yml` | Successful PR Validation or PR Smoke | Auto-merge Renovate/Mergeraptor PRs by risk tier |
 | `e2e-dispatch.yml` | `/e2e` comment (write+ only) | Manual e2e trigger: builds PR → smoke+developer+vanilla-gnome |

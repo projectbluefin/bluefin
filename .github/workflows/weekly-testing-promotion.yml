@@ -223,7 +223,7 @@ jobs:
       suites: smoke,common
     secrets: inherit
 
-  promote-to-latest-and-stable:
+  promote-to-stable:
     if: >-
       always() &&
       needs.verify-e2e.result == 'success' &&
@@ -255,7 +255,7 @@ jobs:
           CURRENT_SHA=$(git rev-parse origin/main)
           if [ "$CURRENT_SHA" != "$LOCKED_SHA" ]; then
             echo "ERROR: main advanced during e2e ($LOCKED_SHA → $CURRENT_SHA)"
-            echo "Untested commits would reach latest/stable. Aborting — rerun next week."
+            echo "Untested commits would reach stable. Aborting — rerun next week."
             exit 1
           fi
           echo "✅ main SHA unchanged: $CURRENT_SHA"
@@ -317,7 +317,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Retag tested images to :latest and :stable
+      - name: Retag tested images to :stable
         run: |
           set -euo pipefail
           REGISTRY="ghcr.io/${{ github.repository_owner }}"
@@ -335,19 +335,18 @@ jobs:
 
             SRC="docker://${REGISTRY}/${IMAGE_NAME}@${DIGEST}"
             echo "Retagging ${IMAGE_NAME}@${DIGEST}"
-            skopeo copy --all "${SRC}" "docker://${REGISTRY}/${IMAGE_NAME}:latest"
             skopeo copy --all "${SRC}" "docker://${REGISTRY}/${IMAGE_NAME}:stable"
-            echo "  ✅ ${IMAGE_NAME}:latest and :stable updated"
+            echo "  ✅ ${IMAGE_NAME}:stable updated"
             PROMOTED=$((PROMOTED + 1))
           done < <(find /tmp/all-digests -name "*.txt" -print0)
 
-          echo "✅ Promoted ${PROMOTED} image(s) to :latest and :stable"
+          echo "✅ Promoted ${PROMOTED} image(s) to :stable"
           echo "Tested artifacts are now live — no rebuild was triggered."
 
   generate-release:
     name: Generate release notes
-    needs: [promote-to-latest-and-stable]
-    if: needs.promote-to-latest-and-stable.result == 'success'
+    needs: [promote-to-stable]
+    if: needs.promote-to-stable.result == 'success'
     permissions:
       contents: write
       actions: read
@@ -357,8 +356,8 @@ jobs:
 
   close-failure-issue:
     name: Close stale failure issue on success
-    needs: [promote-to-latest-and-stable]
-    if: needs.promote-to-latest-and-stable.result == 'success'
+    needs: [promote-to-stable]
+    if: needs.promote-to-stable.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -388,7 +387,7 @@ jobs:
             }
 
   report-failure:
-    needs: [verify-e2e, e2e, e2e-nvidia, promote-to-latest-and-stable]
+    needs: [verify-e2e, e2e, e2e-nvidia, promote-to-stable]
     if: always() && failure() && needs.verify-e2e.outputs.image != ''
     runs-on: ubuntu-latest
     timeout-minutes: 5

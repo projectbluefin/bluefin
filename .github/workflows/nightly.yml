@@ -1,6 +1,6 @@
 name: Nightly E2E
 
-# Runs the vanilla-gnome baseline suite nightly against :latest.
+# Runs the vanilla-gnome baseline suite nightly against :testing.
 # vanilla-gnome tests upstream GNOME behaviour as a comparison baseline:
 #   smoke=fail + vanilla-gnome=pass  → Bluefin-specific regression
 #   smoke=fail + vanilla-gnome=fail  → upstream GNOME issue
@@ -26,5 +26,5 @@ jobs:
       contents: read
     uses: ./.github/workflows/run-testsuite.yml
     with:
-      image: ghcr.io/${{ github.repository_owner }}/bluefin:latest
+      image: ghcr.io/${{ github.repository_owner }}/bluefin:testing
       suites: smoke,common,vanilla-gnome
