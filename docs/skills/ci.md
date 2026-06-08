@@ -39,13 +39,10 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 | `pr-smoke.yml` | PRs touching build files | Full image build + smoke test |
 | `build-image-testing.yml` | Push to `main`, dispatch | Testing image builds via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Testing build on `main` | Smoke+common continuous e2e gate |
-| `weekly-testing-promotion.yml` | Tuesday 06:00 UTC | Full e2e → retag to :stable/:latest |
-| `build-image-stable.yml` | Push to `stable`, dispatch | Stable rebuild |
-| `build-image-latest-main.yml` | Push to `latest`, dispatch | Latest rebuild |
-| `build-images.yml` | Manual dispatch | Rebuild all streams |
+| `weekly-testing-promotion.yml` | Tuesday 06:00 UTC | Full e2e → retag to :stable + generate release |
 | ~~`reusable-build.yml`~~ (deleted) | Replaced by `projectbluefin/actions/.github/workflows/reusable-build.yml` | **All build callers now use the centralized workflow — no local copy** |
 | `run-testsuite.yml` | Called by all e2e workflows | **Canonical testsuite wrapper — always use this, never e2e.yml directly** |
-| `nightly.yml` | 02:00 UTC daily | smoke+common+vanilla-gnome against :latest |
+| `nightly.yml` | 02:00 UTC daily | smoke+common+vanilla-gnome against :testing |
 | `vulnerability-scan.yml` | Testing build + weekly | Grype → SARIF to Security tab |
 | `renovate-automerge.yml` | PR Validation success | Auto-merge all Renovate/mergeraptor PRs via `gh pr merge --auto --squash` (no high-risk/smoke distinction) |
 | `e2e-dispatch.yml` | `/e2e` comment (write+ only) | Manual e2e on PR |
@@ -88,13 +85,13 @@ shellcheck build_files/**/*.sh
 
 1. Push to `testing` → `build-image-testing.yml` publishes `:testing` images (gated behind post-build e2e)
 2. `post-testing-e2e.yml` smoke-tests that exact digest
-3. `weekly-testing-promotion.yml` (Tuesday 06:00 UTC) locks the `:testing` digest, verifies e2e passed, cosign-verifies, skopeo-copies → `:stable` / `:latest`
+3. `weekly-testing-promotion.yml` (Tuesday 06:00 UTC) locks the `:testing` digest, verifies e2e passed, cosign-verifies, skopeo-copies → `:stable`, generates GitHub release
 4. 7-day floor enforced; `workflow_dispatch` bypasses it
 5. A separate `promote-testing-to-main.yml` keeps the `testing → main` git branch in sync via a squash-merge PR (see **testing→main squash history gap** below)
 
 ### Dakota
 
-Same digest-promotion model. `weekly-testing-promotion.yml` resolves `:testing` digest, runs e2e, cosign-verifies, skopeo-copies → `:latest` / `:stable`. No git branch PR.
+Same digest-promotion model. `weekly-testing-promotion.yml` resolves `:testing` digest, runs e2e, cosign-verifies, skopeo-copies → `:stable`. No git branch PR.
 
 ### Bluefin LTS
 
@@ -112,6 +109,10 @@ This is a known gap tracked in [#368](https://github.com/projectbluefin/bluefin/
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `startup_failure` with zero jobs | unsupported permissions scope in that environment | compare `permissions:` with a known-good upstream run |
+| `startup_failure` — `promote-to-latest-and-stable` waits but workflow never starts | `environment: production` with `branch_policy: protected_branches: true` — rulesets are **not** recognized as classic branch protection by environment deployment policies | Switch the `production` environment to `custom_branch_policies: true` and explicitly add `main`: `gh api repos/projectbluefin/bluefin/environments/production -X PUT --field "deployment_branch_policy[custom_branch_policies]=true" --field "deployment_branch_policy[protected_branches]=false"` then `gh api repos/projectbluefin/bluefin/environments/production/deployment-branch-policies -X POST --field "name=main"` |
+| `startup_failure` — workflow that calls `generate-release.yml` | `generate-release.yml` moved to `projectbluefin/actions` as an external reusable workflow | **`generate-release.yml` must remain a LOCAL workflow in this repo.** External cross-repo `workflow_call` reusable workflows cause `startup_failure` in `weekly-testing-promotion.yml` even when actionlint passes and the SHA is reachable. This may be a GitHub bug — do not attempt to centralize it again without testing first. |
+| `startup_failure` — caller passes unknown `with:` inputs to `generate-release.yml` | Extra undeclared inputs in `with:` block for a `workflow_call` job cause startup validation failure | Match the `with:` inputs exactly to the callee's declared `inputs:` block; remove any keys not declared in the callee |
+| `workflow_dispatch` returns HTTP 422 "secret name 'github_token' can not be used" | GitHub (enforced 2026-06-07) now blocks `github_token` as a `workflow_call` secret name — it collides with the system reserved name | Replace `secrets: { github_token: ... }` with no secrets block; use `github.token` directly inside the callee workflow |
 | Testing Images runner timeout / job cancelled after 20+ min | Syft SBOM scan running for testing stream — both outer SBOM steps AND `sign-and-publish` internal Syft each scan the full image | Ensure `reusable-build.yml` has `stream_name != 'testing'` guard on all 4 outer SBOM steps AND passes `generate-sbom: false` to `sign-and-publish` for testing. Fixed in actions#123 + actions#124. |
 | `No SBOM referrer found` in release generation | testing stream skips SBOM; promoted images lack signed SBOMs | allow missing SBOMs for diff generation and use intersection-only comparisons |
 | promotion says no passing e2e for current SHA | `post-testing-e2e` has not passed the locked `main` commit | wait or rerun after e2e completes |
@@ -141,8 +142,11 @@ This is a known gap tracked in [#368](https://github.com/projectbluefin/bluefin/
 - **Unit tests live in `tests/unit/`, not `build_files/`** — `build_files/**` is in the detect-changes image path filter; placing test files there causes every PR push to trigger image builds and E2E. Test files belong in `tests/unit/` where they are invisible to the image path filter.
 - **`just test-unit` runs bats unit tests** — calls `bats tests/unit/`. The CI `unit-tests` job invokes `bats` directly (not `just`) because `just` is not available on a bare `ubuntu-latest` runner without the `setup-runner` composite action. Test files: `package-lib_test.bats`, `validate-repos_test.bats`, `copr-helpers_test.bats`.
 - **Vulnerability scans must use the build digest, not a mutable tag.** `vulnerability-scan.yml` downloads `image-digest-{stream_name}-{brand_name}-{image_flavor}` from the triggering `workflow_run` and passes `image@sha256:...` to the scanner to avoid TOCTOU. Artifact names for the default bluefin build: `image-digest-testing-bluefin-main`, `image-digest-testing-bluefin-nvidia`.
-- Weekly promotion uses retag-only (skopeo copy) for the canonical path — **no rebuild at promotion time**. The parallel rebuild pathway via branch push (`build-image-stable.yml`, `build-image-latest-main.yml`) is a secondary mechanism and does not gate the weekly release.
+- Weekly promotion uses retag-only (skopeo copy) — **no rebuild at promotion time**. `:stable` is set exclusively by `weekly-testing-promotion.yml`.
 - Build callers do not pass `secrets: inherit` — `reusable-build.yml` only needs `GITHUB_TOKEN`, which is automatically available
+- **`generate-release.yml` must be LOCAL** — never centralize it to `projectbluefin/actions`. External cross-repo `workflow_call` reusable workflows called from `weekly-testing-promotion.yml` cause `startup_failure` with 0 jobs starting, even when actionlint passes and the SHA is reachable. Root cause appears to be a GitHub validation interaction with the `production` environment and external callee. Verified 2026-06-07 after multiple failed centralization attempts.
+- **`production` environment branch policy** — use `custom_branch_policies: true` with `main` explicitly added. The `protected_branches: true` policy does NOT recognize GitHub rulesets as branch protection (only classic branch protection rules count). A `main` branch protected only by a ruleset (merge queue) will cause `startup_failure` when any job uses `environment: production`.
+- **`github_token` is a reserved workflow_call secret name** — GitHub enforces this (observed 2026-06-07). Using it returns HTTP 422 at dispatch time. Use `github.token` directly inside the callee instead.
 
 ## Shared actions architecture (projectbluefin/actions)
 

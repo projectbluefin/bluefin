@@ -11,9 +11,7 @@ Bluefin's CI is split between PR validation, image builds, post-build e2e, weekl
 | `sync-main-to-testing.yml` | Push to `main` | Merges `main` back into `testing` after each squash-merge promotion to prevent the next PR from opening `BEHIND` |
 | `build-image-testing.yml` | Push to `main`, `merge_group`, dispatch, workflow call | Builds testing images via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Successful `Testing Images` workflow on `main` push | Downloads the testing digest and runs smoke tests in `projectbluefin/testsuite` |
-| `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, manual dispatch | Verifies e2e on current `main`, promotes `main` to `latest` + `stable`, triggers downstream builds |
-| `build-image-stable.yml` | Push to `stable`, dispatch, workflow call | Builds stable images and then runs `generate-release.yml` |
-| `build-image-latest-main.yml` | PR/push to `latest`, `merge_group`, dispatch | Builds latest images |
+| `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, manual dispatch | Verifies e2e on current `main`, retaggs tested digests to `:stable`, generates release |
 | `renovate-automerge.yml` | Successful `PR Validation — testsuite` | Enables squash auto-merge (`gh pr merge --auto --squash`) for Renovate/mergeraptor PRs |
 | `bonedigger.yml` | Issue events, issue comments, daily schedule | Runs the Bluefin 🦖 issue lifecycle bot |
 
@@ -75,7 +73,7 @@ The shared image build engine is at `.github/workflows/reusable-build.yml` in `p
 uses: projectbluefin/actions/.github/workflows/reusable-build.yml@<SHA>
 ```
 
-> **⚠️ `stable` branch exception:** The `stable` branch maintains its **own local copy** of `.github/workflows/reusable-build.yml` (a diverged legacy version). `build-image-stable.yml` calls `uses: ./.github/workflows/reusable-build.yml` (self-referential). Fixes landed in `projectbluefin/actions` do NOT automatically apply to `stable`. When CI breaks on `stable`, hotfix directly on the `stable` branch — cherry-picking from `testing` will conflict because `testing` does not have that file.
+> **`stable` branch:** The `stable` git branch exists for hotfix cherry-picks (`cherry-pick-to-stable.yml`) but no longer has an independent build workflow. `:stable` images are set exclusively by `weekly-testing-promotion.yml` via skopeo retag from `:testing`.
 
 - Matrix: `bluefin`
 - Flavors: `main`, `nvidia`
@@ -147,8 +145,7 @@ Current automation works like this:
 7. `weekly-testing-promotion.yml` (Tuesday 06:00 UTC) locks the current `main` SHA
 8. It verifies `post-testing-e2e` already passed for that exact SHA
 9. It reruns broader `developer,vanilla-gnome,software,common` suites against the locked digest
-10. If `main` did not advance during testing, it retags all testing digests → `:latest` and `:stable` via skopeo copy (no rebuild)
-11. Branch push triggers on `latest`/`stable` also rebuild from source (dual pathway — see #225)
+10. If `main` did not advance during testing, it retags all testing digests → `:stable` via skopeo copy (no rebuild) and generates the GitHub release
 
 The weekly promotion workflow refuses to promote untested code. It uses SHA-locked digests throughout, not mutable tags.
 
@@ -227,7 +224,7 @@ Every production image has:
 1. **Base image verification:** cosign verify against `keys/fedora-ostree.pub` before build
 2. **Cosign keyless signing:** OIDC-based via Sigstore Fulcio (`sigstore/cosign-installer@SHA`)
 3. **Signature verification post-push:** `cosign verify --certificate-identity-regexp ...` runs immediately after push
-4. **SBOM:** Syft-generated, ORAS-attached, cosign-signed (stable/latest stream only — see #213)
+4. **SBOM:** Syft-generated, ORAS-attached, cosign-signed (testing stream builds)
 5. **GitHub Attestation:** `actions/attest` on all non-PR builds
 
 ### Key files
@@ -273,7 +270,6 @@ Keep this SHA in sync with whatever `projectbluefin/actions` pins. Renovate trac
 
 | Gap | Description |
 |-----|-------------|
-| Testing stream skips SBOM | Promoted `:stable`/`:latest` images lack signed SBOMs; `generate-release.yml` uses `continue-on-error` workaround — see #424 |
 | Weekly promotion tests one flavor | Only `bluefin-main` is e2e-verified before all flavors are promoted |
 
 ## Build caching
@@ -360,6 +356,9 @@ GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, t
 | Cosign sign/verify fails | Sigstore Fulcio/Rekor outage or key rotation | Check `check-cosign-key-rotation.yml` issues; retry after Sigstore recovers |
 | Promotion PR shows CONFLICTING | Commit landed directly on `main` without going through `testing`, severing git merge base | Run `git merge projectbluefin/main --allow-unrelated-histories -X ours` on `testing` and push — see "Squash-merge history gap" above |
 | Trivy scan crashes: "No SARIF file found" | Image reference passed to scan no longer exists — `tag-images` untags the default tag | Verify `tag-images` Justfile recipe re-applies the default tag after alias-tag loop; scan must use `oci-archive:/tmp/scan-image.tar` |
+| `weekly-testing-promotion.yml` dispatch returns HTTP 422 "secret name 'github_token' can not be used" | GitHub enforces (2026-06-07+) that `github_token` is a reserved name in `workflow_call` secrets | In the callee, remove `secrets: { github_token: ... }` block; replace all `secrets.github_token` usages with `github.token` |
+| `weekly-testing-promotion.yml` dispatches succeed but `startup_failure` with 0 jobs | `environment: production` in any job + `branch_policy: protected_branches: true` when `main` only has a **ruleset** (not classic branch protection) | Switch environment to custom branch policy: `gh api repos/projectbluefin/bluefin/environments/production -X PUT --field "deployment_branch_policy[custom_branch_policies]=true" --field "deployment_branch_policy[protected_branches]=false"` then add `main`: `gh api .../environments/production/deployment-branch-policies -X POST --field "name=main"` |
+| `generate-release.yml` is called as external reusable workflow and causes `startup_failure` | `generate-release.yml` was moved to `projectbluefin/actions` — external cross-repo `workflow_call` causes startup_failure in this workflow chain | **`generate-release.yml` must be a LOCAL workflow.** Restore from git history (`git show <known-good-sha>:.github/workflows/generate-release.yml`) and keep it in-repo. Do not centralize to `projectbluefin/actions`. |
 
 ## Complete workflow inventory
 
@@ -371,15 +370,12 @@ GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, t
 | `sync-main-to-testing.yml` | Push to `main` | Merges `main` → `testing` after each squash-merge promotion; prevents `BEHIND` on next promotion PR |
 | `build-image-testing.yml` | Push to `main`, `merge_group`, dispatch | Builds testing images via `reusable-build.yml` |
 | `post-testing-e2e.yml` | Successful `Testing Images` on `main` push | Smoke+common e2e gate; opens issue on failure |
-| `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, dispatch | Full e2e → retag testing digests to :latest/:stable |
-| `build-image-stable.yml` | Push to `stable`, dispatch | Rebuild stable + generate release |
-| `build-image-latest-main.yml` | Push/PR to `latest`, dispatch | Rebuild latest |
-| `build-images.yml` | Manual dispatch only | Rebuild all streams |
-| `nightly.yml` | 02:00 UTC daily | smoke+common+vanilla-gnome against :latest |
+| `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, dispatch | Full e2e → retag testing digests to :stable + generate release |
+| `nightly.yml` | 02:00 UTC daily | smoke+common+vanilla-gnome against :testing |
 | `vulnerability-scan.yml` | Testing build + Monday 08:00 UTC | Grype scan → SARIF to Security tab |
 | `renovate-automerge.yml` | Successful PR Validation or PR Smoke | Auto-merge Renovate/Mergeraptor PRs by risk tier |
 | `e2e-dispatch.yml` | `/e2e` comment (write+ only) | Manual e2e trigger: builds PR → smoke+developer+vanilla-gnome |
-| `generate-release.yml` | Stable build completion, dispatch | Creates GitHub Release with changelog + SBOMs |
+| `generate-release.yml` | Weekly promotion, dispatch | Creates GitHub Release with changelog + SBOMs |
 | `copr-health-monitor.yml` | Daily 07:00 UTC | Checks COPR repo staleness; opens issue on failure |
 | `check-cosign-key-rotation.yml` | Monday 06:00 UTC | Compares vendored keys to upstream; opens P1 issue on mismatch |
 | `cache-maintenance.yml` | Monday 06:00 UTC | Prunes GHA caches from deleted branches or >14d inactive |
