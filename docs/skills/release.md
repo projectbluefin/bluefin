@@ -20,8 +20,7 @@ main push
   -> build-image-testing.yml
   -> post-testing-e2e.yml
   -> weekly-testing-promotion.yml
-     -> fast-forward latest + stable
-     -> trigger build-image-latest-main.yml
+     -> fast-forward stable
      -> trigger build-image-stable.yml
      -> generate-release.yml (stable)
 ```
@@ -51,7 +50,6 @@ Artifacts written locally:
 ```bash
 gh workflow run weekly-testing-promotion.yml --repo projectbluefin/bluefin
 gh workflow run build-image-stable.yml --repo projectbluefin/bluefin --ref stable
-gh workflow run build-image-latest-main.yml --repo projectbluefin/bluefin --ref latest
 ```
 
 To unblock a broken release when the fix is on a branch but not yet merged to `stable`, dispatch directly on the fix branch — `--ref` makes the workflow run using that branch's scripts:

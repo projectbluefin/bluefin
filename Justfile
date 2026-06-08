@@ -11,7 +11,6 @@ flavors := '(
 )'
 tags := '(
     [stable]=stable
-    [latest]=latest
     [testing]=testing
 )'
 export SUDOIF := if `id -u` == "0" { "" } else { "sudo" }
@@ -78,11 +77,6 @@ validate $image $tag $flavor:
     declare -A tags={{ tags }}
     declare -A flavors={{ flavors }}
 
-    # Handle Stable Daily
-    if [[ "${tag}" == "stable-daily" ]]; then
-        tag="stable"
-    fi
-
     checkimage="${images[${image}]-}"
     checktag="${tags[${tag}]-}"
     checkflavor="${flavors[${flavor}]-}"
@@ -103,7 +97,7 @@ validate $image $tag $flavor:
 
 # Build Image
 [group('Image')]
-build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipeline="0" $kernel_pin="":
+build $image="bluefin" $tag="testing" $flavor="main" rechunk="0" ghcr="0" pipeline="0" $kernel_pin="":
     #!/usr/bin/bash
 
     echo "::group:: Build Prep"
@@ -309,12 +303,12 @@ build $image="bluefin" $tag="latest" $flavor="main" rechunk="0" ghcr="0" pipelin
 
 # Build Image and Rechunk
 [group('Image')]
-build-rechunk image="bluefin" tag="latest" flavor="main" kernel_pin="":
+build-rechunk image="bluefin" tag="testing" flavor="main" kernel_pin="":
     @{{ just }} build {{ image }} {{ tag }} {{ flavor }} 1 0 0 {{ kernel_pin }}
 
 # Build Image with GHCR Flag
 [group('Image')]
-build-ghcr image="bluefin" tag="latest" flavor="main" kernel_pin="":
+build-ghcr image="bluefin" tag="testing" flavor="main" kernel_pin="":
     #!/usr/bin/bash
     if [[ "${UID}" -gt "0" ]]; then
         echo "Must Run with sudo or as root..."
@@ -324,14 +318,14 @@ build-ghcr image="bluefin" tag="latest" flavor="main" kernel_pin="":
 
 # Build Image for Pipeline:
 [group('Image')]
-build-pipeline image="bluefin" tag="latest" flavor="main" kernel_pin="":
+build-pipeline image="bluefin" tag="testing" flavor="main" kernel_pin="":
     #!/usr/bin/bash
     ${SUDOIF} {{ just }} build {{ image }} {{ tag }} {{ flavor }} 1 1 1 {{ kernel_pin }}
 
 # Rechunk Image
 [group('Image')]
 [private]
-rechunk $image="bluefin" $tag="latest" $flavor="main" ghcr="0" pipeline="0" previous_build="0":
+rechunk $image="bluefin" $tag="testing" $flavor="main" ghcr="0" pipeline="0" previous_build="0":
     #!/usr/bin/bash
     set -eoux pipefail
 
@@ -401,7 +395,7 @@ rechunk $image="bluefin" $tag="latest" $flavor="main" ghcr="0" pipeline="0" prev
 
 # Load an image into rootful Podman for rechunking
 [group('Image')]
-load-rootful $image="bluefin" $tag="latest" $flavor="main":
+load-rootful $image="bluefin" $tag="testing" $flavor="main":
     #!/usr/bin/bash
     set -oux pipefail
 
@@ -421,7 +415,7 @@ load-rootful $image="bluefin" $tag="latest" $flavor="main":
 
 # Retag rechunked images for downstream steps
 [group('Image')]
-load-rechunk image="bluefin" tag="latest" flavor="main":
+load-rechunk image="bluefin" tag="testing" flavor="main":
     #!/usr/bin/bash
     set -eou pipefail
 
@@ -432,9 +426,6 @@ load-rechunk image="bluefin" tag="latest" flavor="main":
     image_name=$({{ just }} image_name {{ image }} {{ tag }} {{ flavor }})
 
     source_tag="{{ tag }}"
-    if [[ "{{ tag }}" == "stable-daily" ]]; then
-        source_tag="stable"
-    fi
 
     source_ref=localhost/"${image_name}":"${source_tag}"
     source_chunked_ref=${source_ref}-chunked
@@ -458,7 +449,7 @@ load-rechunk image="bluefin" tag="latest" flavor="main":
 
 # Run Container
 [group('Image')]
-run $image="bluefin" $tag="latest" $flavor="main":
+run $image="bluefin" $tag="testing" $flavor="main":
     #!/usr/bin/bash
     set -eoux pipefail
 
@@ -534,7 +525,7 @@ verify-container container="" registry="ghcr.io/ublue-os" key="":
 
 # Secureboot Check
 [group('Utility')]
-secureboot $image="bluefin" $tag="latest" $flavor="main":
+secureboot $image="bluefin" $tag="testing" $flavor="main":
     #!/usr/bin/bash
     set -eou pipefail
 
@@ -586,7 +577,7 @@ secureboot $image="bluefin" $tag="latest" $flavor="main":
 # Get Fedora Version of an image
 [group('Utility')]
 [private]
-fedora_version image="bluefin" tag="latest" flavor="main" $kernel_pin="":
+fedora_version image="bluefin" tag="testing" flavor="main" $kernel_pin="":
     #!/usr/bin/bash
     set -eou pipefail
     {{ just }} validate {{ image }} {{ tag }} {{ flavor }}
@@ -594,10 +585,8 @@ fedora_version image="bluefin" tag="latest" flavor="main" $kernel_pin="":
         if [[ "{{ tag }}" =~ stable ]]; then
             # CoreOS does not uses cosign
             skopeo inspect --retry-times 3 docker://quay.io/fedora/fedora-coreos:stable > /tmp/manifest.json
-        elif [[ "{{ tag }}" == "testing" ]]; then
-            skopeo inspect --retry-times 3 docker://ghcr.io/ublue-os/base-main:latest > /tmp/manifest.json
         else
-            skopeo inspect --retry-times 3 docker://ghcr.io/ublue-os/base-main:"{{ tag }}" > /tmp/manifest.json
+            skopeo inspect --retry-times 3 docker://ghcr.io/ublue-os/base-main:latest > /tmp/manifest.json
         fi
     fi
     fedora_version=$(jq -r '.Labels["org.opencontainers.image.version"]' < /tmp/manifest.json | grep -oP '^[0-9]+')
@@ -609,7 +598,7 @@ fedora_version image="bluefin" tag="latest" flavor="main" $kernel_pin="":
 # Image Name
 [group('Utility')]
 [private]
-image_name image="bluefin" tag="latest" flavor="main":
+image_name image="bluefin" tag="testing" flavor="main":
     #!/usr/bin/bash
     set -eou pipefail
     {{ just }} validate {{ image }} {{ tag }} {{ flavor }}
@@ -622,12 +611,10 @@ image_name image="bluefin" tag="latest" flavor="main":
 
 # Generate Tags
 [group('Utility')]
-generate-build-tags image="bluefin" tag="latest" flavor="main" kernel_pin="" ghcr="0" $version="" github_event="" github_number="":
+generate-build-tags image="bluefin" tag="testing" flavor="main" kernel_pin="" ghcr="0" $version="" github_event="" github_number="":
     #!/usr/bin/bash
     set -eou pipefail
 
-    TODAY="$(date +%A)"
-    WEEKLY="Tuesday"
     if [[ {{ ghcr }} == "0" ]]; then
         rm -f /tmp/manifest.json
     fi
@@ -654,26 +641,12 @@ generate-build-tags image="bluefin" tag="latest" flavor="main" kernel_pin="" ghc
 
     # Convenience Tags
     if [[ "{{ tag }}" =~ stable ]]; then
-        BUILD_TAGS+=("stable-daily" "${version}" "stable-daily-${version}" "stable-daily-${version:3}")
+        BUILD_TAGS+=("stable" "${version}" "stable-${version}" "stable-${version:3}")
     else
         BUILD_TAGS+=("{{ tag }}" "{{ tag }}-${version}" "{{ tag }}-${version:3}")
-        if [[ "{{ tag }}" == "latest" ]]; then
-            BUILD_TAGS+=("stable-daily" "stable-daily-${version}" "stable-daily-${version:3}")
-        fi
     fi
 
-    # Weekly Stable / Rebuild Stable on workflow_dispatch
     github_event="{{ github_event }}"
-    if [[ "{{ tag }}" =~ "stable" && "${WEEKLY}" == "${TODAY}" && "${github_event}" =~ schedule ]]; then
-        BUILD_TAGS+=("stable" "stable-${version}" "stable-${version:3}" "gts" "gts-${version}" "gts-${version:3}")
-    elif [[ "{{ tag }}" =~ "stable" && "${github_event}" =~ workflow_dispatch|workflow_call ]]; then
-        BUILD_TAGS+=("stable" "stable-${version}" "stable-${version:3}" "gts" "gts-${version}" "gts-${version:3}")
-    elif [[ "{{ tag }}" =~ "stable" && "{{ ghcr }}" == "0" ]]; then
-        BUILD_TAGS+=("stable" "stable-${version}" "stable-${version:3}" "gts" "gts-${version}" "gts-${version:3}")
-    elif [[ ! "{{ tag }}" =~ stable|beta && "{{ tag }}" != "testing" ]]; then
-        BUILD_TAGS+=("${FEDORA_VERSION}" "${FEDORA_VERSION}-${version}" "${FEDORA_VERSION}-${version:3}")
-    fi
-
     if [[ "${github_event}" == "pull_request" ]]; then
         alias_tags=("${COMMIT_TAGS[@]}")
     else
@@ -684,17 +657,13 @@ generate-build-tags image="bluefin" tag="latest" flavor="main" kernel_pin="" ghc
 
 # Generate Default Tag
 [group('Utility')]
-generate-default-tag tag="latest" ghcr="0":
+generate-default-tag tag="testing" ghcr="0":
     #!/usr/bin/bash
     set -eou pipefail
 
     # Default Tag
-    if [[ "{{ tag }}" =~ stable && "{{ ghcr }}" == "1" ]]; then
-        DEFAULT_TAG="stable-daily"
-    elif [[ "{{ tag }}" =~ stable && "{{ ghcr }}" == "0" ]]; then
+    if [[ "{{ tag }}" =~ stable ]]; then
         DEFAULT_TAG="stable"
-    elif [[ "{{ tag }}" == "testing" ]]; then
-        DEFAULT_TAG="testing"
     else
         DEFAULT_TAG="{{ tag }}"
     fi
@@ -725,7 +694,7 @@ tag-images image_name="" default_tag="" tags="":
 
 # Extract Container and generate SBOM
 [group('Utility')]
-gen-sbom $image="bluefin" $tag="latest" $flavor="main" $syft_cmd="syft":
+gen-sbom $image="bluefin" $tag="testing" $flavor="main" $syft_cmd="syft":
     #!/usr/bin/bash
     set -eoux pipefail
 
@@ -749,7 +718,7 @@ gen-sbom $image="bluefin" $tag="latest" $flavor="main" $syft_cmd="syft":
 
 # DNF CI package cache
 [group('Utility')]
-setup-cache $image="bluefin" $tag="latest" $ghcr="0" $github_event="0":
+setup-cache $image="bluefin" $tag="testing" $ghcr="0" $github_event="0":
     #!/usr/bin/bash
     set -eou pipefail
 
@@ -770,11 +739,11 @@ setup-cache $image="bluefin" $tag="latest" $ghcr="0" $github_event="0":
     echo "${CACHE_NAME}" "${ALLOW_CACHE_WRITE}"
 
 # Examples:
-#   > just retag-nvidia-on-ghcr stable-daily stable-daily-41.20250126.3 0
-#   > just retag-nvidia-on-ghcr latest latest-41.20250228.1 0
+#   > just retag-nvidia-on-ghcr stable stable-41.20250126.3 0
+#   > just retag-nvidia-on-ghcr testing testing-41.20250228.1 0
 #
-# working_tag: The tag of the most recent known good image (e.g., stable-daily-41.20250126.3)
-# stream:      One of latest, stable-daily, or stable
+# working_tag: The tag of the most recent known good image (e.g., stable-41.20250126.3)
+# stream:      One of testing or stable
 # dry_run:     Only print the skopeo commands instead of running them
 #
 # First generate a PAT with package write access (https://github.com/settings/tokens)
