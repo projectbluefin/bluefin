@@ -20,8 +20,7 @@ main push
   -> build-image-testing.yml
   -> post-testing-e2e.yml
   -> weekly-testing-promotion.yml
-     -> fast-forward stable
-     -> trigger build-image-stable.yml
+     -> retag :testing digests → :stable
      -> generate-release.yml (stable)
 ```
 
@@ -30,8 +29,7 @@ main push
 | Workflow | What it does |
 |---|---|
 | `post-testing-e2e.yml` | smoke-tests the current testing image digest |
-| `weekly-testing-promotion.yml` | promotes only if the current `main` SHA already passed e2e |
-| `build-image-stable.yml` | rebuilds stable and calls release generation |
+| `weekly-testing-promotion.yml` | promotes only if the current `main` SHA already passed e2e; retaggs digests to `:stable` |
 | `generate-release.yml` | runs `just changelogs stable` and publishes the GitHub release |
 
 ## Generate changelog locally
@@ -49,15 +47,13 @@ Artifacts written locally:
 
 ```bash
 gh workflow run weekly-testing-promotion.yml --repo projectbluefin/bluefin
-gh workflow run build-image-stable.yml --repo projectbluefin/bluefin --ref stable
 ```
 
-To unblock a broken release when the fix is on a branch but not yet merged to `stable`, dispatch directly on the fix branch — `--ref` makes the workflow run using that branch's scripts:
+To re-generate a release manually:
 
 ```bash
 gh workflow run generate-release.yml \
   --repo projectbluefin/bluefin \
-  --ref <fix-branch> \
   --field stream_name='["stable"]' \
   --field handwritten="optional notes"
 ```
@@ -67,18 +63,15 @@ gh workflow run generate-release.yml \
 1. `main` testing image build passed
 2. `post-testing-e2e.yml` passed on the exact `main` HEAD
 3. weekly promotion completed without `main` advancing underneath it
-4. stable build finished cleanly
-5. `generate-release.yml` created the release and attached SBOM assets
+4. `generate-release.yml` created the release and attached SBOM assets
 
 ## Common failure modes
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | promotion aborts because SHA changed | new commit landed on `main` during gate | rerun promotion later |
-| promotion says nothing to do | `main` and `latest` are identical | no action needed |
-| `generate-release.yml` fails with "not enough tags" | first-ever release: `changelogs.py` needs ≥ 2 stable tags; fixed by bootstrap patch (PR #264) | ensure the bootstrap fix is merged to `stable`; or dispatch on the fix branch with `--ref` |
-| stable release generation fails on SBOM lookup | testing stream skips SBOM (#213); promoted images lack signed referrers | dispatch `build-image-stable.yml` after promotion to rebuild with SBOM, then redispatch `generate-release.yml` |
-| latest/stable moved without intended coverage | bypassed the testing gate | use workflow-driven promotion, not manual retagging |
+| `generate-release.yml` fails with "not enough tags" | first-ever release: `changelogs.py` needs ≥ 2 stable tags; fixed by bootstrap patch (PR #264) | ensure the bootstrap fix is merged; or dispatch `generate-release.yml` manually |
+| stable moved without intended coverage | bypassed the testing gate | use workflow-driven promotion, not manual retagging |
 
 ## Non-obvious patterns
 
