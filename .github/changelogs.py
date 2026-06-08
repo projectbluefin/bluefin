@@ -10,11 +10,6 @@ from collections import defaultdict
 
 REGISTRY = "ghcr.io/projectbluefin/"
 
-IMAGE_MATRIX_LATEST = {
-    "experience": ["base"],
-    "de": ["gnome"],
-    "image_flavor": ["main", "nvidia-open"],
-}
 IMAGE_MATRIX = {
     "experience": ["base"],
     "de": ["gnome"],
@@ -92,10 +87,7 @@ BLACKLIST_VERSIONS = [
 
 
 def get_images(target: str):
-    if "latest" in target:
-        matrix = IMAGE_MATRIX_LATEST
-    else:
-        matrix = IMAGE_MATRIX
+    matrix = IMAGE_MATRIX
 
     for experience, de, image_flavor in product(*matrix.values()):
         img = ""
@@ -447,8 +439,6 @@ def generate_changelog(
         curr_pretty = re.sub(r"\.\d{1,2}$", "", curr)
         # Remove target- from curr
         curr_pretty = re.sub(rf"^[a-z]+-|^[0-9]+-", "", curr_pretty)
-        if target == "stable-daily":
-            curr_pretty = re.sub(rf"^[a-z]+-", "", curr_pretty)
         if not fedora_version + "." in curr_pretty:
             curr_pretty=fedora_version + "." + curr_pretty
         pretty = target.capitalize()
