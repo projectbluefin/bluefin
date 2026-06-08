@@ -70,7 +70,6 @@ just clean
 |---|---|---|
 | `testing` | PR target | `.github/workflows/pr-validation.yml` |
 | `main` | testing image source | `.github/workflows/build-image-testing.yml` |
-| `stable` | promoted stable stream | `.github/workflows/build-image-stable.yml` |
 
 If CI did not start on a PR, confirm the PR targets `testing`.
 

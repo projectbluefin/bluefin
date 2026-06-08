@@ -10,7 +10,6 @@ flavors := '(
     [nvidia]=nvidia
 )'
 tags := '(
-    [stable]=stable
     [testing]=testing
 )'
 export SUDOIF := if `id -u` == "0" { "" } else { "sudo" }
@@ -118,8 +117,6 @@ build $image="bluefin" $tag="testing" $flavor="main" rechunk="0" ghcr="0" pipeli
     # AKMODS Flavor and Kernel Version
     if [[ "${flavor}" =~ hwe ]]; then
         akmods_flavor="bazzite"
-    elif [[ "${tag}" =~ stable ]]; then
-        akmods_flavor="coreos-stable"
     elif [[ "${tag}" =~ beta ]]; then
         akmods_flavor="main"
     else
@@ -582,12 +579,7 @@ fedora_version image="bluefin" tag="testing" flavor="main" $kernel_pin="":
     set -eou pipefail
     {{ just }} validate {{ image }} {{ tag }} {{ flavor }}
     if [[ ! -f /tmp/manifest.json ]]; then
-        if [[ "{{ tag }}" =~ stable ]]; then
-            # CoreOS does not uses cosign
-            skopeo inspect --retry-times 3 docker://quay.io/fedora/fedora-coreos:stable > /tmp/manifest.json
-        else
-            skopeo inspect --retry-times 3 docker://ghcr.io/ublue-os/base-main:latest > /tmp/manifest.json
-        fi
+        skopeo inspect --retry-times 3 docker://ghcr.io/ublue-os/base-main:latest > /tmp/manifest.json
     fi
     fedora_version=$(jq -r '.Labels["org.opencontainers.image.version"]' < /tmp/manifest.json | grep -oP '^[0-9]+')
     if [[ -n "${kernel_pin:-}" ]]; then
@@ -640,11 +632,7 @@ generate-build-tags image="bluefin" tag="testing" flavor="main" kernel_pin="" gh
     fi
 
     # Convenience Tags
-    if [[ "{{ tag }}" =~ stable ]]; then
-        BUILD_TAGS+=("stable" "${version}" "stable-${version}" "stable-${version:3}")
-    else
-        BUILD_TAGS+=("{{ tag }}" "{{ tag }}-${version}" "{{ tag }}-${version:3}")
-    fi
+    BUILD_TAGS+=("{{ tag }}" "{{ tag }}-${version}" "{{ tag }}-${version:3}")
 
     github_event="{{ github_event }}"
     if [[ "${github_event}" == "pull_request" ]]; then
@@ -662,11 +650,7 @@ generate-default-tag tag="testing" ghcr="0":
     set -eou pipefail
 
     # Default Tag
-    if [[ "{{ tag }}" =~ stable ]]; then
-        DEFAULT_TAG="stable"
-    else
-        DEFAULT_TAG="{{ tag }}"
-    fi
+    DEFAULT_TAG="{{ tag }}"
 
     echo "${DEFAULT_TAG}"
 

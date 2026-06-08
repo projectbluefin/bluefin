@@ -39,9 +39,7 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 | `pr-smoke.yml` | PRs touching build files | Full image build + smoke test |
 | `build-image-testing.yml` | Push to `main`, dispatch | Testing image builds via centralized `projectbluefin/actions` workflow |
 | `post-testing-e2e.yml` | Testing build on `main` | Smoke+common continuous e2e gate |
-| `weekly-testing-promotion.yml` | Tuesday 06:00 UTC | Full e2e → retag to :stable |
-| `build-image-stable.yml` | Push to `stable`, dispatch | Stable rebuild |
-| `build-images.yml` | Manual dispatch | Rebuild all streams |
+| `weekly-testing-promotion.yml` | Tuesday 06:00 UTC | Full e2e → retag to :stable + generate release |
 | ~~`reusable-build.yml`~~ (deleted) | Replaced by `projectbluefin/actions/.github/workflows/reusable-build.yml` | **All build callers now use the centralized workflow — no local copy** |
 | `run-testsuite.yml` | Called by all e2e workflows | **Canonical testsuite wrapper — always use this, never e2e.yml directly** |
 | `nightly.yml` | 02:00 UTC daily | smoke+common+vanilla-gnome against :testing |
@@ -87,13 +85,13 @@ shellcheck build_files/**/*.sh
 
 1. Push to `testing` → `build-image-testing.yml` publishes `:testing` images (gated behind post-build e2e)
 2. `post-testing-e2e.yml` smoke-tests that exact digest
-3. `weekly-testing-promotion.yml` (Tuesday 06:00 UTC) locks the `:testing` digest, verifies e2e passed, cosign-verifies, skopeo-copies → `:stable` / `:latest`
+3. `weekly-testing-promotion.yml` (Tuesday 06:00 UTC) locks the `:testing` digest, verifies e2e passed, cosign-verifies, skopeo-copies → `:stable`, generates GitHub release
 4. 7-day floor enforced; `workflow_dispatch` bypasses it
 5. A separate `promote-testing-to-main.yml` keeps the `testing → main` git branch in sync via a squash-merge PR (see **testing→main squash history gap** below)
 
 ### Dakota
 
-Same digest-promotion model. `weekly-testing-promotion.yml` resolves `:testing` digest, runs e2e, cosign-verifies, skopeo-copies → `:latest` / `:stable`. No git branch PR.
+Same digest-promotion model. `weekly-testing-promotion.yml` resolves `:testing` digest, runs e2e, cosign-verifies, skopeo-copies → `:stable`. No git branch PR.
 
 ### Bluefin LTS
 
@@ -144,7 +142,7 @@ This is a known gap tracked in [#368](https://github.com/projectbluefin/bluefin/
 - **Unit tests live in `tests/unit/`, not `build_files/`** — `build_files/**` is in the detect-changes image path filter; placing test files there causes every PR push to trigger image builds and E2E. Test files belong in `tests/unit/` where they are invisible to the image path filter.
 - **`just test-unit` runs bats unit tests** — calls `bats tests/unit/`. The CI `unit-tests` job invokes `bats` directly (not `just`) because `just` is not available on a bare `ubuntu-latest` runner without the `setup-runner` composite action. Test files: `package-lib_test.bats`, `validate-repos_test.bats`, `copr-helpers_test.bats`.
 - **Vulnerability scans must use the build digest, not a mutable tag.** `vulnerability-scan.yml` downloads `image-digest-{stream_name}-{brand_name}-{image_flavor}` from the triggering `workflow_run` and passes `image@sha256:...` to the scanner to avoid TOCTOU. Artifact names for the default bluefin build: `image-digest-testing-bluefin-main`, `image-digest-testing-bluefin-nvidia`.
-- Weekly promotion uses retag-only (skopeo copy) for the canonical path — **no rebuild at promotion time**. The parallel rebuild pathway via branch push (`build-image-stable.yml`, `build-image-latest-main.yml`) is a secondary mechanism and does not gate the weekly release.
+- Weekly promotion uses retag-only (skopeo copy) — **no rebuild at promotion time**. `:stable` is set exclusively by `weekly-testing-promotion.yml`.
 - Build callers do not pass `secrets: inherit` — `reusable-build.yml` only needs `GITHUB_TOKEN`, which is automatically available
 - **`generate-release.yml` must be LOCAL** — never centralize it to `projectbluefin/actions`. External cross-repo `workflow_call` reusable workflows called from `weekly-testing-promotion.yml` cause `startup_failure` with 0 jobs starting, even when actionlint passes and the SHA is reachable. Root cause appears to be a GitHub validation interaction with the `production` environment and external callee. Verified 2026-06-07 after multiple failed centralization attempts.
 - **`production` environment branch policy** — use `custom_branch_policies: true` with `main` explicitly added. The `protected_branches: true` policy does NOT recognize GitHub rulesets as branch protection (only classic branch protection rules count). A `main` branch protected only by a ruleset (merge queue) will cause `startup_failure` when any job uses `environment: production`.
