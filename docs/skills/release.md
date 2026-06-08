@@ -2,7 +2,7 @@
 
 ## When to use
 
-- Promoting tested `main` builds to `latest` and `stable`
+- Promoting `:testing` builds to `:stable`
 - Generating stable release notes
 - Understanding which workflow moves which stream
 - Checking why a promotion or release did not happen
