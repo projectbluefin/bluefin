@@ -35,6 +35,20 @@
         '# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)\\s+\\w+: "(?<currentValue>[^"]+)"',
       ],
     },
+    {
+      // Discover container image digests from the images: block in image-versions.yml.
+      // Matches each  image: / tag: / digest:  entry so Renovate tracks all pinned
+      // digests directly from the YAML source of truth rather than Containerfile ARGs.
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^image-versions\\.yml$/',
+      ],
+      matchStrings: [
+        'image: (?<packageName>[^\\s]+)\\n\\s+tag: (?<currentValue>[^\\s]+)\\n\\s+digest: (?<currentDigest>sha256:[a-f0-9]+)',
+      ],
+      datasourceTemplate: 'docker',
+      versioningTemplate: 'docker',
+    },
     // Track GNOME extension submodules that pin to a release tag via the
     // `branch =` field in .gitmodules. Renovate's git-submodules manager
     // alone can't see new tags because tags don't move; this rewrites the
@@ -72,9 +86,12 @@
       "automerge": false
     },
     {
+      // common is a first-party trusted image; automerge digest updates immediately.
+      // No schedule — critical fixes must land without the default weekly delay.
       "matchUpdateTypes": ["pin", "digest", "pinDigest"],
       "matchDepNames": ["ghcr.io/projectbluefin/common"],
-      "automerge": false
+      "automerge": true,
+      "schedule": ["at any time"]
     },
     {
       "automerge": true,

@@ -115,8 +115,8 @@ curl -s https://raw.githubusercontent.com/ublue-os/aurora/main/Justfile | grep -
 PR validation (just check + pre-commit + shellcheck)
   → testing build (Containerfile → GHCR :testing)
   → e2e smoke test (boot + package assertions)
-  → weekly promotion (fast-forward latest/stable)
-  → stable build + release generation
+  → weekly gated promotion (:testing digest → :stable)
+  → release generation
 ```
 
 ### Justfile vs GitHub Actions

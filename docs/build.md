@@ -88,9 +88,9 @@ just clean
 
 | Image | Streams | Flavors |
 |---|---|---|
-| `bluefin` | `gts`, `stable`, `latest`, `beta` | `main`, `nvidia` |
+| `bluefin` | `testing`, `stable` | `main`, `nvidia` |
 
-The current branch automation also carries a `testing` stream in local/CI recipes; use the release and CI docs for branch-specific pipeline behavior.
+`:testing` is built daily from `main`. `:stable` is promoted weekly from `:testing` via `weekly-testing-promotion.yml` after e2e passes.
 
 ## Package locations
 
