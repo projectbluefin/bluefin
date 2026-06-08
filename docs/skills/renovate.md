@@ -81,6 +81,35 @@ If auto-merge does not trigger:
 - Unversioned `renovate` in the validator command is intentional: it validates against the current schema
 - Passing a filename to `renovate-config-validator` can change how the file is interpreted; prefer repo auto-discovery unless you intentionally need another mode
 
+### common image tracking — critical
+
+`ghcr.io/projectbluefin/common` delivers first-party boot-critical fixes (e.g. `rechunker-group-fix` — reconstructs `/etc/gshadow`; missing it = black screens). These **must land without delay**.
+
+**Required `renovate.json5` configuration:**
+
+```json5
+// 1. Custom manager — discovers image: / tag: / digest: entries in image-versions.yml
+{
+  customType: 'regex',
+  managerFilePatterns: ['/^image-versions\\.yml$/'],
+  matchStrings: [
+    'image: (?<packageName>[^\\s]+)\\n\\s+tag: (?<currentValue>[^\\s]+)\\n\\s+digest: (?<currentDigest>sha256:[a-f0-9]+)',
+  ],
+  datasourceTemplate: 'docker',
+  versioningTemplate: 'docker',
+},
+
+// 2. packageRule — automerge immediately, bypass default weekly schedule
+{
+  "matchUpdateTypes": ["pin", "digest", "pinDigest"],
+  "matchDepNames": ["ghcr.io/projectbluefin/common"],
+  "automerge": true,
+  "schedule": ["at any time"]
+},
+```
+
+**Never use `"automerge": false` or a weekly schedule for common.** The `config:best-practices` default schedule (branch creation only on Mondays) delayed a critical fix by 2 days (PR #457, 2026-06-08). See also bluefin-lts PR #123 where `"enabled": false` meant the same fix was silently dropped entirely.
+
 ## Shared actions version management
 
 When `projectbluefin/actions` is live, Renovate will track action versions automatically via the `github-actions` manager. The contract:

@@ -131,7 +131,7 @@ There are three different branch roles to keep straight:
 
 - **Contribution branch:** PRs land on `testing`
 - **Testing image branch:** `main` builds the `:testing` stream
-- **Production promotion branch flow:** `main` → `latest` / `stable`
+- **Production promotion branch flow:** `main` → `:stable` (via weekly gated promotion)
 
 Current automation works like this:
 
@@ -350,7 +350,7 @@ GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, t
 | Weekly promotion aborts because `main` advanced | New commits landed during e2e | Rerun `weekly-testing-promotion.yml` after e2e is green again |
 | Weekly promotion cannot download digest artifact | Artifact expired before the Tuesday window | Trigger a fresh push to `main` to get a new artifact |
 | `verify-e2e` fails: "No successful build run found for SHA" | Promotion dispatched while testing build still in-progress | Wait: `gh run watch <build-run-id> --repo projectbluefin/bluefin --exit-status` then dispatch |
-| `promote-to-latest-and-stable` cosign verify fails | `--certificate-identity-regexp` too narrow — images signed by `projectbluefin/actions`, not `projectbluefin/bluefin` | Use `(bluefin\|bluefin-lts\|aurora\|actions)` regexp — see Security → Cosign certificate identity regexp |
+| `promote-to-stable` cosign verify fails | `--certificate-identity-regexp` too narrow — images signed by `projectbluefin/actions`, not `projectbluefin/bluefin` | Use `(bluefin\|bluefin-lts\|aurora\|actions)` regexp — see Security → Cosign certificate identity regexp |
 | Renovate auto-merge finds no PR | Author filter mismatch (renovate[bot] vs app/mergeraptor) | Check jq filter in `renovate-automerge.yml` includes both |
 | `generate-release.yml` fails with "No SBOM referrer found" | Testing stream skips SBOM; promoted images lack referrers | See `allow_missing_sbom=True` pattern in skill Learnings |
 | Cosign sign/verify fails | Sigstore Fulcio/Rekor outage or key rotation | Check `check-cosign-key-rotation.yml` issues; retry after Sigstore recovers |
