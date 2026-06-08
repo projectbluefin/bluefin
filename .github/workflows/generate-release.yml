@@ -81,9 +81,6 @@ jobs:
     permissions:
       contents: write
       actions: read
-    environment:
-      name: production
-      url: ${{ inputs.image }}:stable
     strategy:
       fail-fast: false
       matrix:
