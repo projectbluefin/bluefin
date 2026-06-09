@@ -241,6 +241,18 @@ jobs:
             exit 1
           fi
 
+      - name: Dispatch release gate
+        if: steps.compare.outputs.sync_needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.upsert.outputs.pr_number }}
+        run: |
+          set -euo pipefail
+          gh workflow run pr-release-gate.yml \
+            --repo "${{ github.repository }}" \
+            -f pr_number="${PR_NUMBER}"
+          echo "Dispatched pr-release-gate.yml for PR #${PR_NUMBER}"
+
   close-failure-issue:
     needs: [promote]
     if: needs.promote.result == 'success'

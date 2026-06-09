@@ -4,12 +4,20 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Promotion PR number to run gate checks on
+        required: true
+        type: number
 
 permissions: {}
 
 jobs:
   gate:
-    if: github.event.pull_request.head.ref == 'auto/promote-testing-to-main'
+    if: >
+      (github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'auto/promote-testing-to-main') ||
+      github.event_name == 'workflow_dispatch'
     permissions:
       actions: read
       contents: read
@@ -19,6 +27,8 @@ jobs:
     uses: projectbluefin/actions/.github/workflows/reusable-release-gate.yml@main
     with:
       repo: ${{ github.repository }}
+      pr_number: ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number || '' }}
+      head_sha: ${{ github.event_name == 'workflow_dispatch' && github.sha || '' }}
       registry: ghcr.io/projectbluefin
       variants: >-
         [{"image":"bluefin"},{"image":"bluefin-nvidia"}]
