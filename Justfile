@@ -297,7 +297,7 @@ build-ghcr image="bluefin" tag="testing" flavor="main" kernel_pin="":
         echo "Must Run with sudo or as root..."
         exit 1
     fi
-    {{ just }} build {{ image }} {{ tag }} {{ flavor }} 0 1 0 {{ kernel_pin }}
+    {{ just }} build {{ image }} {{ tag }} {{ flavor }} 1 0 {{ kernel_pin }}
 
 # Build Image for Pipeline:
 [group('Image')]
