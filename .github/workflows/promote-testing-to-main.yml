@@ -26,6 +26,7 @@ jobs:
     outputs:
       sync_needed: ${{ steps.compare.outputs.sync_needed }}
       testing_sha: ${{ steps.compare.outputs.testing_sha }}
+      pr_number: ${{ steps.upsert.outputs.pr_number }}
       pr_url: ${{ steps.upsert.outputs.pr_url || steps.existing-pr.outputs.pr_url }}
       merge_state_status: ${{ steps.upsert.outputs.merge_state_status }}
       mergeable: ${{ steps.upsert.outputs.mergeable }}
@@ -241,17 +242,30 @@ jobs:
             exit 1
           fi
 
-      - name: Dispatch release gate
-        if: steps.compare.outputs.sync_needed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ steps.upsert.outputs.pr_number }}
-        run: |
-          set -euo pipefail
-          gh workflow run pr-release-gate.yml \
-            --repo "${{ github.repository }}" \
-            -f pr_number="${PR_NUMBER}"
-          echo "Dispatched pr-release-gate.yml for PR #${PR_NUMBER}"
+  gate:
+    name: Release gate checks
+    needs: [promote]
+    if: needs.promote.outputs.sync_needed == 'true'
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+      packages: read
+      pull-requests: write
+    uses: projectbluefin/actions/.github/workflows/reusable-release-gate.yml@main
+    with:
+      repo: ${{ github.repository }}
+      pr_number: ${{ needs.promote.outputs.pr_number }}
+      head_sha: ${{ needs.promote.outputs.testing_sha }}
+      registry: ghcr.io/projectbluefin
+      variants: >-
+        [{"image":"bluefin"},{"image":"bluefin-nvidia"}]
+      cosign_identity_regexp: ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
+      target_tag: testing
+      run_e2e: true
+      e2e_suites: smoke,common
+      e2e_image: ghcr.io/projectbluefin/bluefin:testing
+    secrets: inherit
 
   close-failure-issue:
     needs: [promote]
