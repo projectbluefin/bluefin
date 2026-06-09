@@ -54,7 +54,7 @@ jobs:
       (github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || inputs.pr_number != '') &&
       (github.event_name != 'pull_request' ||
        needs.detect-changes.outputs.should_build == 'true')
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@d18542169d94ed2df1364e5e19dddffdd248307f # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@a522a36807cab68339ac7709cfc42f0709da5247 # feat/centralize-chunka
     permissions:
       contents: read
       packages: write
