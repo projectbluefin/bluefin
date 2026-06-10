@@ -98,7 +98,6 @@ FEDORA_PACKAGES=(
     input-remapper
     intel-vaapi-driver
     iwd
-    jetbrains-mono-fonts-all
     just
     krb5-workstation
     libappindicator-gtk3
@@ -123,7 +122,6 @@ FEDORA_PACKAGES=(
     net-tools
     nvtop
     oddjob-mkhomedir
-    opendyslexic-fonts
     openrgb-udev-rules
     openssh-askpass
     pam-u2f
@@ -200,9 +198,6 @@ dnf5 -y install \
     "${FEDORA_PACKAGES[@]}" \
     tailscale \
     ffmpeg{,-libs} libavcodec @multimedia gstreamer1-plugins-{bad-free,bad-free-libs,good,base} lame{,-libs} libfdk-aac libjxl ffmpegthumbnailer
-
-# From che/nerd-fonts
-copr_install_isolated "che/nerd-fonts" "nerd-fonts"
 
 # From ublue-os/packages
 copr_install_isolated "ublue-os/packages" \
