@@ -54,7 +54,7 @@ jobs:
       (github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || inputs.pr_number != '') &&
       (github.event_name != 'pull_request' ||
        needs.detect-changes.outputs.should_build == 'true')
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@bd1d83a3eb3a55d63f71069cd9234d6a8d93f4b5 # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@ecec4e27bd2ef035aca2ee047ab83bf63e5e6568 # fix/restore-trivy-scan
     permissions:
       contents: read
       packages: write
