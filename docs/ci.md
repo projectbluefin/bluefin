@@ -10,7 +10,7 @@ Bluefin's CI is split between PR validation, image builds, post-build e2e, weekl
 | `promote-testing-to-main.yml` | Push to `testing`, daily 23:00 UTC, manual dispatch | Upserts the long-lived `testing` → `main` promotion PR and enables squash auto-merge |
 | `sync-main-to-testing.yml` | Push to `main` | Merges `main` back into `testing` after each squash-merge promotion to prevent the next PR from opening `BEHIND` |
 | `build-image-testing.yml` | Push to `main`, `merge_group`, dispatch, workflow call | Builds testing images via centralized `projectbluefin/actions` workflow |
-| `post-testing-e2e.yml` | Successful `Testing Images` workflow on `main` push | Downloads the testing digest and runs smoke+lifecycle suites; `run-upgrade-test` job from `projectbluefin/actions` is a hard gate — all three jobs must pass before promotion can proceed |
+| `post-testing-e2e.yml` | Successful `Testing Images` workflow on `main` push | Downloads the testing digest and runs smoke tests in `projectbluefin/testsuite` |
 | `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, manual dispatch | Verifies e2e on current `main`, retaggs tested digests to `:stable`, generates release |
 | `renovate-automerge.yml` | Successful `PR Validation — testsuite` | Enables squash auto-merge (`gh pr merge --auto --squash`) for Renovate/mergeraptor PRs |
 | `bonedigger.yml` | Issue events, issue comments, daily schedule | Runs the Bluefin 🦖 issue lifecycle bot |

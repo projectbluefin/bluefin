@@ -96,7 +96,7 @@ validate $image $tag $flavor:
 
 # Build Image
 [group('Image')]
-build $image="bluefin" $tag="testing" $flavor="main" ghcr="0" pipeline="0" $kernel_pin="":
+build $image="bluefin" $tag="testing" $flavor="main" rechunk="0" ghcr="0" pipeline="0" $kernel_pin="":
     #!/usr/bin/bash
 
     echo "::group:: Build Prep"
@@ -289,6 +289,20 @@ build $image="bluefin" $tag="testing" $flavor="main" ghcr="0" pipeline="0" $kern
     ${PODMAN} build "${PODMAN_BUILD_ARGS[@]}" .
     echo "::endgroup::"
 
+    # Rechunk
+    if [[ "{{ rechunk }}" == "1" && "{{ ghcr }}" == "1" && "{{ pipeline }}" == "1" ]]; then
+        ${SUDOIF} {{ just }} rechunk "${image}" "${tag}" "${flavor}" 1 1
+    elif [[ "{{ rechunk }}" == "1" && "{{ ghcr }}" == "1" ]]; then
+        ${SUDOIF} {{ just }} rechunk "${image}" "${tag}" "${flavor}" 1
+    elif [[ "{{ rechunk }}" == "1" ]]; then
+        ${SUDOIF} {{ just }} rechunk "${image}" "${tag}" "${flavor}"
+    fi
+
+# Build Image and Rechunk
+[group('Image')]
+build-rechunk image="bluefin" tag="testing" flavor="main" kernel_pin="":
+    @{{ just }} build {{ image }} {{ tag }} {{ flavor }} 1 0 0 {{ kernel_pin }}
+
 # Build Image with GHCR Flag
 [group('Image')]
 build-ghcr image="bluefin" tag="testing" flavor="main" kernel_pin="":
@@ -297,15 +311,86 @@ build-ghcr image="bluefin" tag="testing" flavor="main" kernel_pin="":
         echo "Must Run with sudo or as root..."
         exit 1
     fi
-    {{ just }} build {{ image }} {{ tag }} {{ flavor }} 1 0 {{ kernel_pin }}
+    {{ just }} build {{ image }} {{ tag }} {{ flavor }} 0 1 0 {{ kernel_pin }}
 
 # Build Image for Pipeline:
 [group('Image')]
 build-pipeline image="bluefin" tag="testing" flavor="main" kernel_pin="":
     #!/usr/bin/bash
-    ${SUDOIF} {{ just }} build {{ image }} {{ tag }} {{ flavor }} 1 1 {{ kernel_pin }}
+    ${SUDOIF} {{ just }} build {{ image }} {{ tag }} {{ flavor }} 1 1 1 {{ kernel_pin }}
 
-# Load an image into rootful Podman for local builds
+# Rechunk Image
+[group('Image')]
+[private]
+rechunk $image="bluefin" $tag="testing" $flavor="main" ghcr="0" pipeline="0" previous_build="0":
+    #!/usr/bin/bash
+    set -eoux pipefail
+
+    # Validate
+    {{ just }} validate "${image}" "${tag}" "${flavor}"
+
+    # Image Name
+    image_name=$({{ just }} image_name {{ image }} {{ tag }} {{ flavor }})
+
+    # Check if image is already built
+    ID=$(${PODMAN} images --filter reference=localhost/"${image_name}":"${tag}" --format "'{{ '{{.ID}}' }}'")
+    if [[ -z "$ID" ]]; then
+        {{ just }} build "${image}" "${tag}" "${flavor}"
+    fi
+
+    if [[ "{{ ghcr }}" == "0" ]]; then
+        {{ just }} load-rootful "${image}" "${tag}" "${flavor}"
+    fi
+
+    IMAGE_REF=localhost/"${image_name}":"${tag}"
+    fedora_version=$(${SUDOIF} ${PODMAN} inspect "${IMAGE_REF}" | jq -r '.[].Config.Labels["ostree.linux"]' | grep -oP 'fc\K[0-9]+')
+
+    # TODO: Switch fully to --previous-build once rpm-ostree 2026.1+ lands everywhere.
+    if [[ "{{ previous_build }}" == "1" ]]; then
+        PREVIOUS_IMAGE=ghcr.io/{{ repo_organization }}/"${image_name}":"${tag}"
+
+        if skopeo inspect "docker://${PREVIOUS_IMAGE}" | jq -e '.LayersData[1:] | all(.Annotations?["ostree.components"]?)' >/dev/null; then
+            ${SUDOIF} ${PODMAN} pull "${PREVIOUS_IMAGE}"
+        else
+            echo "${PREVIOUS_IMAGE} is not chunked yet. Building a fresh layer plan instead."
+            PREVIOUS_IMAGE=""
+        fi
+    fi
+
+    if [[ "{{ ghcr }}" == "1" ]]; then
+        CHUNKED_IMAGE=localhost/"${image_name}":"${tag}"
+        if [[ -n "${PREVIOUS_IMAGE:-}" ]]; then
+            CHUNKED_IMAGE="${PREVIOUS_IMAGE}"
+        fi
+    else
+        # Keep the original unrechunked image around for local builds.
+        CHUNKED_IMAGE=localhost/"${image_name}":"${tag}"-chunked
+    fi
+
+    ${SUDOIF} ${PODMAN} run --rm \
+        --pull=${PULL_POLICY} \
+        --privileged \
+        -v "/var/lib/containers:/var/lib/containers" \
+        --entrypoint /usr/bin/rpm-ostree \
+        "{{ base_image_org }}/{{ base_image_name }}:${fedora_version}" \
+        compose build-chunked-oci \
+        --max-layers 127 \
+        --format-version=2 \
+        --bootc \
+        --from "${IMAGE_REF}" \
+        --output containers-storage:${CHUNKED_IMAGE}
+
+    if [[ "{{ ghcr }}" == "1" && -n "${PREVIOUS_IMAGE:-}" ]]; then
+        ${SUDOIF} ${PODMAN} tag "${CHUNKED_IMAGE}" "${IMAGE_REF}"
+        ${SUDOIF} ${PODMAN} image rm -f "${CHUNKED_IMAGE}"
+    fi
+
+    # Pipeline Checks
+    if [[ {{ pipeline }} == "1" && -n "${SUDO_USER:-}" ]]; then
+        sudo -u "${SUDO_USER}" {{ just }} secureboot "${image}" "${tag}" "${flavor}"
+    fi
+
+# Load an image into rootful Podman for rechunking
 [group('Image')]
 load-rootful $image="bluefin" $tag="testing" $flavor="main":
     #!/usr/bin/bash
@@ -324,6 +409,40 @@ load-rootful $image="bluefin" $tag="testing" $flavor="main":
         fi
         ${PODMAN} image scp localhost/"${image_name}":"${tag}" root@localhost::
     fi
+
+# Retag rechunked images for downstream steps
+[group('Image')]
+load-rechunk image="bluefin" tag="testing" flavor="main":
+    #!/usr/bin/bash
+    set -eou pipefail
+
+    # Validate
+    {{ just }} validate {{ image }} {{ tag }} {{ flavor }}
+
+    # Image Name
+    image_name=$({{ just }} image_name {{ image }} {{ tag }} {{ flavor }})
+
+    source_tag="{{ tag }}"
+
+    source_ref=localhost/"${image_name}":"${source_tag}"
+    source_chunked_ref=${source_ref}-chunked
+    target_ref=localhost/"${image_name}":"{{ tag }}"
+
+    SOURCE_ID=$(${PODMAN} images --filter reference="${source_chunked_ref}" --format "'{{ '{{.ID}}' }}'")
+    if [[ -n "${SOURCE_ID}" ]]; then
+        source_ref="${source_chunked_ref}"
+    fi
+
+    if [[ "${source_ref}" == "${target_ref}" ]]; then
+        exit 0
+    fi
+
+    IMAGE=$(${PODMAN} inspect "${source_ref}" | jq -r '.[].Id')
+    TARGET_ID=$(${PODMAN} images --filter reference="${target_ref}" --format "'{{ '{{.ID}}' }}'")
+    if [[ -n "${TARGET_ID}" ]]; then
+        ${PODMAN} rmi "${target_ref}" || true
+    fi
+    ${PODMAN} tag "${IMAGE}" "${target_ref}"
 
 # Run Container
 [group('Image')]
