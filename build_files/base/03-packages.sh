@@ -62,7 +62,7 @@ FEDORA_PACKAGES=(
     alsa-tools-firmware
     autofs
     bash-color-prompt
-    bcache-tools
+
     bootc
     borgbackup
     containerd
@@ -161,6 +161,7 @@ FEDORA_PACKAGES=(
     waypipe
     wireguard-tools
     wl-clipboard
+    wtype
     xdg-terminal-exec
     xprop
     yubikey-manager
@@ -242,5 +243,11 @@ remove_excluded_packages EXCLUDED_PACKAGES
 #    Workaround pkcs11-provider regression, see issue #1943
 #    rpm-ostree override replace https://bodhi.fedoraproject.org/updates/FEDORA-2024-dd2e9fb225
 #fi
+
+# Create a standard symlink for the NVIDIA Vulkan ICD so AppImages and legacy games
+# that hardcode "nvidia_icd.json" can find the GPU. On non-NVIDIA systems this is a
+# dangling symlink, which the Vulkan loader safely ignores.
+mkdir -p /usr/share/vulkan/icd.d/
+ln -sf /usr/share/vulkan/icd.d/nvidia_icd.x86_64.json /usr/share/vulkan/icd.d/nvidia_icd.json
 
 echo "::endgroup::"
