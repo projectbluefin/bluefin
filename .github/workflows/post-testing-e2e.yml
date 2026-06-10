@@ -7,7 +7,7 @@ on:
   workflow_run:
     workflows: ["Testing Images"]
     types: [completed]
-    branches: [main]
+    branches: [main, testing]
 
 permissions: read-all
 
@@ -73,7 +73,8 @@ jobs:
     # run-upgrade-test removed from needs — lifecycle suite is non-blocking (see TODO above).
     needs: [e2e, run-e2e]
     if: >-
-      needs.run-e2e.result == 'success'
+      needs.run-e2e.result == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
