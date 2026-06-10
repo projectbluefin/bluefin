@@ -7,6 +7,10 @@ on:
   schedule:
     - cron: '0 23 * * *'
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Post-Testing E2E"]
+    types: [completed]
+    branches: [testing]
 
 concurrency:
   group: promote-testing-to-main
