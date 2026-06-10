@@ -7,7 +7,7 @@ on:
   workflow_run:
     workflows: ["Testing Images"]
     types: [completed]
-    branches: [main, testing]
+    branches: [main]
 
 permissions: read-all
 
@@ -62,7 +62,7 @@ jobs:
   #   permissions:
   #     packages: write
   #     contents: read
-  #   uses: projectbluefin/actions/.github/workflows/upgrade-test.yml@0527fe28c462e3f53cb1f6674c429562861e316c # main
+  #   uses: projectbluefin/actions/.github/workflows/upgrade-test.yml@3025b5d31f34ce44c19eab41a7fa5d4d5c5b688e # main
   #   with:
   #     image: ${{ needs.e2e.outputs.image }}
   #     suites: lifecycle
@@ -73,8 +73,7 @@ jobs:
     # run-upgrade-test removed from needs — lifecycle suite is non-blocking (see TODO above).
     needs: [e2e, run-e2e]
     if: >-
-      needs.run-e2e.result == 'success' &&
-      github.event.workflow_run.head_branch == 'main'
+      needs.run-e2e.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
