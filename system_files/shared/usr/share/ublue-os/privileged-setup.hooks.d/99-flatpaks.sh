@@ -1,5 +1,6 @@
 #!/usr/bin/bash
 
+# shellcheck source=/dev/null
 source /usr/lib/ublue/setup-services/libsetup.sh
 
 version-script flatpaks privileged 1 || exit 0
