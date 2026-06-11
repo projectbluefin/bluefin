@@ -42,7 +42,7 @@ test-unit:
         exit 1
     fi
     echo "Running unit tests..."
-    bats tests/unit/package-lib_test.bats
+    bats tests/unit/
 
 # Fix Just Syntax
 [group('Just')]
