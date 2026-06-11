@@ -1,5 +1,7 @@
 # COPR isolation security invariant
 
+> See also: [`docs/skills/security.md`](security.md) for general COPR usage, cosign, and shellcheck coverage.
+
 ## Rule
 
 Keep the `copr_install_isolated` helper as a three-step sequence:
