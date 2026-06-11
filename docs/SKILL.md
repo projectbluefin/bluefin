@@ -14,7 +14,7 @@ Agent entry point. Load only the skill that matches the task in front of you.
 | Fix a stuck, conflicted, or wrong-base PR | [`workflow.md` → Fixing stuck PRs](workflow.md#fixing-stuck-prs) |
 | Handle Renovate PRs or auto-merge behavior | `docs/skills/renovate.md` |
 | Review COPR usage, cosign, or other security-sensitive changes | `docs/skills/security.md` |
-| Review or change COPR isolation logic or the enable/disable/install sequence | [`docs/skills/copr-security.md`](docs/skills/copr-security.md) |
+| Review or change COPR isolation logic or the enable/disable/install sequence | `docs/skills/copr-security.md` |
 | Work on the LTS image or LTS-specific policy | `docs/skills/lts.md` |
 | Build or promote installation ISOs | `docs/skills/iso.md` |
 
