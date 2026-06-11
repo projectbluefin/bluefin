@@ -4,21 +4,24 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 permissions: {}
 
 jobs:
   gate:
-    if: github.event.pull_request.head.ref == 'auto/promote-testing-to-main'
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.ref == 'auto/promote-testing-to-main'
     permissions:
       actions: read
       contents: read
       issues: write
       packages: read
       pull-requests: write
-    uses: projectbluefin/actions/.github/workflows/reusable-release-gate.yml@7f79969c2ff74c51ac7f385cb0a86414975308d7 # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-release-gate.yml@feat/retry-e2e-promote # validation branch
     with:
       repo: ${{ github.repository }}
+      pr_number: ${{ github.event_name == 'workflow_dispatch' && '492' || github.event.pull_request.number }}
+      head_sha: ${{ github.event_name == 'workflow_dispatch' && '7baa828d81d6ccdac3c85d83d0eec1ab1d5c3cef' || github.event.pull_request.head.sha }}
       registry: ghcr.io/projectbluefin
       variants: >-
         [{"image":"bluefin"},{"image":"bluefin-nvidia"}]
