@@ -18,8 +18,16 @@ concurrency:
   group: promote-testing-to-main
   cancel-in-progress: false
 
+# The called reusable workflow needs write access to push the squash branch,
+# open/update PRs, and write issues. Caller-level permissions set the maximum
+# grants available to the called workflow's jobs — too-narrow a grant here
+# causes startup_failure before any job runs.
 permissions:
-  contents: read
+  contents: write       # push squash promotion branch
+  pull-requests: write  # create / update / auto-merge the promotion PR
+  issues: write         # open / close failure-tracking issues
+  packages: read        # read image digests in release-gate checks
+  actions: read         # inspect workflow-run statuses in release-gate
 
 jobs:
   promote:
