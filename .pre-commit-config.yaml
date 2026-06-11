@@ -21,7 +21,7 @@ repos:
     rev: v0.9.0.6
     hooks:
       - id: shellcheck
-        files: (build_files|system_files)/.*\.sh$
+        files: ^(build_files|system_files)/.*\.sh$
   - repo: local
     hooks:
       - id: no-floating-action-tags
