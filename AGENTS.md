@@ -138,3 +138,4 @@ Tests live in `tests/unit/`. Run with `bats tests/unit/` (or a single file). The
   | `disable-repos_test.bats` | `build_files/shared/disable-repos.sh` |
   | `package-lib_test.bats` | `build_files/shared/package-lib.sh` |
   | `validate-repos_test.bats` | `build_files/shared/validate-repos.sh` |
+  | `00-image-info_test.bats` | `build_files/base/00-image-info.sh` |

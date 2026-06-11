@@ -41,11 +41,14 @@ Validation:
 ```bash
 bash -n build_files/base/03-packages.sh
 shellcheck build_files/**/*.sh
+shellcheck system_files/**/*.sh
 ```
 
 > **Invariant detail:** the enable → disable → install three-step sequence is a
 > security boundary, not cleanup. See [`copr-security.md`](copr-security.md) for
 > the full reasoning and safe/unsafe patterns.
+
+> This runs automatically on commit via the pre-commit shellcheck hook (covers `build_files/` and `system_files/`).
 
 ## Cosign verification
 
