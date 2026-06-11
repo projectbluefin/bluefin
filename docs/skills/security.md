@@ -43,6 +43,10 @@ bash -n build_files/base/03-packages.sh
 shellcheck build_files/**/*.sh
 ```
 
+> **Invariant detail:** the enable → disable → install three-step sequence is a
+> security boundary, not cleanup. See [`copr-security.md`](copr-security.md) for
+> the full reasoning and safe/unsafe patterns.
+
 ## Cosign verification
 
 Bluefin verifies upstream containers before building.
