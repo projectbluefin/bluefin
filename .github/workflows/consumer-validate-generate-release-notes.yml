@@ -51,7 +51,7 @@ jobs:
           EOF
 
       - name: Run shared generate-release-notes action
-        uses: projectbluefin/actions/bootc-build/generate-release-notes@2497c3a7e0a7bbeeb36ac10bc2b487e7812ab562 # consumer-validation
+        uses: projectbluefin/actions/bootc-build/generate-release-notes@3025b5d31f34ce44c19eab41a7fa5d4d5c5b688e # consumer-validation
         with:
           tag: v0.0.0
           output-file: CHANGELOG.md

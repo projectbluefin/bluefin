@@ -286,6 +286,42 @@ git push projectbluefin testing
 
 The promotion workflow will re-run on the next schedule and succeed.
 
+**SHA-pin conflict on squash (promotion workflow fails with CONFLICT):** `main` and `testing` independently updated the same workflow SHA pins, so `git merge --squash origin/testing` conflicts. Since `testing` is the source of truth for what goes to `main`, rebuild the squash branch manually, favouring `testing`:
+
+```bash
+git fetch projectbluefin main testing
+git checkout -B auto/promote-testing-to-main projectbluefin/main
+git merge --squash -X theirs projectbluefin/testing
+git commit -m "chore: promote testing to main"
+git push --force projectbluefin auto/promote-testing-to-main
+```
+
+The `reusable-promote-squash.yml` workflow in `projectbluefin/actions` does not currently pass `-X theirs`, so SHA-pin divergence requires this manual rebuild until that is fixed upstream.
+
+### Promotion PR reviewer assignment (CODEOWNERS)
+
+The promotion PR (`auto/promote-testing-to-main` → `main`) must request the `@projectbluefin/maintainers` team, not individual handles. `.github/CODEOWNERS` controls this. The correct form:
+
+```
+# Default: any one maintainer approves
+* @projectbluefin/maintainers
+
+# Sensitive paths — require maintainer review
+.github/workflows/  @projectbluefin/maintainers
+Justfile            @projectbluefin/maintainers
+build_files/        @projectbluefin/maintainers
+```
+
+If the promotion PR has individual reviewers instead of the team, CODEOWNERS on `main` still has the old individual handles. The fix lands on `main` when the promotion PR itself merges (CODEOWNERS is updated on `testing` and squashed in). When reopening a promotion PR manually before the fix lands, pass `--reviewer projectbluefin/maintainers` explicitly:
+
+```bash
+gh pr create --repo projectbluefin/bluefin \
+  --base main --head auto/promote-testing-to-main \
+  --title "chore: promote testing to main" \
+  --body "..." \
+  --reviewer projectbluefin/maintainers
+```
+
 ### Auto-merge cannot be enabled
 
 `testing` has branch protection with `validate` as required check, and `allow_auto_merge` is enabled at the repo level. `gh pr merge --auto --squash` works.

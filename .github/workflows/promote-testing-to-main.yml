@@ -20,7 +20,8 @@ concurrency:
 
 # The called reusable workflow needs write access to push the squash branch,
 # open/update PRs, and write issues. Caller-level permissions set the maximum
-# grants available to the called workflow's jobs.
+# grants available to the called workflow's jobs — too-narrow a grant here
+# causes startup_failure before any job runs.
 permissions:
   contents: write       # push squash promotion branch
   pull-requests: write  # create / update / auto-merge the promotion PR
@@ -30,7 +31,7 @@ permissions:
 
 jobs:
   promote:
-    uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@5f3cabacecd1a7b95b7f64b03aa4c298ff73f918 # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@72ee991c06c58b865c2419db0af8748eef70199b # v1
     with:
       variants: >-
         [{"image":"bluefin"},{"image":"bluefin-nvidia"}]
