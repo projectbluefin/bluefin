@@ -14,6 +14,7 @@ Bluefin's CI is split between PR validation, image builds, post-build e2e, weekl
 | `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, manual dispatch | Verifies e2e on current `main`, retaggs tested digests to `:stable`, generates release |
 | `renovate-automerge.yml` | Successful `PR Validation — testsuite` | Enables squash auto-merge (`gh pr merge --auto --squash`) for Renovate/mergeraptor PRs |
 | `bonedigger.yml` | Issue events, issue comments, daily schedule | Runs the Bluefin 🦖 issue lifecycle bot |
+| `skill-drift.yml` | PRs to `main` | Checks whether code paths (`build_files/`, `Justfile`, `recipes/`, `.github/workflows/`) have drifted from skill docs (`docs/skills/`, `AGENTS.md`). Fails if docs are out of sync. **Fix:** update `docs/skills/` to reflect your code change |
 
 ## Centralized actions (`projectbluefin/actions`)
 
@@ -384,4 +385,5 @@ GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, t
 | `cherry-pick-to-stable.yml` | PR closed with `cherry-pick` label | Backports to `stable` via GitHub App token |
 | `bonedigger.yml` | Issue events, daily | Issue lifecycle bot |
 | `moderator.yml` | Issues/comments opened | AI spam + AI-content detection |
+| `skill-drift.yml` | PRs to `main` | Skill/code sync check; fails if `build_files/`, `Justfile`, or workflow files changed without updating `docs/skills/`. Fix by updating `docs/skills/` to match your code changes |
 | `validate-renovate.yml` | Renovate config PRs | Validates renovate.json5 syntax |

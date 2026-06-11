@@ -2,7 +2,7 @@
 
 ## When to use
 
-- Working with `projectbluefin/bluefin-iso`
+- Working with `projectbluefin/dakota-iso`
 - Building or promoting installation ISOs
 - Troubleshooting ISO promotion or prerelease behavior
 
@@ -14,7 +14,7 @@
 
 ## First rule
 
-**ISO building and promotion happens in the separate `projectbluefin/bluefin-iso` repo/workflows.**
+**ISO building and promotion happens in the separate `projectbluefin/dakota-iso` repo/workflows.**
 
 ## Safety rules
 
@@ -35,12 +35,12 @@ container image built in image repo
 
 Build a stable ISO workflow manually:
 ```bash
-gh workflow run build-iso-stable.yml --repo projectbluefin/bluefin-iso
+gh workflow run build-iso-stable.yml --repo projectbluefin/dakota-iso
 ```
 
 Promote a safe variant:
 ```bash
-gh workflow run promote-iso.yml --repo projectbluefin/bluefin-iso -f variant=stable
+gh workflow run promote-iso.yml --repo projectbluefin/dakota-iso -f variant=stable
 ```
 
 If applicable, generate or inspect release notes from the image repo first:
