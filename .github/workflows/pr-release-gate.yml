@@ -8,8 +8,33 @@ on:
 permissions: {}
 
 jobs:
-  gate:
+  # The release gate checks for a post-testing-e2e run keyed to the testing
+  # branch SHA — not the squash commit SHA on the promotion branch head.
+  # Extract the testing SHA from the PR body so the gate looks in the right place.
+  setup:
     if: github.event.pull_request.head.ref == 'auto/promote-testing-to-main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      testing_sha: ${{ steps.parse.outputs.sha }}
+    steps:
+      - name: Parse testing SHA from PR body
+        id: parse
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          sha=$(printf '%s' "$BODY" | grep -oP 'Testing SHA: `\K[0-9a-f]{40}' | head -1 || true)
+          if [ -z "$sha" ]; then
+            echo "::warning::Testing SHA not found in PR body; falling back to testing branch HEAD"
+            sha=$(gh api "repos/${{ github.repository }}/git/ref/heads/testing" --jq '.object.sha')
+          fi
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+
+  gate:
+    needs: setup
     permissions:
       actions: read
       contents: read
@@ -27,4 +52,5 @@ jobs:
       run_e2e: true
       e2e_suites: smoke,common
       e2e_image: ghcr.io/projectbluefin/bluefin:testing
+      head_sha: ${{ needs.setup.outputs.testing_sha }}
     secrets: inherit
