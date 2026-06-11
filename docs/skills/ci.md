@@ -77,7 +77,10 @@ pre-commit run --all-files
 ### shellcheck failed in CI
 ```bash
 shellcheck build_files/**/*.sh
+shellcheck system_files/**/*.sh
 ```
+
+Both trees are covered by the pre-commit `shellcheck` hook (shellcheck-py `v0.11.0.1`). Scripts under `system_files/` that source runtime paths use `# shellcheck source=/dev/null`; profile.d scripts with no shebang use `# shellcheck shell=bash`.
 
 ## Promotion pipeline mental model
 
@@ -145,7 +148,7 @@ This is a known gap tracked in [#368](https://github.com/projectbluefin/bluefin/
 - **`testing`/`main` branch sync — automated:** `sync-main-to-testing.yml` fires on every push to `main` and merges `main` → `testing` automatically. Manual sync is only needed if the workflow aborts due to a direct push to `main` that severs the merge base (CONFLICTING case — see "Testing→main squash history gap" above).
 - **E2E (`testsuite` job) only runs on `merge_group`** — the `testsuite` job in `pr-validation.yml` has a hard `if: github.event_name == 'merge_group'` guard. There is no `detect-changes` conditional; the guard is unconditional. Per-push PR CI is fast validate + unit-tests only (~2 min). Do not add E2E to per-push PR jobs — each push triggering a 10-min QEMU boot is wasteful and blocks Renovate automerge.
 - **Unit tests live in `tests/unit/`, not `build_files/`** — `build_files/**` is in the detect-changes image path filter; placing test files there causes every PR push to trigger image builds and E2E. Test files belong in `tests/unit/` where they are invisible to the image path filter.
-- **`just test-unit` runs bats unit tests** — calls `bats tests/unit/`. The CI `unit-tests` job invokes `bats` directly (not `just`) because `just` is not available on a bare `ubuntu-latest` runner without the `setup-runner` composite action. Test files: `package-lib_test.bats`, `validate-repos_test.bats`, `copr-helpers_test.bats`.
+- **`just test-unit` runs bats unit tests** — calls `bats tests/unit/` (all `.bats` files in the directory). The CI `unit-tests` job invokes `bats` directly (not `just`) because `just` is not available on a bare `ubuntu-latest` runner without the `setup-runner` composite action. Current test files: `00-image-info_test.bats`, `17-cleanup_test.bats`, `18-workarounds_test.bats`, `19-initramfs_test.bats`, `clean-stage_test.bats`, `copr-helpers_test.bats`, `disable-repos_test.bats`, `package-lib_test.bats`, `validate-repos_test.bats`.
 - **Vulnerability scans must use the build digest, not a mutable tag.** `vulnerability-scan.yml` downloads `image-digest-{stream_name}-{brand_name}-{image_flavor}` from the triggering `workflow_run` and passes `image@sha256:...` to the scanner to avoid TOCTOU. Artifact names for the default bluefin build: `image-digest-testing-bluefin-main`, `image-digest-testing-bluefin-nvidia`.
 - Weekly promotion uses retag-only (skopeo copy) — **no rebuild at promotion time**. `:stable` is set exclusively by `weekly-testing-promotion.yml`.
 - Build callers do not pass `secrets: inherit` — `reusable-build.yml` only needs `GITHUB_TOKEN`, which is automatically available
