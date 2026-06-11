@@ -61,7 +61,7 @@ jobs:
       id-token: write
       attestations: write
       security-events: write
-      artifact-metadata: write
+      issues: write
     with:
       image_flavors: >-
         ${{
