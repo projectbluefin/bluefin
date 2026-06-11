@@ -116,6 +116,38 @@ jobs:
 
           echo "✅ Promoted ${PROMOTED} flavor(s) to :testing"
 
+  close-failure-issue:
+    # Auto-close any stale e2e failure issue when this run succeeds end-to-end.
+    # Mirrors the close-failure-issue pattern used in reusable-promote-squash.yml.
+    needs: [e2e, run-e2e, promote-to-testing]
+    if: needs.promote-to-testing.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Close stale e2e failure issues
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'area/testing,kind/bug',
+              state: 'open',
+            });
+            const stale = existing.data.filter(i => i.title.startsWith('ci: e2e smoke test failure'));
+            for (const issue of stale) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+                state_reason: 'completed',
+              });
+              core.info(`Closed stale e2e failure issue #${issue.number}`);
+            }
+
   report-failure:
     needs: [e2e, run-e2e, promote-to-testing]
     if: failure() && needs.e2e.outputs.image != ''
