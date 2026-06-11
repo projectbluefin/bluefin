@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# shellcheck source=/dev/null
 source /usr/lib/ublue/setup-services/libsetup.sh
 
 version-script framework tool 1 || exit 0
