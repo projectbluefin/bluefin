@@ -8,36 +8,15 @@ on:
 permissions: {}
 
 jobs:
-  # post-testing-e2e runs on `main` commits (after each successful Testing Images
-  # build on main). The gate must be told main's current HEAD SHA so it looks for
-  # the right run — not the squash commit SHA or the testing branch SHA, neither
-  # of which ever has a post-testing-e2e run.
-  setup:
-    if: github.event.pull_request.head.ref == 'auto/promote-testing-to-main'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      main_sha: ${{ steps.sha.outputs.sha }}
-    steps:
-      - name: Get current main HEAD SHA
-        id: sha
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          sha=$(gh api "repos/${{ github.repository }}/git/ref/heads/main" --jq '.object.sha')
-          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
-
   gate:
-    needs: setup
+    if: github.event.pull_request.head.ref == 'auto/promote-testing-to-main'
     permissions:
       actions: read
       contents: read
       issues: write
       packages: read
       pull-requests: write
-    uses: projectbluefin/actions/.github/workflows/reusable-release-gate.yml@7f79969c2ff74c51ac7f385cb0a86414975308d7 # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-release-gate.yml@1005ca5b03e1bff997aba7689052d4aa419987b3 # v1
     with:
       repo: ${{ github.repository }}
       registry: ghcr.io/projectbluefin
@@ -48,5 +27,4 @@ jobs:
       run_e2e: true
       e2e_suites: smoke,common
       e2e_image: ghcr.io/projectbluefin/bluefin:testing
-      head_sha: ${{ needs.setup.outputs.main_sha }}
     secrets: inherit
