@@ -32,7 +32,7 @@ jobs:
       issues: write
       packages: read
       pull-requests: write
-    uses: projectbluefin/actions/.github/workflows/reusable-release-gate.yml@aff35fb22815a4cdbf505fec9f8d1808717896d3 # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-release-gate.yml@2a4e92bb164ce66fac928f508bfcdfe4b1f7f98a # v1
     with:
       repo: ${{ github.repository }}
       pr_number: ${{ github.event.pull_request.number }}
