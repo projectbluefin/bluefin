@@ -6,13 +6,21 @@ set -ouex pipefail
 
 # All DNF-related operations should be done here whenever possible
 
+# shellcheck source=build_files/shared/copr-helpers.sh
+source /ctx/build_files/shared/copr-helpers.sh
+# shellcheck source=build_files/shared/package-lib.sh
+source /ctx/build_files/shared/package-lib.sh
+
+READ_PKGS="python3 /ctx/build_files/shared/read-packages"
+PKGS_TOML="/ctx/build_files/packages/base.toml"
+
 # use negativo17 for 3rd party packages with higher priority than default
 # mitigate upstream packaging bug: https://bugzilla.redhat.com/show_bug.cgi?id=2332429
 # swap the incorrectly installed OpenCL-ICD-Loader for ocl-icd, the expected package
 # TODO: remove me when F42 dropped, F43 is not affected
 if [[ "$(rpm -E %fedora)" == "42" ]]; then
-dnf5 -y swap --repo='fedora' \
-    OpenCL-ICD-Loader ocl-icd
+    dnf5 -y swap --repo='fedora' \
+        OpenCL-ICD-Loader ocl-icd
 fi
 
 if ! grep -q fedora-multimedia <(dnf5 repolist); then
@@ -24,28 +32,9 @@ fi
 dnf5 config-manager setopt fedora-multimedia.priority=90
 
 # use override to replace mesa and others with less crippled versions
-OVERRIDES=(
-    "intel-gmmlib"
-    "intel-mediasdk"
-    "intel-vpl-gpu-rt"
-    "libheif"
-    "libva"
-    "libva-intel-media-driver"
-    "mesa-dri-drivers"
-    "mesa-filesystem"
-    "mesa-libEGL"
-    "mesa-libGL"
-    "mesa-libgbm"
-    "mesa-vulkan-drivers"
-)
-
+readarray -t OVERRIDES < <($READ_PKGS "$PKGS_TOML" multimedia_overrides)
 dnf5 distro-sync --skip-unavailable -y --repo='fedora-multimedia' "${OVERRIDES[@]}"
 dnf5 versionlock add "${OVERRIDES[@]}"
-
-# shellcheck source=build_files/shared/copr-helpers.sh
-source /ctx/build_files/shared/copr-helpers.sh
-# shellcheck source=build_files/shared/package-lib.sh
-source /ctx/build_files/shared/package-lib.sh
 
 # NOTE:
 # Packages are split into FEDORA_PACKAGES and COPR_PACKAGES to prevent
@@ -53,140 +42,12 @@ source /ctx/build_files/shared/package-lib.sh
 # Fedora packages are installed first in bulk (safe).
 # COPR packages are installed individually with isolated enablement.
 
-# Base packages from Fedora repos - common to all versions
-FEDORA_PACKAGES=(
-    adcli
-    adw-gtk3-theme
-    adwaita-fonts-all
-    alsa-firmware
-    alsa-tools-firmware
-    autofs
-    bash-color-prompt
+# Base packages from Fedora repos — common to all versions
+readarray -t FEDORA_PACKAGES < <($READ_PKGS "$PKGS_TOML" fedora)
 
-    bootc
-    borgbackup
-    containerd
-    cryfs
-    davfs2
-    ddcutil
-    distrobox
-    evtest
-    fastfetch
-    firewall-config
-    fish
-    flatpak-spawn
-    foo2zjs
-    fuse-encfs
-    gcc
-    gcc-c++
-    git-credential-libsecret
-    glow
-    gnome-tweaks
-    google-noto-sans-balinese-fonts
-    google-noto-sans-cjk-fonts
-    google-noto-sans-javanese-fonts
-    google-noto-sans-sundanese-fonts
-    grub2-tools-extra
-    gum
-    gvfs-nfs
-    htop
-    hplip
-    ibus-mozc
-    ibus-unikey
-    ifuse
-    igt-gpu-tools
-    input-remapper
-    intel-vaapi-driver
-    iwd
-    just
-    krb5-workstation
-    libappindicator-gtk3
-    libayatana-appindicator-gtk3
-    libcamera-gstreamer
-    libcamera-tools
-    libgda
-    libgda-sqlite
-    libimobiledevice
-    libimobiledevice-utils
-    libratbag-ratbagd
-    libsss_autofs
-    libva-utils
-    libxcrypt-compat
-    lm_sensors
-    lshw
-    make
-    mesa-libGLU
-    mozc
-    mtools
-    nautilus-gsconnect
-    net-tools
-    nvtop
-    oddjob-mkhomedir
-    openrgb-udev-rules
-    openssh-askpass
-    pam-u2f
-    pam_yubico
-    pamu2fcfg
-    pipewire-libs-extra
-    powerstat
-    powertop
-    printer-driver-brlaser
-    pulseaudio-utils
-    python3-pip
-    python3-pygit2
-    rclone
-    restic
-    samba
-    samba-dcerpc
-    samba-ldb-ldap-modules
-    samba-winbind-clients
-    samba-winbind-modules
-    setools-console
-    smartmontools
-    solaar-udev
-    squashfs-tools
-    sssd-ad
-    sssd-krb5
-    sssd-nfs-idmap
-    switcheroo-control
-    symlinks
-    tcpdump
-    tmux
-    traceroute
-    usbip
-    usbmuxd
-    vim
-    waypipe
-    wireguard-tools
-    wl-clipboard
-    wtype
-    xdg-terminal-exec
-    xprop
-    yubikey-manager
-    zenity
-    zsh
-)
-
-# Version-specific Fedora package additions
-case "$FEDORA_MAJOR_VERSION" in
-    42)
-        FEDORA_PACKAGES+=(
-            evolution-ews-core
-            uld
-        )
-        ;;
-    43)
-        FEDORA_PACKAGES+=(
-            evolution-ews-core
-            gnupg2-scdaemon
-        )
-        ;;
-    44)
-        FEDORA_PACKAGES+=(
-            gnupg2-scdaemon
-        )
-        ;;
-esac
+# Version-specific additions
+readarray -t _ver_pkgs < <($READ_PKGS "$PKGS_TOML" "fedora_v${FEDORA_MAJOR_VERSION}" 2>/dev/null || true)
+FEDORA_PACKAGES+=("${_ver_pkgs[@]}")
 
 # Install Fedora, Tailscale, and multimedia packages together while keeping COPR packages isolated.
 echo "Installing ${#FEDORA_PACKAGES[@]} Fedora packages plus Tailscale and multimedia packages..."
@@ -200,33 +61,16 @@ dnf5 -y install \
     tailscale \
     ffmpeg{,-libs} libavcodec @multimedia gstreamer1-plugins-{bad-free,bad-free-libs,good,base} lame{,-libs} libfdk-aac libjxl ffmpegthumbnailer
 
+# From che/nerd-fonts
+copr_install_isolated "che/nerd-fonts" "nerd-fonts"
+
 # From ublue-os/packages
 copr_install_isolated "ublue-os/packages" \
     "uupd" \
     "oversteer-udev"
 
-# Packages to exclude - common to all versions
-# shellcheck disable=SC2034  # passed by name to remove_excluded_packages
-EXCLUDED_PACKAGES=(
-    default-fonts-cjk-sans
-    fedora-bookmarks
-    fedora-chromium-config
-    fedora-chromium-config-gnome
-    fedora-third-party
-    firefox
-    firefox-langpacks
-    gnome-extensions-app
-    gnome-shell-extension-background-logo
-    gnome-software
-    gnome-software-rpm-ostree
-    gnome-terminal-nautilus
-    google-noto-sans-cjk-vf-fonts
-    podman-docker
-    totem-video-thumbnailer
-    yelp
-)
-
-# Remove excluded packages if they are installed
+# Packages to exclude — conflicts with or replaced by image content
+readarray -t EXCLUDED_PACKAGES < <($READ_PKGS "$PKGS_TOML" excluded)
 remove_excluded_packages EXCLUDED_PACKAGES
 
 ## Pins and Overrides
@@ -238,11 +82,5 @@ remove_excluded_packages EXCLUDED_PACKAGES
 #    Workaround pkcs11-provider regression, see issue #1943
 #    rpm-ostree override replace https://bodhi.fedoraproject.org/updates/FEDORA-2024-dd2e9fb225
 #fi
-
-# Create a standard symlink for the NVIDIA Vulkan ICD so AppImages and legacy games
-# that hardcode "nvidia_icd.json" can find the GPU. On non-NVIDIA systems this is a
-# dangling symlink, which the Vulkan loader safely ignores.
-mkdir -p /usr/share/vulkan/icd.d/
-ln -sf /usr/share/vulkan/icd.d/nvidia_icd.x86_64.json /usr/share/vulkan/icd.d/nvidia_icd.json
 
 echo "::endgroup::"
