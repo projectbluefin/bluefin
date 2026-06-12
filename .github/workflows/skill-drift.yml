@@ -11,7 +11,7 @@ permissions:
 jobs:
   skill-drift:
     # Guardrail: CI/workflow changes must update the matching skill and docs in the same PR.
-    uses: projectbluefin/actions/.github/workflows/skill-drift-check.yml@3025b5d31f34ce44c19eab41a7fa5d4d5c5b688e # v1
+    uses: projectbluefin/actions/.github/workflows/skill-drift-check.yml@c4e9e5511a984cc88623be152e140d96740185f5 # v1
     with:
       code-paths: '[".github/workflows/**", ".github/actions/**", "build_files/**", "Justfile", "recipes/**"]'
       skill-paths: '["docs/skills/**", "docs/*.md", "AGENTS.md"]'
