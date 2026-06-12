@@ -1,3 +1,4 @@
+# renovate: managed
 images:
   - name: common
     image: ghcr.io/projectbluefin/common
