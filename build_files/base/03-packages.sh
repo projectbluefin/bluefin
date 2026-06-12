@@ -70,6 +70,7 @@ copr_install_isolated "ublue-os/packages" \
     "oversteer-udev"
 
 # Packages to exclude — conflicts with or replaced by image content
+# shellcheck disable=SC2034  # passed by name to remove_excluded_packages
 readarray -t EXCLUDED_PACKAGES < <($READ_PKGS "$PKGS_TOML" excluded)
 remove_excluded_packages EXCLUDED_PACKAGES
 
