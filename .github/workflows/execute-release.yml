@@ -20,7 +20,7 @@ jobs:
       issues: write
       packages: write
       pull-requests: write
-    uses: projectbluefin/actions/.github/workflows/reusable-execute-release.yml@2a4e92bb164ce66fac928f508bfcdfe4b1f7f98a # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-execute-release.yml@d1bec11e3fcd610e3285b3f50615c1f35c2d2455 # v1
     with:
       registry: ghcr.io/projectbluefin
       variants: >-
@@ -38,7 +38,7 @@ jobs:
       contents: write
       id-token: write
       packages: read
-    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@2a4e92bb164ce66fac928f508bfcdfe4b1f7f98a # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@d1bec11e3fcd610e3285b3f50615c1f35c2d2455 # v1
     with:
       stream_name: stable
       image: ghcr.io/projectbluefin/bluefin
