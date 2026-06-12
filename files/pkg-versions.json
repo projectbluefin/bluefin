@@ -1,0 +1,7306 @@
+{
+  "7zip": {
+    "version": "25.01-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ImageMagick": {
+    "version": "7.1.2.13-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ImageMagick-libs": {
+    "version": "7.1.2.13-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "LCEVCdec": {
+    "version": "4.1.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "LibRaw": {
+    "version": "0.22.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ModemManager": {
+    "version": "1.24.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ModemManager-glib": {
+    "version": "1.24.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager": {
+    "version": "1.56.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-adsl": {
+    "version": "1.56.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-bluetooth": {
+    "version": "1.56.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-config-connectivity-fedora": {
+    "version": "1.56.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-libnm": {
+    "version": "1.56.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-openconnect": {
+    "version": "1.2.10-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-openconnect-gnome": {
+    "version": "1.2.10-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-openvpn": {
+    "version": "1.12.5-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-openvpn-gnome": {
+    "version": "1.12.5-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-ppp": {
+    "version": "1.56.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-ssh": {
+    "version": "1.4.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-ssh-gnome": {
+    "version": "1.4.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-ssh-selinux": {
+    "version": "1.4.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-vpnc": {
+    "version": "1.4.0-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-vpnc-gnome": {
+    "version": "1.4.0-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-wifi": {
+    "version": "1.56.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "NetworkManager-wwan": {
+    "version": "1.56.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "PackageKit-glib": {
+    "version": "1.3.4-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "SDL3": {
+    "version": "3.4.8-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "aardvark-dns": {
+    "version": "1.17.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "abattis-cantarell-fonts": {
+    "version": "0.301-17.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "abattis-cantarell-vf-fonts": {
+    "version": "0.301-17.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "abseil-cpp": {
+    "version": "20260107.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "accountsservice": {
+    "version": "23.13.9-16.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "accountsservice-libs": {
+    "version": "23.13.9-16.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "acl": {
+    "version": "2.3.2-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "adcli": {
+    "version": "0.9.3.1-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "adcli-selinux": {
+    "version": "0.9.3.1-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "adobe-mappings-cmap": {
+    "version": "20231115-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "adobe-mappings-cmap-deprecated": {
+    "version": "20231115-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "adobe-mappings-pdf": {
+    "version": "20190401-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "adobe-source-code-pro-fonts": {
+    "version": "2.042.1.062.1.026-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "adw-gtk3-theme": {
+    "version": "6.4-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "adwaita-cursor-theme": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "adwaita-fonts-all": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "adwaita-icon-theme": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "adwaita-icon-theme-legacy": {
+    "version": "46.2-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "adwaita-mono-fonts": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "adwaita-sans-fonts": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "alsa-firmware": {
+    "version": "1.2.4-17.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "alsa-lib": {
+    "version": "1.2.15.3-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "alsa-sof-firmware": {
+    "version": "2025.12.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "alsa-tools-firmware": {
+    "version": "1.2.15-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "alsa-ucm": {
+    "version": "1.2.15.3-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "alsa-utils": {
+    "version": "1.2.15.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "alternatives": {
+    "version": "1.33-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "amd-gpu-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "amd-ucode-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "anthy-unicode": {
+    "version": "1.0.0.20260213-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "antiword": {
+    "version": "0.37-44.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "appstream": {
+    "version": "1.1.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "appstream-data": {
+    "version": "44-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "apr": {
+    "version": "1.7.6-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "apr-util": {
+    "version": "1.6.3-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "apr-util-lmdb": {
+    "version": "1.6.3-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "apr-util-openssl": {
+    "version": "1.6.3-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "argyllcms": {
+    "version": "3.4.1-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "argyllcms-data": {
+    "version": "3.4.1-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "aribb24": {
+    "version": "1.0.3^20160216git5e9be27-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "at-spi2-atk": {
+    "version": "2.60.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "at-spi2-core": {
+    "version": "2.60.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "atheros-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "atk": {
+    "version": "2.60.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "attr": {
+    "version": "2.5.2-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "audit": {
+    "version": "4.1.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "audit-libs": {
+    "version": "4.1.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "audit-rules": {
+    "version": "4.1.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "authselect": {
+    "version": "1.7.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "authselect-libs": {
+    "version": "1.7.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "autofs": {
+    "version": "5.1.9-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "avahi": {
+    "version": "0.9~rc2-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "avahi-glib": {
+    "version": "0.9~rc2-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "avahi-gobject": {
+    "version": "0.9~rc2-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "avahi-libs": {
+    "version": "0.9~rc2-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "avahi-tools": {
+    "version": "0.9~rc2-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "b43-fwcutter": {
+    "version": "019-41.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "b43-openfwwf": {
+    "version": "5.2-48.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bash": {
+    "version": "5.3.9-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bash-color-prompt": {
+    "version": "0.7.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bash-completion": {
+    "version": "2.17-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bc": {
+    "version": "1.08.2-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bcache-tools": {
+    "version": "1.1-16.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bind-libs": {
+    "version": "9.18.49-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bind-utils": {
+    "version": "9.18.49-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "binutils": {
+    "version": "2.46-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bison": {
+    "version": "3.8.2-15.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bluez": {
+    "version": "5.86-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bluez-cups": {
+    "version": "5.86-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bluez-libs": {
+    "version": "5.86-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bluez-obexd": {
+    "version": "5.86-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bolt": {
+    "version": "0.9.11-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "boost-atomic": {
+    "version": "1.90.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "boost-chrono": {
+    "version": "1.90.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "boost-container": {
+    "version": "1.90.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "boost-date-time": {
+    "version": "1.90.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "boost-filesystem": {
+    "version": "1.90.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "boost-program-options": {
+    "version": "1.90.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "boost-thread": {
+    "version": "1.90.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bootc": {
+    "version": "1.15.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bootupd": {
+    "version": "0.2.34-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "borgbackup": {
+    "version": "1.4.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "braille-printer-app": {
+    "version": "2.0~b0^386eea385f-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "brcmfmac-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "brlapi": {
+    "version": "0.8.7-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "brltty": {
+    "version": "6.8-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "btrfs-progs": {
+    "version": "7.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bubblewrap": {
+    "version": "0.11.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "buildah": {
+    "version": "1.43.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bzip2": {
+    "version": "1.0.8-23.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "bzip2-libs": {
+    "version": "1.0.8-23.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "c-ares": {
+    "version": "1.34.6-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "c2esp": {
+    "version": "2.7-37.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ca-certificates": {
+    "version": "2025.2.80_v9.0.304-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cairo": {
+    "version": "1.18.4-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cairo-gobject": {
+    "version": "1.18.4-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cairomm1.16": {
+    "version": "1.18.0-16.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "capstone": {
+    "version": "5.0.6-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "catatonit": {
+    "version": "0.2.1-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cdparanoia-libs": {
+    "version": "10.2-50.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "checkpolicy": {
+    "version": "3.10-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "chrony": {
+    "version": "4.8-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cifs-utils": {
+    "version": "7.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cifs-utils-info": {
+    "version": "7.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cirrus-audio-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cjson": {
+    "version": "1.7.18-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cldr-emoji-annotation": {
+    "version": "48.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cldr-emoji-annotation-dtd": {
+    "version": "48.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cmake-filesystem": {
+    "version": "4.3.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "codec2": {
+    "version": "1.2.0-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "color-filesystem": {
+    "version": "1-38.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "colord": {
+    "version": "1.4.8-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "colord-gtk4": {
+    "version": "0.3.1-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "colord-libs": {
+    "version": "1.4.8-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "composefs": {
+    "version": "1.0.8-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "composefs-libs": {
+    "version": "1.0.8-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "compsize": {
+    "version": "1.5^git20250123.d79eacf-15.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "conmon": {
+    "version": "2.2.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "container-selinux": {
+    "version": "2.248.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "containerd": {
+    "version": "2.2.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "containers-common": {
+    "version": "0.67.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "containers-common-extra": {
+    "version": "0.67.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "coreutils": {
+    "version": "9.10-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "coreutils-common": {
+    "version": "9.10-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cpio": {
+    "version": "2.15-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cpp": {
+    "version": "16.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cracklib": {
+    "version": "2.9.11-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cracklib-dicts": {
+    "version": "2.9.11-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "criu": {
+    "version": "4.2-13.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "criu-libs": {
+    "version": "4.2-13.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "crun": {
+    "version": "1.27.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cryfs": {
+    "version": "0.11.3-15.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "crypto-policies": {
+    "version": "20251128-3.git19878fe.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "crypto-policies-scripts": {
+    "version": "20251128-3.git19878fe.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cryptsetup": {
+    "version": "2.8.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cryptsetup-libs": {
+    "version": "2.8.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cups": {
+    "version": "2.4.19-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cups-browsed": {
+    "version": "2.1.1-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cups-client": {
+    "version": "2.4.19-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cups-filesystem": {
+    "version": "2.4.19-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cups-filters": {
+    "version": "2.0.1-14.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cups-filters-driverless": {
+    "version": "2.0.1-14.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cups-ipptool": {
+    "version": "2.4.19-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cups-libs": {
+    "version": "2.4.19-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cups-pk-helper": {
+    "version": "0.2.7-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "curl": {
+    "version": "8.18.0-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cyrus-sasl-gssapi": {
+    "version": "2.1.28-35.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cyrus-sasl-lib": {
+    "version": "2.1.28-35.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "cyrus-sasl-plain": {
+    "version": "2.1.28-35.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "davfs2": {
+    "version": "1.7.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "davs2-libs": {
+    "version": "1.7^20220903gitb41cf11-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dbus": {
+    "version": "1.16.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dbus-broker": {
+    "version": "37-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dbus-common": {
+    "version": "1.16.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dbus-daemon": {
+    "version": "1.16.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dbus-libs": {
+    "version": "1.16.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dbus-tools": {
+    "version": "1.16.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dbus-x11": {
+    "version": "1.16.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dconf": {
+    "version": "0.49.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ddcutil": {
+    "version": "2.2.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-editor": {
+    "version": "8.7.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-am": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-ar": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-as": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-ast": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-be": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-bg": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-bn": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-bo": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-br": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-chr": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-cjk-mono": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-cjk-serif": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-core-emoji": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-core-math": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-core-mono": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-core-sans": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-core-serif": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-dv": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-dz": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-el": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-eo": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-eu": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-fa": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-got": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-gu": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-he": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-hi": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-hy": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-ia": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-ii": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-iu": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-ka": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-kab": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-km": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-kn": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-ku": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-lo": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-mai": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-ml": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-mni": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-mr": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-my": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-nb": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-ne": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-nn": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-nqo": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-nr": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-nso": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-or": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-other-mono": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-other-sans": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-other-serif": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-pa": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-ru": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-sat": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-si": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-ss": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-syr": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-ta": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-te": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-th": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-tn": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-ts": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-uk": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-ur": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-ve": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-vi": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-xh": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-yi": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "default-fonts-zu": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "desktop-backgrounds-gnome": {
+    "version": "44.0.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "desktop-file-utils": {
+    "version": "0.28-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "device-mapper": {
+    "version": "1.02.212-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "device-mapper-event": {
+    "version": "1.02.212-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "device-mapper-event-libs": {
+    "version": "1.02.212-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "device-mapper-libs": {
+    "version": "1.02.212-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "device-mapper-persistent-data": {
+    "version": "1.3.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "diffutils": {
+    "version": "3.12-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "distribution-gpg-keys": {
+    "version": "1.119-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "distrobox": {
+    "version": "1.8.2.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "djvulibre-libs": {
+    "version": "3.5.30-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dmidecode": {
+    "version": "3.6-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dnf5": {
+    "version": "5.4.2.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dnf5-plugins": {
+    "version": "5.4.2.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dnf5daemon-server": {
+    "version": "5.4.2.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dnf5daemon-server-polkit": {
+    "version": "5.4.2.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dns-root-data": {
+    "version": "2026260100-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dnsmasq": {
+    "version": "2.92rel2-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dosfstools": {
+    "version": "4.2-18.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dotconf": {
+    "version": "1.4.1-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "double-conversion": {
+    "version": "3.4.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dracut": {
+    "version": "108-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "duktape": {
+    "version": "2.7.0-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "dymo-cups-drivers": {
+    "version": "1.4.0.5-25.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "e2fsprogs": {
+    "version": "1.47.3-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "e2fsprogs-libs": {
+    "version": "1.47.3-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "efi-filesystem": {
+    "version": "6-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "efibootmgr": {
+    "version": "18-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "efivar-libs": {
+    "version": "39-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "elfutils-debuginfod-client": {
+    "version": "0.195-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "elfutils-default-yama-scope": {
+    "version": "0.195-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "elfutils-libelf": {
+    "version": "0.195-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "elfutils-libelf-devel": {
+    "version": "0.195-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "elfutils-libs": {
+    "version": "0.195-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "emacs-filesystem": {
+    "version": "30.2-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "enchant2": {
+    "version": "2.8.16-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "epiphany-runtime": {
+    "version": "50.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "espeak-ng": {
+    "version": "1.52.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ethtool": {
+    "version": "7.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "evolution-data-server": {
+    "version": "3.60.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "evolution-data-server-langpacks": {
+    "version": "3.60.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "evolution-ews-core": {
+    "version": "3.60.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "evolution-ews-langpacks": {
+    "version": "3.60.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "evtest": {
+    "version": "1.36-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "exempi": {
+    "version": "2.6.4-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "exfatprogs": {
+    "version": "1.3.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "exiv2": {
+    "version": "0.28.6-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "exiv2-libs": {
+    "version": "0.28.6-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "expat": {
+    "version": "2.8.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "f2fs-tools": {
+    "version": "1.16.0-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "f44-backgrounds-base": {
+    "version": "44.0.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "f44-backgrounds-gnome": {
+    "version": "44.0.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "faad2-libs": {
+    "version": "2.11.2-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fastfetch": {
+    "version": "2.63.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fedora-gpg-keys": {
+    "version": "44-1",
+    "last_seen": "2026-06-12"
+  },
+  "fedora-logos-httpd": {
+    "version": "42.0.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fedora-release-common": {
+    "version": "44-18",
+    "last_seen": "2026-06-12"
+  },
+  "fedora-release-identity-silverblue": {
+    "version": "44-18",
+    "last_seen": "2026-06-12"
+  },
+  "fedora-release-ostree-desktop": {
+    "version": "44-18",
+    "last_seen": "2026-06-12"
+  },
+  "fedora-release-silverblue": {
+    "version": "44-18",
+    "last_seen": "2026-06-12"
+  },
+  "fedora-repos": {
+    "version": "44-1",
+    "last_seen": "2026-06-12"
+  },
+  "fedora-repos-archive": {
+    "version": "44-1",
+    "last_seen": "2026-06-12"
+  },
+  "fedora-workstation-backgrounds": {
+    "version": "1.6-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ffmpeg": {
+    "version": "8.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ffmpeg-libs": {
+    "version": "8.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ffmpegthumbnailer": {
+    "version": "2.3.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ffmpegthumbnailer-libs": {
+    "version": "2.3.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fftw-libs-double": {
+    "version": "3.3.10-17.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fftw-libs-single": {
+    "version": "3.3.10-17.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "file": {
+    "version": "5.46-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "file-libs": {
+    "version": "5.46-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "filesystem": {
+    "version": "3.18-52.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "findutils": {
+    "version": "4.10.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "firewall-config": {
+    "version": "2.4.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "firewalld": {
+    "version": "2.4.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "firewalld-filesystem": {
+    "version": "2.4.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fish": {
+    "version": "4.6.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "flac-libs": {
+    "version": "1.5.0-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "flashrom": {
+    "version": "1.6.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "flatpak": {
+    "version": "1.17.7-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "flatpak-libs": {
+    "version": "1.17.7-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "flatpak-selinux": {
+    "version": "1.17.7-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "flatpak-session-helper": {
+    "version": "1.17.7-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "flatpak-spawn": {
+    "version": "1.0.6-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "flex": {
+    "version": "2.6.4-24.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "flite": {
+    "version": "2.2-13.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fmt": {
+    "version": "11.2.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fontconfig": {
+    "version": "2.17.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fonts-filesystem": {
+    "version": "5.0.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "foo2zjs": {
+    "version": "0.20201003-29.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "foomatic-db-filesystem": {
+    "version": "4.0-83.20230810.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fpaste": {
+    "version": "0.5.0.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fprintd": {
+    "version": "1.94.5-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fprintd-pam": {
+    "version": "1.94.5-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "freeglut": {
+    "version": "3.8.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "freerdp-libs": {
+    "version": "3.26.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "freetype": {
+    "version": "2.14.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fribidi": {
+    "version": "1.0.16-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fstrm": {
+    "version": "0.6.1-14.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fuse": {
+    "version": "2.9.9-25.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fuse-common": {
+    "version": "3.18.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fuse-encfs": {
+    "version": "1.9.5-28.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fuse-libs": {
+    "version": "2.9.9-25.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fuse-overlayfs": {
+    "version": "1.16-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fuse3": {
+    "version": "3.18.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fuse3-libs": {
+    "version": "3.18.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fwupd": {
+    "version": "2.1.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fwupd-efi": {
+    "version": "1.8-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fwupd-plugin-flashrom": {
+    "version": "2.1.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fwupd-plugin-modem-manager": {
+    "version": "2.1.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fwupd-plugin-uefi-capsule-data": {
+    "version": "2.1.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fxload": {
+    "version": "2008_10_13-34.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "fzf": {
+    "version": "0.70.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "game-music-emu": {
+    "version": "0.6.4-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gamemode": {
+    "version": "1.8.2-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gawk": {
+    "version": "5.3.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gawk-all-langpacks": {
+    "version": "5.3.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gcc": {
+    "version": "16.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gcc-c++": {
+    "version": "16.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gcr": {
+    "version": "4.4.0.1-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gcr-libs": {
+    "version": "4.4.0.1-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gcr3": {
+    "version": "3.41.1-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gcr3-base": {
+    "version": "3.41.1-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gd": {
+    "version": "2.3.3-21.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gdbm": {
+    "version": "1.23-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gdbm-libs": {
+    "version": "1.23-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gdk-pixbuf2": {
+    "version": "2.44.4-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gdm": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gdouros-symbola-fonts": {
+    "version": "10.24-19.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "generic-logos": {
+    "version": "18.0.0-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "geoclue2": {
+    "version": "2.8.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "geoclue2-libs": {
+    "version": "2.8.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "geocode-glib": {
+    "version": "3.26.4-15.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gettext": {
+    "version": "0.26-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gettext-envsubst": {
+    "version": "0.26-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gettext-libs": {
+    "version": "0.26-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gettext-runtime": {
+    "version": "0.26-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ghostscript": {
+    "version": "10.06.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ghostscript-tools-fontutils": {
+    "version": "10.06.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ghostscript-tools-printing": {
+    "version": "10.06.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "giflib": {
+    "version": "6.1.3-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "git": {
+    "version": "2.54.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "git-core": {
+    "version": "2.54.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "git-core-doc": {
+    "version": "2.54.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "git-credential-libsecret": {
+    "version": "2.54.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gjs": {
+    "version": "1.88.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "glib-networking": {
+    "version": "2.80.1-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "glib2": {
+    "version": "2.88.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "glibc": {
+    "version": "2.43-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "glibc-all-langpacks": {
+    "version": "2.43-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "glibc-common": {
+    "version": "2.43-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "glibc-devel": {
+    "version": "2.43-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "glibc-gconv-extra": {
+    "version": "2.43-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "glibmm2.68": {
+    "version": "2.88.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "glow": {
+    "version": "2.1.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "glx-utils": {
+    "version": "9.0.0-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "glycin-gtk4-libs": {
+    "version": "2.1.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "glycin-libs": {
+    "version": "2.1.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "glycin-loaders": {
+    "version": "2.1.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "glycin-thumbnailer": {
+    "version": "2.1.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gmp": {
+    "version": "6.3.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-app-list": {
+    "version": "3.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-autoar": {
+    "version": "0.4.5-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-backgrounds": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-bluetooth": {
+    "version": "47.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-bluetooth-libs": {
+    "version": "47.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-browser-connector": {
+    "version": "42.1-14.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-classic-session": {
+    "version": "50.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-color-manager": {
+    "version": "3.36.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-control-center": {
+    "version": "50.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-control-center-filesystem": {
+    "version": "50.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-desktop3": {
+    "version": "44.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-desktop4": {
+    "version": "44.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-disk-utility": {
+    "version": "46.1-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-epub-thumbnailer": {
+    "version": "1.8-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-initial-setup": {
+    "version": "50.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-keyring": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-keyring-pam": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-menus": {
+    "version": "3.38.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-online-accounts": {
+    "version": "3.58.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-online-accounts-libs": {
+    "version": "3.58.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-remote-desktop": {
+    "version": "50.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-session": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-session-wayland-session": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-settings-daemon": {
+    "version": "50.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-shell": {
+    "version": "50.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-shell-common": {
+    "version": "50.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-shell-extension-apps-menu": {
+    "version": "50.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-shell-extension-common": {
+    "version": "50.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-shell-extension-gsconnect": {
+    "version": "72-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-shell-extension-launch-new-instance": {
+    "version": "50.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-shell-extension-places-menu": {
+    "version": "50.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-shell-extension-window-list": {
+    "version": "50.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-system-monitor": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-tour": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-tweaks": {
+    "version": "49.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-user-docs": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnome-user-share": {
+    "version": "48.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnulib-l10n": {
+    "version": "20241231-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnupg2": {
+    "version": "2.4.9-16.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnupg2-dirmngr": {
+    "version": "2.4.9-16.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnupg2-gpg-agent": {
+    "version": "2.4.9-16.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnupg2-gpgconf": {
+    "version": "2.4.9-16.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnupg2-keyboxd": {
+    "version": "2.4.9-16.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnupg2-scdaemon": {
+    "version": "2.4.9-16.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnupg2-verify": {
+    "version": "2.4.9-16.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnutls": {
+    "version": "3.8.13-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gnutls-dane": {
+    "version": "3.8.13-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gobject-introspection": {
+    "version": "1.86.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-droid-sans-fonts": {
+    "version": "20200215-24.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-color-emoji-fonts": {
+    "version": "20250623-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-emoji-fonts": {
+    "version": "20250623-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-fonts-common": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-naskh-arabic-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-arabic-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-armenian-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-balinese-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-bengali-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-canadian-aboriginal-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-cherokee-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-cjk-fonts": {
+    "version": "2.004-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-devanagari-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-ethiopic-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-georgian-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-gothic-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-gujarati-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-gurmukhi-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-hebrew-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-javanese-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-kannada-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-khmer-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-lao-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-math-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-meetei-mayek-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-mono-cjk-vf-fonts": {
+    "version": "2.004-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-mono-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-nko-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-ol-chiki-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-oriya-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-sinhala-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-sundanese-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-symbols-2-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-symbols-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-syriac-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-tamil-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-telugu-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-thaana-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-thai-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-sans-yi-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-armenian-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-bengali-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-cjk-vf-fonts": {
+    "version": "2.003-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-devanagari-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-ethiopic-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-georgian-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-gujarati-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-gurmukhi-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-hebrew-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-kannada-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-khmer-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-lao-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-oriya-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-sinhala-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-tamil-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-telugu-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-thai-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "google-noto-serif-vf-fonts": {
+    "version": "20251201-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gpg-pubkey": {
+    "version": "e9a491a3de247814e7e067eae06f8ecdd651ff2e-5dadbbc1",
+    "last_seen": "2026-06-12"
+  },
+  "gpgme": {
+    "version": "2.0.1-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gpgmepp": {
+    "version": "2.0.1-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gpm-libs": {
+    "version": "1.20.7-53.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "graphene": {
+    "version": "1.10.8-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "graphite2": {
+    "version": "1.3.14-20.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "graphviz-libs": {
+    "version": "14.1.4-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "grep": {
+    "version": "3.12-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "groff-base": {
+    "version": "1.23.0-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "grub2-common": {
+    "version": "2.12-58.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "grub2-efi-ia32": {
+    "version": "2.12-58.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "grub2-efi-x64": {
+    "version": "2.12-58.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "grub2-pc": {
+    "version": "2.12-58.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "grub2-pc-modules": {
+    "version": "2.12-58.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "grub2-tools": {
+    "version": "2.12-58.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "grub2-tools-extra": {
+    "version": "2.12-58.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "grub2-tools-minimal": {
+    "version": "2.12-58.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gsettings-desktop-schemas": {
+    "version": "50.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gsl": {
+    "version": "2.8-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gsm": {
+    "version": "1.0.24-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gsound": {
+    "version": "1.0.3-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gssdp": {
+    "version": "1.6.4-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gssproxy": {
+    "version": "0.9.2-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gst-editing-services": {
+    "version": "1.28.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gst-thumbnailers": {
+    "version": "1.0.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gstreamer1": {
+    "version": "1.28.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gstreamer1-plugin-dav1d": {
+    "version": "0.15.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gstreamer1-plugin-libav": {
+    "version": "1.28.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gstreamer1-plugin-openh264": {
+    "version": "1.28.3-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gstreamer1-plugins-bad-free": {
+    "version": "1.28.3-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gstreamer1-plugins-bad-free-libs": {
+    "version": "1.28.3-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gstreamer1-plugins-base": {
+    "version": "1.28.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gstreamer1-plugins-good": {
+    "version": "1.28.3-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gstreamer1-plugins-good-qt": {
+    "version": "1.28.3-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gstreamer1-plugins-good-qt6": {
+    "version": "1.28.3-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gstreamer1-plugins-ugly-free": {
+    "version": "1.28.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gtk-update-icon-cache": {
+    "version": "3.24.52-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gtk2": {
+    "version": "2.24.33-25.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gtk3": {
+    "version": "3.24.52-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gtk4": {
+    "version": "4.22.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gtkmm4.0": {
+    "version": "4.22.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gtksourceview4": {
+    "version": "4.8.4-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gtksourceview5": {
+    "version": "5.20.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gum": {
+    "version": "0.17.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gupnp": {
+    "version": "1.6.9-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gupnp-av": {
+    "version": "0.14.4-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gupnp-dlna": {
+    "version": "0.12.0-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gupnp-igd": {
+    "version": "1.6.0-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gutenprint": {
+    "version": "5.3.5-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gutenprint-cups": {
+    "version": "5.3.5-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gutenprint-libs": {
+    "version": "5.3.5-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gvfs": {
+    "version": "1.60.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gvfs-afc": {
+    "version": "1.60.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gvfs-afp": {
+    "version": "1.60.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gvfs-archive": {
+    "version": "1.60.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gvfs-client": {
+    "version": "1.60.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gvfs-fuse": {
+    "version": "1.60.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gvfs-goa": {
+    "version": "1.60.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gvfs-gphoto2": {
+    "version": "1.60.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gvfs-mtp": {
+    "version": "1.60.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gvfs-nfs": {
+    "version": "1.60.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gvfs-smb": {
+    "version": "1.60.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gweather-locations": {
+    "version": "2026.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gweather-locations-common": {
+    "version": "2026.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "gzip": {
+    "version": "1.14-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "harfbuzz": {
+    "version": "14.1.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "harfbuzz-icu": {
+    "version": "14.1.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hdparm": {
+    "version": "9.65-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hfsplus-tools": {
+    "version": "540.1.linux3-36.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hicolor-icon-theme": {
+    "version": "0.18-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hidapi": {
+    "version": "0.15.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "highway": {
+    "version": "1.3.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hiredis": {
+    "version": "1.2.0-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hostname": {
+    "version": "3.25-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hplip": {
+    "version": "3.25.8-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hplip-common": {
+    "version": "3.25.8-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hplip-libs": {
+    "version": "3.25.8-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "htop": {
+    "version": "3.4.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "httpd": {
+    "version": "2.4.67-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "httpd-core": {
+    "version": "2.4.67-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "httpd-filesystem": {
+    "version": "2.4.67-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "httpd-tools": {
+    "version": "2.4.67-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hunspell": {
+    "version": "1.7.2-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hunspell-en": {
+    "version": "0.20260225-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hunspell-en-AU": {
+    "version": "0.20260225-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hunspell-en-CA": {
+    "version": "0.20260225-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hunspell-en-GB": {
+    "version": "0.20260225-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hunspell-en-US": {
+    "version": "0.20260225-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hunspell-filesystem": {
+    "version": "1.7.2-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hwdata": {
+    "version": "0.407-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hwloc-libs": {
+    "version": "2.12.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hyperv-daemons": {
+    "version": "6.10-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hyperv-daemons-license": {
+    "version": "6.10-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hypervfcopyd": {
+    "version": "6.10-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hypervkvpd": {
+    "version": "6.10-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hypervvssd": {
+    "version": "6.10-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "hyphen": {
+    "version": "2.8.8-28.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "i2c-tools": {
+    "version": "4.4-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ibus": {
+    "version": "1.5.34-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ibus-anthy": {
+    "version": "1.5.18-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ibus-anthy-python": {
+    "version": "1.5.18-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ibus-chewing": {
+    "version": "2.1.7-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ibus-gtk2": {
+    "version": "1.5.34-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ibus-gtk3": {
+    "version": "1.5.34-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ibus-gtk4": {
+    "version": "1.5.34-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ibus-hangul": {
+    "version": "1.5.5-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ibus-libpinyin": {
+    "version": "1.16.5-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ibus-libs": {
+    "version": "1.5.34-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ibus-m17n": {
+    "version": "1.4.39-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ibus-mozc": {
+    "version": "2.29.5111.102-18.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ibus-setup": {
+    "version": "1.5.34-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ibus-typing-booster": {
+    "version": "2.30.8-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ibus-unikey": {
+    "version": "0.7.0~beta1-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ifuse": {
+    "version": "1.2.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "igt-gpu-tools": {
+    "version": "2.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "iio-sensor-proxy": {
+    "version": "3.8-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ilbc": {
+    "version": "3.0.4-19.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ima-evm-utils-libs": {
+    "version": "1.6.2-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "imath": {
+    "version": "3.1.12-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "inih": {
+    "version": "62-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "inih-cpp": {
+    "version": "62-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "initscripts-service": {
+    "version": "10.27-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "input-remapper": {
+    "version": "2.2.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "intel-audio-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "intel-gmmlib": {
+    "version": "22.10.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "intel-gpu-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "intel-lpmd": {
+    "version": "0.0.9-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "intel-mediasdk": {
+    "version": "23.2.2-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "intel-vaapi-driver": {
+    "version": "2.4.1-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "intel-vpl-gpu-rt": {
+    "version": "26.1.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "intel-vsc-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ipp-usb": {
+    "version": "0.9.31-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "iproute": {
+    "version": "6.17.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ipset": {
+    "version": "7.24-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ipset-libs": {
+    "version": "7.24-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "iptables-libs": {
+    "version": "1.8.11-13.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "iptables-nft": {
+    "version": "1.8.11-13.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "iptstate": {
+    "version": "2.2.7-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "iputils": {
+    "version": "20250605-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "iso-codes": {
+    "version": "4.20.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "iw": {
+    "version": "6.17-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "iwd": {
+    "version": "3.12-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "iwlegacy-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "iwlwifi-dvm-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "iwlwifi-mld-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "iwlwifi-mvm-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "jansson": {
+    "version": "2.14-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "javascriptcoregtk4.1": {
+    "version": "2.52.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "javascriptcoregtk6.0": {
+    "version": "2.52.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "jbig2dec-libs": {
+    "version": "0.20-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "jbigkit-libs": {
+    "version": "2.1-33.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "jetbrains-mono-fonts": {
+    "version": "2.304-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "jetbrains-mono-fonts-all": {
+    "version": "2.304-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "jetbrains-mono-nl-fonts": {
+    "version": "2.304-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "jomolhari-fonts": {
+    "version": "0.003-45.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "jq": {
+    "version": "1.8.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "json-c": {
+    "version": "0.18-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "json-glib": {
+    "version": "1.10.8-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "julietaula-montserrat-fonts": {
+    "version": "9.000-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "just": {
+    "version": "1.50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kasumi-common": {
+    "version": "2.5-50.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kasumi-unicode": {
+    "version": "2.5-50.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kbd": {
+    "version": "2.9.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kbd-legacy": {
+    "version": "2.9.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kbd-misc": {
+    "version": "2.9.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kde-filesystem": {
+    "version": "5-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kernel": {
+    "version": "7.0.8-200.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kernel-core": {
+    "version": "7.0.8-200.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kernel-devel-matched": {
+    "version": "7.0.8-200.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kernel-headers": {
+    "version": "7.0.6-200.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kernel-modules": {
+    "version": "7.0.8-200.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kernel-modules-core": {
+    "version": "7.0.8-200.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kernel-modules-extra": {
+    "version": "7.0.8-200.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kernel-tools": {
+    "version": "7.0.10-201.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kernel-tools-libs": {
+    "version": "7.0.10-201.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "keyutils": {
+    "version": "1.6.3-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "keyutils-libs": {
+    "version": "1.6.3-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kf6-filesystem": {
+    "version": "6.26.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kf6-karchive": {
+    "version": "6.26.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kf6-kimageformats": {
+    "version": "6.26.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kmod": {
+    "version": "34.2-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kmod-libs": {
+    "version": "34.2-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kmod-v4l2loopback": {
+    "version": "0.15.3-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kmod-zfs": {
+    "version": "2.3.7-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kpartx": {
+    "version": "0.13.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "krb5-libs": {
+    "version": "1.22.2-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "krb5-pkinit": {
+    "version": "1.22.2-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "krb5-workstation": {
+    "version": "1.22.2-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kvazaar-libs": {
+    "version": "2.3.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "kyotocabinet-libs": {
+    "version": "1.2.80-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lame": {
+    "version": "3.100-21.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lame-libs": {
+    "version": "3.100-21.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "langpacks-core-en": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "langpacks-en": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "langpacks-fonts-en": {
+    "version": "4.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "langtable": {
+    "version": "0.0.70-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lcms": {
+    "version": "1.19-43.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lcms-libs": {
+    "version": "1.19-43.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lcms2": {
+    "version": "2.16-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "leptonica": {
+    "version": "1.87.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "less": {
+    "version": "692-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libICE": {
+    "version": "1.1.2-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libSM": {
+    "version": "1.2.5-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libX11": {
+    "version": "1.8.13-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libX11-common": {
+    "version": "1.8.13-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libX11-xcb": {
+    "version": "1.8.13-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXScrnSaver": {
+    "version": "1.2.4-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXau": {
+    "version": "1.0.12-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXcomposite": {
+    "version": "0.4.6-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXcursor": {
+    "version": "1.2.3-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXdamage": {
+    "version": "1.1.6-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXdmcp": {
+    "version": "1.1.5-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXext": {
+    "version": "1.3.6-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXfixes": {
+    "version": "6.0.1-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXfont2": {
+    "version": "2.0.7-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXft": {
+    "version": "2.3.8-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXi": {
+    "version": "1.8.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXinerama": {
+    "version": "1.1.5-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXmu": {
+    "version": "1.2.1-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXpm": {
+    "version": "3.5.17-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXrandr": {
+    "version": "1.5.4-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXrender": {
+    "version": "0.9.12-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXres": {
+    "version": "1.2.2-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXt": {
+    "version": "1.3.1-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXtst": {
+    "version": "1.2.5-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXv": {
+    "version": "1.0.13-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libXxf86vm": {
+    "version": "1.1.6-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liba52": {
+    "version": "0.7.4-53.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libacl": {
+    "version": "2.3.2-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libadwaita": {
+    "version": "1.9.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libaio": {
+    "version": "0.3.111-23.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libao": {
+    "version": "1.2.0-31.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libaom": {
+    "version": "3.13.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libappindicator-gtk3": {
+    "version": "12.10.1-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libarchive": {
+    "version": "3.8.7-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libaribcaption": {
+    "version": "1.1.1-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libass": {
+    "version": "0.17.4-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libassuan": {
+    "version": "2.5.7-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libasyncns": {
+    "version": "0.8-32.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libatasmart": {
+    "version": "0.19-32.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libatomic": {
+    "version": "16.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libattr": {
+    "version": "2.5.2-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libavc1394": {
+    "version": "0.5.4-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libavcodec": {
+    "version": "8.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libavdevice": {
+    "version": "8.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libavfilter": {
+    "version": "8.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libavformat": {
+    "version": "8.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libavif": {
+    "version": "1.3.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libavutil": {
+    "version": "8.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libayatana-appindicator-gtk3": {
+    "version": "0.5.94-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libayatana-ido-gtk3": {
+    "version": "0.10.4-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libayatana-indicator-gtk3": {
+    "version": "0.9.4-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libb2": {
+    "version": "0.98.1-15.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libbabeltrace": {
+    "version": "1.5.11-17.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libbasicobjects": {
+    "version": "0.1.1-61.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libblkid": {
+    "version": "2.41.4-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libblockdev": {
+    "version": "3.5.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libblockdev-crypto": {
+    "version": "3.5.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libblockdev-fs": {
+    "version": "3.5.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libblockdev-loop": {
+    "version": "3.5.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libblockdev-mdraid": {
+    "version": "3.5.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libblockdev-nvme": {
+    "version": "3.5.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libblockdev-part": {
+    "version": "3.5.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libblockdev-smart": {
+    "version": "3.5.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libblockdev-swap": {
+    "version": "3.5.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libblockdev-utils": {
+    "version": "3.5.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libbluray": {
+    "version": "1.4.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libbpf": {
+    "version": "1.6.3-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libbrotli": {
+    "version": "1.2.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libbs2b": {
+    "version": "3.1.0-37.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libbsd": {
+    "version": "0.12.2-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libbytesize": {
+    "version": "2.12-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcaca": {
+    "version": "0.99-0.82.beta20.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcamera": {
+    "version": "0.7.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcamera-gstreamer": {
+    "version": "0.7.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcamera-ipa": {
+    "version": "0.7.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcamera-tools": {
+    "version": "0.7.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcanberra": {
+    "version": "0.30-39.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcanberra-gtk2": {
+    "version": "0.30-39.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcanberra-gtk3": {
+    "version": "0.30-39.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcap": {
+    "version": "2.78-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcap-ng": {
+    "version": "0.9.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcap-ng-python3": {
+    "version": "0.9.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcbor": {
+    "version": "0.13.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcdio": {
+    "version": "2.3.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcdio-paranoia": {
+    "version": "10.2+2.0.2-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libchewing": {
+    "version": "0.11.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libchromaprint": {
+    "version": "1.6.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcloudproviders": {
+    "version": "0.4.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcollection": {
+    "version": "0.7.0-61.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcom_err": {
+    "version": "1.47.3-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcue": {
+    "version": "2.3.0-14.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcupsfilters": {
+    "version": "2.1.1-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libcurl-minimal": {
+    "version": "8.18.0-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdaemon": {
+    "version": "0.14-33.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdatrie": {
+    "version": "0.2.14-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdav1d": {
+    "version": "1.5.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdbusmenu": {
+    "version": "16.04.0-31.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdbusmenu-gtk3": {
+    "version": "16.04.0-31.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdc1394": {
+    "version": "2.2.7-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libde265": {
+    "version": "1.1.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdecor": {
+    "version": "0.2.5-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdeflate": {
+    "version": "1.25-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdhash": {
+    "version": "0.5.0-61.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdisplay-info": {
+    "version": "0.3.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdnf5": {
+    "version": "5.4.2.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdnf5-cli": {
+    "version": "5.4.2.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdnf5-plugin-appstream": {
+    "version": "5.4.2.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdnf5-plugin-expired-pgp-keys": {
+    "version": "5.4.2.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdovi": {
+    "version": "3.3.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdrm": {
+    "version": "2.4.133-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdvdnav": {
+    "version": "7.0.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libdvdread": {
+    "version": "7.0.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libebur128": {
+    "version": "1.2.6-15.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libeconf": {
+    "version": "0.7.9-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libedit": {
+    "version": "3.1-59.20260512cvs.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libei": {
+    "version": "1.5.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libeis": {
+    "version": "1.5.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libell": {
+    "version": "0.83-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libepoxy": {
+    "version": "1.5.10-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liberation-mono-fonts": {
+    "version": "2.1.5-15.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liberation-sans-fonts": {
+    "version": "2.1.5-15.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liberation-serif-fonts": {
+    "version": "2.1.5-15.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libertas-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libev": {
+    "version": "4.33-15.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libevdev": {
+    "version": "1.13.6-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libevent": {
+    "version": "2.1.12-17.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libexif": {
+    "version": "0.6.26-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libfdisk": {
+    "version": "2.41.4-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libfdk-aac": {
+    "version": "2.0.3-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libffi": {
+    "version": "3.5.2-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libfido2": {
+    "version": "1.16.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libfontenc": {
+    "version": "1.1.8-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libfprint": {
+    "version": "1.94.10-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libfreeaptx": {
+    "version": "0.2.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libfsverity": {
+    "version": "1.6-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libftdi": {
+    "version": "1.5-22.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libfyaml": {
+    "version": "0.8-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgcc": {
+    "version": "16.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgcrypt": {
+    "version": "1.12.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgda": {
+    "version": "6.0.0-14.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgda-sqlite": {
+    "version": "6.0.0-14.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgee": {
+    "version": "0.20.8-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgexiv2": {
+    "version": "0.16.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgit2": {
+    "version": "1.9.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libglvnd": {
+    "version": "1.7.0-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libglvnd-egl": {
+    "version": "1.7.0-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libglvnd-gles": {
+    "version": "1.7.0-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libglvnd-glx": {
+    "version": "1.7.0-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libglvnd-opengl": {
+    "version": "1.7.0-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgomp": {
+    "version": "16.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgpg-error": {
+    "version": "1.58-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgphoto2": {
+    "version": "2.5.33-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgs": {
+    "version": "10.06.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgsf": {
+    "version": "1.14.58-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgtop2": {
+    "version": "2.41.3-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgudev": {
+    "version": "238-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgusb": {
+    "version": "0.4.9-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgweather": {
+    "version": "4.6.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libgxps": {
+    "version": "0.3.2-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libhandy": {
+    "version": "1.8.3-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libhangul": {
+    "version": "0.2.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libheif": {
+    "version": "1.21.2-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libi2c": {
+    "version": "4.4-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libibverbs": {
+    "version": "61.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libical": {
+    "version": "3.0.20-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libical-glib": {
+    "version": "3.0.20-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libicu": {
+    "version": "77.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libidn2": {
+    "version": "2.3.8-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libiec61883": {
+    "version": "1.2.0-39.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libieee1284": {
+    "version": "0.2.11-48.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libijs": {
+    "version": "0.35-26.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libimagequant": {
+    "version": "4.1.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libimobiledevice": {
+    "version": "1.4.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libimobiledevice-glue": {
+    "version": "1.3.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libimobiledevice-utils": {
+    "version": "1.4.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libini_config": {
+    "version": "1.3.1-61.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libinput": {
+    "version": "1.31.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libjaylink": {
+    "version": "0.3.0-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libjcat": {
+    "version": "0.2.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libjpeg-turbo": {
+    "version": "3.1.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libjxl": {
+    "version": "0.11.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libkadm5": {
+    "version": "1.22.2-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libkcapi": {
+    "version": "1.5.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libkcapi-hasher": {
+    "version": "1.5.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libkcapi-hmaccalc": {
+    "version": "1.5.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libklvanc": {
+    "version": "1.6.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libksba": {
+    "version": "1.6.7-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liblastlog2": {
+    "version": "2.41.4-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liblc3": {
+    "version": "1.1.3-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liblc3plus": {
+    "version": "1.6.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libldac": {
+    "version": "2.0.2.3-19.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libldb": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liblerc": {
+    "version": "4.0.0-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liblouis": {
+    "version": "3.33.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liblouis-tables": {
+    "version": "3.33.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liblouisutdml": {
+    "version": "2.12.0-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liblouisutdml-utils": {
+    "version": "2.12.0-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liblqr-1": {
+    "version": "0.4.2-29.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libmanette": {
+    "version": "0.2.13-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libmaxminddb": {
+    "version": "1.13.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libmbim": {
+    "version": "1.32.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libmbim-utils": {
+    "version": "1.32.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libmd": {
+    "version": "1.2.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libmediaart": {
+    "version": "1.9.7-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libmnl": {
+    "version": "1.0.5-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libmodplug": {
+    "version": "0.8.9.0-29.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libmodulemd": {
+    "version": "2.15.2-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libmount": {
+    "version": "2.41.4-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libmpc": {
+    "version": "1.4.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libmpeg2": {
+    "version": "0.5.1-33.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libmspack": {
+    "version": "0.10.1-0.16.alpha.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libmtp": {
+    "version": "1.1.22-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libmysofa": {
+    "version": "1.3.3-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libndp": {
+    "version": "1.9-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnet": {
+    "version": "1.3-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnetapi": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnetfilter_conntrack": {
+    "version": "1.1.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnfnetlink": {
+    "version": "1.0.1-32.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnfs": {
+    "version": "6.0.2-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnfsidmap": {
+    "version": "2.8.7-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnftnl": {
+    "version": "1.3.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnghttp2": {
+    "version": "1.68.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnice": {
+    "version": "0.1.23-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnl3": {
+    "version": "3.12.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnma": {
+    "version": "1.10.6-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnma-common": {
+    "version": "1.10.6-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnma-gtk4": {
+    "version": "1.10.6-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnotify": {
+    "version": "0.8.8-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnsl2": {
+    "version": "2.0.1-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libntlm": {
+    "version": "1.8-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnvme": {
+    "version": "1.16.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libnvpair3": {
+    "version": "2.3.7-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liboeffis": {
+    "version": "1.5.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libogg": {
+    "version": "1.3.6-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libopenjph": {
+    "version": "0.25.3-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libopenmpt": {
+    "version": "0.8.7-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liboping": {
+    "version": "1.10.0-36.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libosinfo": {
+    "version": "1.12.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libpaper": {
+    "version": "2.1.1-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libpasswdqc": {
+    "version": "2.0.3-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libpath_utils": {
+    "version": "0.2.1-61.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libpcap": {
+    "version": "1.10.6-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libpciaccess": {
+    "version": "0.16-17.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libpfm": {
+    "version": "4.13.0-19.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libphonenumber": {
+    "version": "8.13.55-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libpinyin": {
+    "version": "2.11.91-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libpinyin-data": {
+    "version": "2.11.91-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libpipeline": {
+    "version": "1.5.8-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libpkgconf": {
+    "version": "2.5.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libplacebo": {
+    "version": "7.360.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libplist": {
+    "version": "2.7.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libpng": {
+    "version": "1.6.58-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libportal": {
+    "version": "0.9.1-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libportal-gtk4": {
+    "version": "0.9.1-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libppd": {
+    "version": "2.1.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libproxy": {
+    "version": "0.5.12-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libpskc": {
+    "version": "2.6.14-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libpsl": {
+    "version": "0.21.5-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libpwquality": {
+    "version": "1.4.5-15.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libqmi": {
+    "version": "1.36.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libqmi-utils": {
+    "version": "1.36.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libqrtr-glib": {
+    "version": "1.2.2-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "librabbitmq": {
+    "version": "0.15.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libraqm": {
+    "version": "0.10.1-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libratbag-ratbagd": {
+    "version": "0.18-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libraw1394": {
+    "version": "2.1.2-25.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libref_array": {
+    "version": "0.1.5-61.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "librepo": {
+    "version": "1.20.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libreport-filesystem": {
+    "version": "2.17.15-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "librist": {
+    "version": "0.2.11-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "librsvg2": {
+    "version": "2.62.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "librtmp": {
+    "version": "2.6^20240301git6f6bb13-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsamplerate": {
+    "version": "0.2.2-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsane-airscan": {
+    "version": "0.99.36-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsane-hpaio": {
+    "version": "3.25.8-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsbc": {
+    "version": "2.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libseccomp": {
+    "version": "2.6.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsecret": {
+    "version": "0.21.7-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libselinux": {
+    "version": "3.10-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libselinux-utils": {
+    "version": "3.10-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsemanage": {
+    "version": "3.10-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsepol": {
+    "version": "3.10-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libshaderc": {
+    "version": "2026.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libshout": {
+    "version": "2.4.6-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsigc++30": {
+    "version": "3.8.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libslirp": {
+    "version": "4.9.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsmartcols": {
+    "version": "2.41.4-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsmbclient": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsndfile": {
+    "version": "1.2.2-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsodium": {
+    "version": "1.0.22-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsolv": {
+    "version": "0.7.37-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsoup3": {
+    "version": "3.6.6-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libspelling": {
+    "version": "0.4.10-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsrtp": {
+    "version": "2.8.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libss": {
+    "version": "1.47.3-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libssh": {
+    "version": "0.12.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libssh-config": {
+    "version": "0.12.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libssh2": {
+    "version": "1.11.1-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsss_autofs": {
+    "version": "2.13.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsss_certmap": {
+    "version": "2.13.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsss_idmap": {
+    "version": "2.13.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsss_nss_idmap": {
+    "version": "2.13.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libsss_sudo": {
+    "version": "2.13.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libstdc++": {
+    "version": "16.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libstdc++-devel": {
+    "version": "16.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libstemmer": {
+    "version": "3.0.1-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libswresample": {
+    "version": "8.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libswscale": {
+    "version": "8.1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libtalloc": {
+    "version": "2.4.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libtasn1": {
+    "version": "4.21.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libtatsu": {
+    "version": "1.0.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libtdb": {
+    "version": "1.4.15-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libtevent": {
+    "version": "0.17.1-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libtextstyle": {
+    "version": "0.26-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libthai": {
+    "version": "0.1.30-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libtheora": {
+    "version": "1.1.1-41.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libtiff": {
+    "version": "4.7.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libtinysparql": {
+    "version": "3.11.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libtirpc": {
+    "version": "1.3.7-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libtommath": {
+    "version": "1.3.1~rc1-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libtool-ltdl": {
+    "version": "2.5.4-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libtraceevent": {
+    "version": "1.8.4-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libudfread": {
+    "version": "1.2.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libudisks2": {
+    "version": "2.11.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libultrahdr": {
+    "version": "1.4.0^20251202git8cbc983-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libunibreak": {
+    "version": "6.1-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libunistring": {
+    "version": "1.1-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libunwind": {
+    "version": "1.8.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "liburing": {
+    "version": "2.13-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libusb1": {
+    "version": "1.0.30-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libusbmuxd": {
+    "version": "2.1.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libuser": {
+    "version": "0.64-17.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libutempter": {
+    "version": "1.2.1-20.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libuuid": {
+    "version": "2.41.4-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libuutil3": {
+    "version": "2.3.7-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libuv": {
+    "version": "1.51.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libv4l": {
+    "version": "1.32.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libva": {
+    "version": "2.23.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libva-intel-media-driver": {
+    "version": "26.1.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libva-utils": {
+    "version": "2.23.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libvarlink": {
+    "version": "24.0.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libvdpau": {
+    "version": "1.5-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libverto": {
+    "version": "0.3.2-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libverto-libev": {
+    "version": "0.3.2-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libvisual": {
+    "version": "0.4.2-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libvmaf": {
+    "version": "3.0.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libvncserver": {
+    "version": "0.9.15-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libvorbis": {
+    "version": "1.3.7-14.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libvpl": {
+    "version": "2.16.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libvpx": {
+    "version": "1.15.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libwacom": {
+    "version": "2.18.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libwacom-data": {
+    "version": "2.18.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libwayland-client": {
+    "version": "1.24.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libwayland-cursor": {
+    "version": "1.24.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libwayland-egl": {
+    "version": "1.24.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libwayland-server": {
+    "version": "1.24.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libwbclient": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libwebp": {
+    "version": "1.6.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libwinpr": {
+    "version": "3.26.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libwmf-lite": {
+    "version": "0.2.13-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libwnck3": {
+    "version": "43.3-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libxavs": {
+    "version": "0.1.55~20110821svnr55-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libxcb": {
+    "version": "1.17.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libxcrypt": {
+    "version": "4.5.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libxcrypt-compat": {
+    "version": "4.5.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libxcrypt-devel": {
+    "version": "4.5.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libxcvt": {
+    "version": "0.1.2-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libxkbcommon": {
+    "version": "1.13.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libxkbcommon-x11": {
+    "version": "1.13.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libxkbfile": {
+    "version": "1.1.3-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libxml2": {
+    "version": "2.12.10-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libxmlb": {
+    "version": "0.3.26-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libxshmfence": {
+    "version": "1.3.2-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libxslt": {
+    "version": "1.1.43-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libyaml": {
+    "version": "0.2.5-18.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libyubikey": {
+    "version": "1.13-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libyuv": {
+    "version": "0-0.61.20260213git6067afd.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libzfs6": {
+    "version": "2.3.7-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libzip": {
+    "version": "1.11.4-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libzpool6": {
+    "version": "2.3.7-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libzstd": {
+    "version": "1.5.7-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "libzstd-devel": {
+    "version": "1.5.7-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lilv-libs": {
+    "version": "0.26.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "linux-atm-libs": {
+    "version": "2.5.1-46.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "linux-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "linux-firmware-whence": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "llhttp": {
+    "version": "9.3.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "llvm-filesystem": {
+    "version": "22.1.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "llvm-libs": {
+    "version": "22.1.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lm_sensors": {
+    "version": "3.6.0-24.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lm_sensors-libs": {
+    "version": "3.6.0-24.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lmdb-libs": {
+    "version": "0.9.34-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "localsearch": {
+    "version": "3.11.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lockdev": {
+    "version": "1.0.4-0.54.20111007git.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "logrotate": {
+    "version": "3.22.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lpcnetfreedv": {
+    "version": "0.5-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lrzsz": {
+    "version": "0.12.20-76.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lsb_release": {
+    "version": "3.3-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lshw": {
+    "version": "B.02.20-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lsof": {
+    "version": "4.98.0-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lttng-ust": {
+    "version": "2.14.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lua-libs": {
+    "version": "5.4.8-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lvm2": {
+    "version": "2.03.38-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lvm2-libs": {
+    "version": "2.03.38-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lz4-libs": {
+    "version": "1.10.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "lzo": {
+    "version": "2.10-16.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "m17n-db": {
+    "version": "1.8.11-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "m17n-lib": {
+    "version": "1.8.6-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "m4": {
+    "version": "1.4.21-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "madan-fonts": {
+    "version": "2.000-43.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mailcap": {
+    "version": "2.1.54-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "make": {
+    "version": "4.4.1-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "malcontent": {
+    "version": "0.14.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "malcontent-control": {
+    "version": "0.14.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "malcontent-libs": {
+    "version": "0.14.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "malcontent-ui-libs": {
+    "version": "0.14.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "man-db": {
+    "version": "2.13.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "man-pages": {
+    "version": "6.13-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mcelog": {
+    "version": "175-14.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mdadm": {
+    "version": "4.3-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "memstrack": {
+    "version": "0.2.5-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mesa-dri-drivers": {
+    "version": "26.0.8-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mesa-filesystem": {
+    "version": "26.0.8-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mesa-libEGL": {
+    "version": "26.0.8-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mesa-libGL": {
+    "version": "26.0.8-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mesa-libGLU": {
+    "version": "9.0.3-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mesa-libgbm": {
+    "version": "26.0.8-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mesa-vulkan-drivers": {
+    "version": "26.0.8-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "microcode_ctl": {
+    "version": "2.1-74.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mkpasswd": {
+    "version": "5.6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mobile-broadband-provider-info": {
+    "version": "20240407-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mod_dnssd": {
+    "version": "0.6-36.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mod_http2": {
+    "version": "2.0.39-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mod_lua": {
+    "version": "2.4.67-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mokutil": {
+    "version": "0.7.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mozc": {
+    "version": "2.29.5111.102-18.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mozilla-filesystem": {
+    "version": "1.9-38.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mozjs140": {
+    "version": "140.6.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mpage": {
+    "version": "2.5.7-24.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mpdecimal": {
+    "version": "4.0.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mpfr": {
+    "version": "4.2.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mpg123-libs": {
+    "version": "1.32.10-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "msgraph": {
+    "version": "0.3.4-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mt7xxx-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mtdev": {
+    "version": "1.1.6-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mtools": {
+    "version": "4.0.49-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mtr": {
+    "version": "0.95-14.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mutter": {
+    "version": "50.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "mutter-common": {
+    "version": "50.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nano": {
+    "version": "8.7.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nano-default-editor": {
+    "version": "8.7.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nautilus": {
+    "version": "50.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nautilus-extensions": {
+    "version": "50.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nautilus-gsconnect": {
+    "version": "72-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nautilus-python": {
+    "version": "4.1.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ncurses": {
+    "version": "6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ncurses-base": {
+    "version": "6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ncurses-libs": {
+    "version": "6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ncurses-term": {
+    "version": "6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "neon": {
+    "version": "0.37.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nerd-fonts": {
+    "version": "3.4.0-0.1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "net-snmp-libs": {
+    "version": "5.9.5.2-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "net-tools": {
+    "version": "2.0-0.77.20160912git.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "netavark": {
+    "version": "1.17.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nettle": {
+    "version": "3.10.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nfs-client-utils": {
+    "version": "2.8.7-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nfs-common-utils": {
+    "version": "2.8.7-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nfs-utils": {
+    "version": "2.8.7-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nfsv3-client-utils": {
+    "version": "2.8.7-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nfsv4-client-utils": {
+    "version": "2.8.7-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nftables": {
+    "version": "1.1.6-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nftables-services": {
+    "version": "1.1.6-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ngtcp2": {
+    "version": "1.22.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ngtcp2-crypto-gnutls": {
+    "version": "1.22.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ngtcp2-crypto-ossl": {
+    "version": "1.22.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nilfs-utils": {
+    "version": "2.2.11-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nm-connection-editor": {
+    "version": "1.36.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "noopenh264": {
+    "version": "2.6.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "npth": {
+    "version": "1.8-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nspr": {
+    "version": "4.38.2-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nss": {
+    "version": "3.123.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nss-altfiles": {
+    "version": "2.23.0-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nss-mdns": {
+    "version": "0.15.1-28.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nss-softokn": {
+    "version": "3.123.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nss-softokn-freebl": {
+    "version": "3.123.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nss-sysinit": {
+    "version": "3.123.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nss-util": {
+    "version": "3.123.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ntfs-3g": {
+    "version": "2022.10.3-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ntfs-3g-libs": {
+    "version": "2022.10.3-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ntfs-3g-system-compression": {
+    "version": "1.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ntfsprogs": {
+    "version": "2022.10.3-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "numactl-libs": {
+    "version": "2.0.19-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nvidia-gpu-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nvme-cli": {
+    "version": "2.16-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nvtop": {
+    "version": "3.3.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "nxpwireless-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ocl-icd": {
+    "version": "2.3.4-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "oddjob": {
+    "version": "0.34.7-18.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "oddjob-mkhomedir": {
+    "version": "0.34.7-18.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "oniguruma": {
+    "version": "6.9.10-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "open-sans-fonts": {
+    "version": "1.10-25.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "open-vm-tools": {
+    "version": "13.1.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "open-vm-tools-desktop": {
+    "version": "13.1.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openal-soft": {
+    "version": "1.24.2-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openapv-libs": {
+    "version": "0.2.1.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openconnect": {
+    "version": "9.12-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "opencore-amr": {
+    "version": "0.1.6-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "opendyslexic-fonts": {
+    "version": "0.940-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openexr-libs": {
+    "version": "3.2.4-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openjpeg": {
+    "version": "2.5.4-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openldap": {
+    "version": "2.6.13-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openpace": {
+    "version": "1.1.3-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openpgm": {
+    "version": "5.3.128-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openrgb-udev-rules": {
+    "version": "1.0~rc2-3.20260126git74cbdcc.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "opensc": {
+    "version": "0.27.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "opensc-libs": {
+    "version": "0.27.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openssh": {
+    "version": "10.2p1-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openssh-askpass": {
+    "version": "10.2p1-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openssh-clients": {
+    "version": "10.2p1-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openssh-server": {
+    "version": "10.2p1-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openssl": {
+    "version": "3.5.5-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openssl-devel": {
+    "version": "3.5.5-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openssl-libs": {
+    "version": "3.5.5-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "openvpn": {
+    "version": "2.7.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "opus": {
+    "version": "1.6-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "orc": {
+    "version": "0.4.41-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "orca": {
+    "version": "50.1.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "os-prober": {
+    "version": "1.81-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "osinfo-db": {
+    "version": "20251212-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "osinfo-db-tools": {
+    "version": "1.12.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ostree": {
+    "version": "2026.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ostree-libs": {
+    "version": "2026.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "oversteer-udev": {
+    "version": "0.0.git.407.76a8d702-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "p11-kit": {
+    "version": "0.26.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "p11-kit-server": {
+    "version": "0.26.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "p11-kit-trust": {
+    "version": "0.26.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "paktype-naskh-basic-fonts": {
+    "version": "7.0-4.20231228.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pam": {
+    "version": "1.7.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pam-libs": {
+    "version": "1.7.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pam-u2f": {
+    "version": "1.4.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pam_afs_session": {
+    "version": "2.6-25.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pam_passwdqc": {
+    "version": "2.0.3-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pam_yubico": {
+    "version": "2.27-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pamu2fcfg": {
+    "version": "1.4.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pango": {
+    "version": "1.57.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pangomm2.48": {
+    "version": "2.56.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "papers-libs": {
+    "version": "49.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "papers-nautilus": {
+    "version": "49.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "papers-previewer": {
+    "version": "49.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "papers-thumbnailer": {
+    "version": "49.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "paps": {
+    "version": "0.8.0-15.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "passim": {
+    "version": "0.1.11-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "passim-libs": {
+    "version": "0.1.11-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "passt": {
+    "version": "0^20260120.g386b5f5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "passt-selinux": {
+    "version": "0^20260120.g386b5f5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "passwdqc": {
+    "version": "2.0.3-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "passwdqc-utils": {
+    "version": "2.0.3-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pcaudiolib": {
+    "version": "1.1-19.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pciutils": {
+    "version": "3.14.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pciutils-libs": {
+    "version": "3.14.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pcp-conf": {
+    "version": "7.1.0-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pcp-libs": {
+    "version": "7.1.0-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pcre2": {
+    "version": "10.47-1.fc44.1",
+    "last_seen": "2026-06-12"
+  },
+  "pcre2-syntax": {
+    "version": "10.47-1.fc44.1",
+    "last_seen": "2026-06-12"
+  },
+  "pcre2-utf16": {
+    "version": "10.47-1.fc44.1",
+    "last_seen": "2026-06-12"
+  },
+  "pcre2-utf32": {
+    "version": "10.47-1.fc44.1",
+    "last_seen": "2026-06-12"
+  },
+  "pcsc-lite": {
+    "version": "2.4.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pcsc-lite-ccid": {
+    "version": "1.7.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pcsc-lite-libs": {
+    "version": "2.4.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-AutoLoader": {
+    "version": "5.74-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-B": {
+    "version": "1.89-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Carp": {
+    "version": "1.54-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Class-Struct": {
+    "version": "0.68-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Data-Dumper": {
+    "version": "2.191-522.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Digest": {
+    "version": "1.20-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Digest-MD5": {
+    "version": "2.59-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-DynaLoader": {
+    "version": "1.57-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Encode": {
+    "version": "3.21-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Errno": {
+    "version": "1.38-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Error": {
+    "version": "0.17030-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Exporter": {
+    "version": "5.79-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Fcntl": {
+    "version": "1.20-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-File-Basename": {
+    "version": "2.86-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-File-Path": {
+    "version": "2.18-522.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-File-Temp": {
+    "version": "0.231.200-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-File-stat": {
+    "version": "1.14-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-FileHandle": {
+    "version": "2.05-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Getopt-Long": {
+    "version": "2.58-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Getopt-Std": {
+    "version": "1.14-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Git": {
+    "version": "2.54.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-HTTP-Tiny": {
+    "version": "0.094-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-IO": {
+    "version": "1.55-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-IO-Socket-IP": {
+    "version": "0.43-522.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-IO-Socket-SSL": {
+    "version": "2.098-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-IPC-Open3": {
+    "version": "1.24-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-MIME-Base32": {
+    "version": "1.303-25.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-MIME-Base64": {
+    "version": "3.16-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-NDBM_File": {
+    "version": "1.18-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Net-SSLeay": {
+    "version": "1.94-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-POSIX": {
+    "version": "2.23-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-PathTools": {
+    "version": "3.94-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Pod-Escapes": {
+    "version": "1.07-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Pod-Perldoc": {
+    "version": "3.28.01-522.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Pod-Simple": {
+    "version": "3.47-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Pod-Usage": {
+    "version": "2.05-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Scalar-List-Utils": {
+    "version": "1.70-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-SelectSaver": {
+    "version": "1.02-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Socket": {
+    "version": "2.040-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Storable": {
+    "version": "3.37-522.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Symbol": {
+    "version": "1.09-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Term-ANSIColor": {
+    "version": "5.01-522.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Term-Cap": {
+    "version": "1.18-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-TermReadKey": {
+    "version": "2.38-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Text-ParseWords": {
+    "version": "3.31-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Text-Tabs+Wrap": {
+    "version": "2024.001-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Time-HiRes": {
+    "version": "1.9778-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-Time-Local": {
+    "version": "1.350-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-URI": {
+    "version": "5.34-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-base": {
+    "version": "2.27-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-constant": {
+    "version": "1.33-522.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-if": {
+    "version": "0.61.000-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-interpreter": {
+    "version": "5.42.2-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-lib": {
+    "version": "0.65-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-libnet": {
+    "version": "3.15-522.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-libs": {
+    "version": "5.42.2-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-locale": {
+    "version": "1.13-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-mro": {
+    "version": "1.29-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-overload": {
+    "version": "1.40-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-overloading": {
+    "version": "0.02-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-parent": {
+    "version": "0.244-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-podlators": {
+    "version": "6.0.2-521.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "perl-vars": {
+    "version": "1.05-524.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pinentry": {
+    "version": "1.3.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pinentry-gnome3": {
+    "version": "1.3.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pinfo": {
+    "version": "0.6.13-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pipewire": {
+    "version": "1.6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pipewire-alsa": {
+    "version": "1.6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pipewire-config-raop": {
+    "version": "1.6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pipewire-gstreamer": {
+    "version": "1.6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pipewire-jack-audio-connection-kit": {
+    "version": "1.6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pipewire-jack-audio-connection-kit-libs": {
+    "version": "1.6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pipewire-libs": {
+    "version": "1.6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pipewire-libs-extra": {
+    "version": "1.6.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pipewire-plugin-libcamera": {
+    "version": "1.6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pipewire-pulseaudio": {
+    "version": "1.6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pipewire-utils": {
+    "version": "1.6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pixman": {
+    "version": "0.46.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pkcs11-helper": {
+    "version": "1.30.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pkcs11-provider": {
+    "version": "1.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pkgconf": {
+    "version": "2.5.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pkgconf-m4": {
+    "version": "2.5.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pkgconf-pkg-config": {
+    "version": "2.5.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "plymouth": {
+    "version": "24.004.60-24.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "plymouth-core-libs": {
+    "version": "24.004.60-24.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "plymouth-graphics-libs": {
+    "version": "24.004.60-24.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "plymouth-plugin-label": {
+    "version": "24.004.60-24.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "plymouth-plugin-two-step": {
+    "version": "24.004.60-24.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "plymouth-scripts": {
+    "version": "24.004.60-24.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "plymouth-system-theme": {
+    "version": "24.004.60-24.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "plymouth-theme-spinner": {
+    "version": "24.004.60-24.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "podman": {
+    "version": "5.8.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "podman-sequoia": {
+    "version": "0.3.2-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "policycoreutils": {
+    "version": "3.10-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "policycoreutils-python-utils": {
+    "version": "3.10-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "polkit": {
+    "version": "127-2.fc44.2",
+    "last_seen": "2026-06-12"
+  },
+  "polkit-libs": {
+    "version": "127-2.fc44.2",
+    "last_seen": "2026-06-12"
+  },
+  "poppler": {
+    "version": "26.01.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "poppler-cpp": {
+    "version": "26.01.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "poppler-data": {
+    "version": "0.4.11-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "poppler-glib": {
+    "version": "26.01.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "poppler-utils": {
+    "version": "26.01.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "popt": {
+    "version": "1.19-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "portaudio": {
+    "version": "19.7.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "powerstat": {
+    "version": "0.04.05-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "powertop": {
+    "version": "2.15-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ppp": {
+    "version": "2.5.1-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "prefixdevname": {
+    "version": "0.2.0-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "printer-driver-brlaser": {
+    "version": "6.2.7-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "procps-ng": {
+    "version": "4.0.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "protobuf": {
+    "version": "3.19.6-20.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "protobuf-c": {
+    "version": "1.5.2-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "psmisc": {
+    "version": "23.7-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ptouch-driver": {
+    "version": "1.7.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ptyxis": {
+    "version": "50.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "publicsuffix-list-dafsa": {
+    "version": "20260116-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pulseaudio-libs": {
+    "version": "17.0-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pulseaudio-libs-glib2": {
+    "version": "17.0-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pulseaudio-utils": {
+    "version": "17.0-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "pv": {
+    "version": "1.10.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python-pip-wheel": {
+    "version": "26.0.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python-unversioned-command": {
+    "version": "3.14.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3": {
+    "version": "3.14.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-annotated-types": {
+    "version": "0.7.0-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-anyio": {
+    "version": "4.12.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-argcomplete": {
+    "version": "3.6.3-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-audit": {
+    "version": "4.1.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-boto3": {
+    "version": "1.43.15-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-botocore": {
+    "version": "1.43.15-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-brlapi": {
+    "version": "0.8.7-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-cairo": {
+    "version": "1.28.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-certifi": {
+    "version": "2026.01.04-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-cffi": {
+    "version": "2.0.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-charset-normalizer": {
+    "version": "3.4.4-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-click": {
+    "version": "8.3.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-cryptography": {
+    "version": "48.0.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-cups": {
+    "version": "2.0.4-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-dasbus": {
+    "version": "1.7-14.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-dateutil": {
+    "version": "2.9.0.post0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-dbus": {
+    "version": "1.4.0-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-distro": {
+    "version": "1.9.0-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-dns": {
+    "version": "2.8.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-email-validator": {
+    "version": "2.3.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-enchant": {
+    "version": "3.3.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-evdev": {
+    "version": "1.9.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-fido2": {
+    "version": "2.0.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-file-magic": {
+    "version": "5.46-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-firewall": {
+    "version": "2.4.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-gobject": {
+    "version": "3.56.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-gobject-base": {
+    "version": "3.56.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-h11": {
+    "version": "0.16.0-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-html2text": {
+    "version": "2025.4.15-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-httpcore": {
+    "version": "1.0.9-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-httpx": {
+    "version": "0.28.1-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-ibus": {
+    "version": "1.5.34-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-idna": {
+    "version": "3.11-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-inotify": {
+    "version": "0.9.6-43.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-jaraco-classes": {
+    "version": "3.4.0-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-jaraco-context": {
+    "version": "6.1.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-jaraco-functools": {
+    "version": "4.3.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-jeepney": {
+    "version": "0.9.0-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-jmespath": {
+    "version": "1.0.1-14.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-keyring": {
+    "version": "25.7.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-keyring+completion": {
+    "version": "25.7.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-langtable": {
+    "version": "0.0.70-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-libs": {
+    "version": "3.14.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-libselinux": {
+    "version": "3.10-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-libsemanage": {
+    "version": "3.10-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-linux-procfs": {
+    "version": "0.7.4-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-llfuse": {
+    "version": "1.5.2-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-louis": {
+    "version": "3.33.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-more-itertools": {
+    "version": "10.5.0-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-msgpack": {
+    "version": "1.1.2-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-nftables": {
+    "version": "1.1.6-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-olefile": {
+    "version": "0.47-13.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-packaging": {
+    "version": "25.0-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pam": {
+    "version": "2.0.2-18.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-perf": {
+    "version": "7.0.10-201.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pexpect": {
+    "version": "4.9.0-15.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pillow": {
+    "version": "12.2.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pip": {
+    "version": "26.0.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-policycoreutils": {
+    "version": "3.10-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pskc": {
+    "version": "1.4-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-psutil": {
+    "version": "7.2.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-ptyprocess": {
+    "version": "0.7.0-15.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pyatspi": {
+    "version": "2.58.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pyaudio": {
+    "version": "0.2.13-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pycparser": {
+    "version": "2.22-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pydantic": {
+    "version": "2.12.5-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pydantic+email": {
+    "version": "2.12.5-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pydantic-core": {
+    "version": "2.41.5-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pydbus": {
+    "version": "0.6.0-34.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pygit2": {
+    "version": "1.19.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pyscard": {
+    "version": "2.2.2-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pysocks": {
+    "version": "1.7.1-32.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pyudev": {
+    "version": "0.24.4-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pyxdg": {
+    "version": "0.28-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pyyaml": {
+    "version": "6.0.3-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-pyzfs": {
+    "version": "2.3.7-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-rapidfuzz": {
+    "version": "3.14.3-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-regex": {
+    "version": "2026.2.28-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-requests": {
+    "version": "2.33.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-s3transfer": {
+    "version": "0.17.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-secretstorage": {
+    "version": "3.5.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-setools": {
+    "version": "4.6.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-setuptools": {
+    "version": "80.10.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-shtab": {
+    "version": "1.7.2-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-six": {
+    "version": "1.17.0-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-speechd": {
+    "version": "0.12.1-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-typing-extensions": {
+    "version": "4.15.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-typing-inspection": {
+    "version": "0.4.2-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-urllib3": {
+    "version": "2.7.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-urllib3+socks": {
+    "version": "2.7.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "python3-yubikey-manager": {
+    "version": "5.9.1-1.20260415gitbc866e8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qadwaitadecorations-qt5": {
+    "version": "0.1.7-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qcom-wwan-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qemu-guest-agent": {
+    "version": "10.2.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qemu-user-static-aarch64": {
+    "version": "10.2.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qpdf-libs": {
+    "version": "12.3.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qrencode-libs": {
+    "version": "4.1.1-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt-settings": {
+    "version": "43.101-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt5-filesystem": {
+    "version": "5.15.18-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt5-qtbase": {
+    "version": "5.15.18-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt5-qtbase-common": {
+    "version": "5.15.18-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt5-qtbase-gui": {
+    "version": "5.15.18-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt5-qtdeclarative": {
+    "version": "5.15.18-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt5-qtsvg": {
+    "version": "5.15.18-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt5-qttranslations": {
+    "version": "5.15.18-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt5-qtwayland": {
+    "version": "5.15.18-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt5-qtx11extras": {
+    "version": "5.15.18-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt5-qtxmlpatterns": {
+    "version": "5.15.18-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt6-filesystem": {
+    "version": "6.11.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt6-qtbase": {
+    "version": "6.11.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt6-qtbase-common": {
+    "version": "6.11.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt6-qtbase-gui": {
+    "version": "6.11.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt6-qtdeclarative": {
+    "version": "6.11.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt6-qtsvg": {
+    "version": "6.11.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt6-qttranslations": {
+    "version": "6.11.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt6-qtwayland": {
+    "version": "6.11.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "qt6-qtwayland-adwaita-decoration": {
+    "version": "6.11.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "quota": {
+    "version": "4.11-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "quota-nls": {
+    "version": "4.11-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rav1e-libs": {
+    "version": "0.8.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rclone": {
+    "version": "1.74.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rdma-core-common": {
+    "version": "61.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "readline": {
+    "version": "8.3-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "realmd": {
+    "version": "0.17.1-19.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "realtek-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "redhat-menus": {
+    "version": "12.0.2-39.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rest": {
+    "version": "0.10.2-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "restic": {
+    "version": "0.18.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rit-meera-new-fonts": {
+    "version": "1.6.2-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rit-rachana-fonts": {
+    "version": "1.5.2-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rootfiles": {
+    "version": "9.0-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rpcbind": {
+    "version": "1.2.8-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rpm": {
+    "version": "6.0.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rpm-build-libs": {
+    "version": "6.0.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rpm-libs": {
+    "version": "6.0.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rpm-ostree": {
+    "version": "2026.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rpm-ostree-libs": {
+    "version": "2026.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rpm-plugin-audit": {
+    "version": "6.0.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rpm-plugin-dbus-announce": {
+    "version": "6.0.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rpm-plugin-selinux": {
+    "version": "6.0.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rpm-sequoia": {
+    "version": "1.10.2-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rpm-sign-libs": {
+    "version": "6.0.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rsync": {
+    "version": "3.4.1-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rtkit": {
+    "version": "0.11-70.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rubberband-libs": {
+    "version": "4.0.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "runc": {
+    "version": "1.4.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "rygel": {
+    "version": "45.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "samba": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "samba-client": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "samba-client-libs": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "samba-common": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "samba-common-tools": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "samba-core-libs": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "samba-dcerpc": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "samba-ldb-ldap-modules": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "samba-libs": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "samba-ndr-libs": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "samba-winbind": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "samba-winbind-clients": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "samba-winbind-modules": {
+    "version": "4.24.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sane-airscan": {
+    "version": "0.99.36-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sane-backends": {
+    "version": "1.4.0-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sane-backends-drivers-cameras": {
+    "version": "1.4.0-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sane-backends-drivers-scanners": {
+    "version": "1.4.0-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sane-backends-libs": {
+    "version": "1.4.0-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sdbus-cpp": {
+    "version": "2.2.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sdl2-compat": {
+    "version": "2.32.68-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sed": {
+    "version": "4.9-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "selinux-policy": {
+    "version": "44.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "selinux-policy-targeted": {
+    "version": "44.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "serd": {
+    "version": "0.32.8-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "setools-console": {
+    "version": "4.6.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "setup": {
+    "version": "2.15.0-28.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "setxkbmap": {
+    "version": "1.3.4-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "shadow-utils": {
+    "version": "4.19.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "shadow-utils-subid": {
+    "version": "4.19.0-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "shared-mime-info": {
+    "version": "2.4-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "shim-ia32": {
+    "version": "16.1-5",
+    "last_seen": "2026-06-12"
+  },
+  "shim-x64": {
+    "version": "16.1-5",
+    "last_seen": "2026-06-12"
+  },
+  "sil-padauk-fonts": {
+    "version": "3.003-21.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "simdutf": {
+    "version": "7.2.1-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "skopeo": {
+    "version": "1.22.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "slang": {
+    "version": "2.3.3-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "slirp4netns": {
+    "version": "1.3.1-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "smartmontools": {
+    "version": "7.5-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "smartmontools-selinux": {
+    "version": "7.5-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "snappy": {
+    "version": "1.2.2-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "solaar-udev": {
+    "version": "1.1.19-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sord": {
+    "version": "0.16.22-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sos": {
+    "version": "4.11.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sound-theme-freedesktop": {
+    "version": "0.8-31.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "soundtouch": {
+    "version": "2.4.0-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "soxr": {
+    "version": "0.1.3-21.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "spandsp": {
+    "version": "0.0.6-22.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "spdlog": {
+    "version": "1.15.3-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "speech-dispatcher": {
+    "version": "0.12.1-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "speech-dispatcher-espeak-ng": {
+    "version": "0.12.1-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "speech-dispatcher-libs": {
+    "version": "0.12.1-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "speech-dispatcher-utils": {
+    "version": "0.12.1-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "speex": {
+    "version": "1.2.0-21.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "spice-vdagent": {
+    "version": "0.23.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "spice-webdavd": {
+    "version": "3.0-13.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "spirv-tools-libs": {
+    "version": "2026.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "splix": {
+    "version": "2.0.1-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sqlite-libs": {
+    "version": "3.51.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "squashfs-tools": {
+    "version": "4.6.1-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sratom": {
+    "version": "0.6.22-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "srt-libs": {
+    "version": "1.5.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sshpass": {
+    "version": "1.09-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sso-mib-libs": {
+    "version": "0.8.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sssd-ad": {
+    "version": "2.13.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sssd-client": {
+    "version": "2.13.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sssd-common": {
+    "version": "2.13.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sssd-common-pac": {
+    "version": "2.13.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sssd-kcm": {
+    "version": "2.13.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sssd-krb5": {
+    "version": "2.13.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sssd-krb5-common": {
+    "version": "2.13.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sssd-nfs-idmap": {
+    "version": "2.13.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "startup-notification": {
+    "version": "0.12-33.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "stix-fonts": {
+    "version": "2.13b171-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "stoken-libs": {
+    "version": "0.93-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sudo": {
+    "version": "1.9.17-8.p2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sudo-python-plugin": {
+    "version": "1.9.17-8.p2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "svt-av1-libs": {
+    "version": "3.1.2-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "svt-vp9-libs": {
+    "version": "0.3.0-17.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "switcheroo-control": {
+    "version": "3.0-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "symlinks": {
+    "version": "1.7-14.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "sysstat": {
+    "version": "12.7.9-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "system-config-printer-libs": {
+    "version": "1.5.18-17.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "system-config-printer-udev": {
+    "version": "1.5.18-17.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "systemd": {
+    "version": "259.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "systemd-container": {
+    "version": "259.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "systemd-libs": {
+    "version": "259.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "systemd-networkd": {
+    "version": "259.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "systemd-oomd-defaults": {
+    "version": "259.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "systemd-pam": {
+    "version": "259.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "systemd-resolved": {
+    "version": "259.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "systemd-shared": {
+    "version": "259.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "systemd-sysusers": {
+    "version": "259.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "systemd-udev": {
+    "version": "259.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "taglib": {
+    "version": "2.2.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tailscale": {
+    "version": "1.98.4-1",
+    "last_seen": "2026-06-12"
+  },
+  "tar": {
+    "version": "1.35-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tcl": {
+    "version": "9.0.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tcpdump": {
+    "version": "4.99.6-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tecla": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tesseract-common": {
+    "version": "5.5.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tesseract-langpack-eng": {
+    "version": "4.1.0-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tesseract-libs": {
+    "version": "5.5.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tesseract-tessdata-doc": {
+    "version": "4.1.0-12.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "thermald": {
+    "version": "2.5.9-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "time": {
+    "version": "1.9-28.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tinysparql": {
+    "version": "3.11.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tinyxml2": {
+    "version": "11.0.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tiwilink-firmware": {
+    "version": "20260519-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tmux": {
+    "version": "3.6b-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "toolbox": {
+    "version": "0.3-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "totem-pl-parser": {
+    "version": "3.26.7-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tpm2-tools": {
+    "version": "5.7-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tpm2-tss": {
+    "version": "4.1.3-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tpm2-tss-fapi": {
+    "version": "4.1.3-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "traceroute": {
+    "version": "2.1.6-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tree": {
+    "version": "2.2.1-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tslib": {
+    "version": "1.24-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tuned": {
+    "version": "2.27.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tuned-ppd": {
+    "version": "2.27.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "twolame-libs": {
+    "version": "0.4.0-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "tzdata": {
+    "version": "2026b-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "uavs3d-libs": {
+    "version": "1.2.0~20251213git0e20d2c-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "uchardet": {
+    "version": "0.0.8-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "udftools": {
+    "version": "2.3-13.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "udisks2": {
+    "version": "2.11.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "unbound-anchor": {
+    "version": "1.25.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "unbound-libs": {
+    "version": "1.25.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "unicode-ucd": {
+    "version": "17.0.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "unzip": {
+    "version": "6.0-69.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "upower": {
+    "version": "1.91.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "upower-libs": {
+    "version": "1.91.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "uresourced": {
+    "version": "0.5.4-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "uriparser": {
+    "version": "1.0.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "urw-base35-bookman-fonts": {
+    "version": "20200910-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "urw-base35-c059-fonts": {
+    "version": "20200910-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "urw-base35-d050000l-fonts": {
+    "version": "20200910-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "urw-base35-fonts": {
+    "version": "20200910-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "urw-base35-fonts-common": {
+    "version": "20200910-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "urw-base35-gothic-fonts": {
+    "version": "20200910-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "urw-base35-nimbus-mono-ps-fonts": {
+    "version": "20200910-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "urw-base35-nimbus-roman-fonts": {
+    "version": "20200910-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "urw-base35-nimbus-sans-fonts": {
+    "version": "20200910-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "urw-base35-p052-fonts": {
+    "version": "20200910-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "urw-base35-standard-symbols-ps-fonts": {
+    "version": "20200910-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "urw-base35-z003-fonts": {
+    "version": "20200910-27.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "usb_modeswitch": {
+    "version": "2.6.2-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "usb_modeswitch-data": {
+    "version": "20191128-15.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "usbip": {
+    "version": "5.7.9-14.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "usbmuxd": {
+    "version": "1.1.1^20251205git3ded00c-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "usbutils": {
+    "version": "019-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "usermode": {
+    "version": "1.114-16.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "userspace-rcu": {
+    "version": "0.15.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "util-linux": {
+    "version": "2.41.4-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "util-linux-core": {
+    "version": "2.41.4-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "uupd": {
+    "version": "1.4.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "uvg266-libs": {
+    "version": "0.8.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "v4l2loopback": {
+    "version": "0.15.3-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vazirmatn-vf-fonts": {
+    "version": "33.003-16.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vid.stab": {
+    "version": "1.1.1-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vim-common": {
+    "version": "9.2.530-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vim-data": {
+    "version": "9.2.530-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vim-enhanced": {
+    "version": "9.2.530-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vim-filesystem": {
+    "version": "9.2.530-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vim-minimal": {
+    "version": "9.2.530-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "virt-what": {
+    "version": "1.27-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "virtualbox-guest-additions": {
+    "version": "7.2.8-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vo-amrwbenc": {
+    "version": "0.1.3-24.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "volume_key-libs": {
+    "version": "0.3.12-29.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vpnc": {
+    "version": "0.5.3^20241114.git11e15a1-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vpnc-script": {
+    "version": "20230907-7.git5b9e7e4c.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vte-profile": {
+    "version": "0.84.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vte291": {
+    "version": "0.84.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vte291-gtk4": {
+    "version": "0.84.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vulkan-loader": {
+    "version": "1.4.341.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vvdec-libs": {
+    "version": "3.1.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "vvenc-libs": {
+    "version": "1.14.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "wavpack": {
+    "version": "5.9.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "waypipe": {
+    "version": "0.11.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "webkit2gtk4.1": {
+    "version": "2.52.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "webkitgtk6.0": {
+    "version": "2.52.3-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "webrtc-audio-processing": {
+    "version": "2.1-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "wget2": {
+    "version": "2.2.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "wget2-libs": {
+    "version": "2.2.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "wget2-wget": {
+    "version": "2.2.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "which": {
+    "version": "2.25-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "whois": {
+    "version": "5.6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "whois-nls": {
+    "version": "5.6.6-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "wireguard-tools": {
+    "version": "1.0.20250521-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "wireless-regdb": {
+    "version": "2026.03.18-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "wireplumber": {
+    "version": "0.5.14-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "wireplumber-libs": {
+    "version": "0.5.14-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "wl-clipboard": {
+    "version": "2.2.1^git20251124.e808203-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "words": {
+    "version": "3.0-63.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "wpa_supplicant": {
+    "version": "2.11-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "wsdd": {
+    "version": "0.8-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "x264-libs": {
+    "version": "0.165-38.20250910git0480cb0.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "x265-libs": {
+    "version": "4.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xavs2-libs": {
+    "version": "1.4-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xcb-util": {
+    "version": "0.4.1-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xcb-util-cursor": {
+    "version": "0.1.6-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xcb-util-image": {
+    "version": "0.4.1-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xcb-util-keysyms": {
+    "version": "0.4.1-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xcb-util-renderutil": {
+    "version": "0.3.10-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xcb-util-wm": {
+    "version": "0.4.2-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xdg-dbus-proxy": {
+    "version": "0.1.7-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xdg-desktop-portal": {
+    "version": "1.21.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xdg-desktop-portal-gnome": {
+    "version": "50.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xdg-desktop-portal-gtk": {
+    "version": "1.15.3-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xdg-terminal-exec": {
+    "version": "0.14.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xdg-user-dirs": {
+    "version": "0.18-11.fc43",
+    "last_seen": "2026-06-12"
+  },
+  "xdg-user-dirs-gtk": {
+    "version": "0.16-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xdg-utils": {
+    "version": "1.2.1-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xdriinfo": {
+    "version": "1.0.7-6.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xevd-libs": {
+    "version": "0.5.0-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xeve-libs": {
+    "version": "0.5.1-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xfsprogs": {
+    "version": "6.18.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xhost": {
+    "version": "1.0.9-11.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xkbcomp": {
+    "version": "1.5.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xkeyboard-config": {
+    "version": "2.47-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xml-common": {
+    "version": "0.6.3-68.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xmlrpc-c": {
+    "version": "1.60.04-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xmlrpc-c-client": {
+    "version": "1.60.04-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xmlsec1": {
+    "version": "1.2.41-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xmlsec1-openssl": {
+    "version": "1.2.41-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xmodmap": {
+    "version": "1.0.11-10.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xorg-x11-server-Xwayland": {
+    "version": "24.1.11-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xorg-x11-xauth": {
+    "version": "1.1.5-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xorg-x11-xinit": {
+    "version": "1.4.3-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xprop": {
+    "version": "1.2.8-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xrandr": {
+    "version": "1.5.3-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xrdb": {
+    "version": "1.2.2-7.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xrefresh": {
+    "version": "1.1.0-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xset": {
+    "version": "1.2.5-9.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xvidcore": {
+    "version": "1.3.7-19.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xxd": {
+    "version": "9.2.530-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xxhash-libs": {
+    "version": "0.8.3-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xz": {
+    "version": "5.8.2-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "xz-libs": {
+    "version": "5.8.2-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "yajl": {
+    "version": "2.1.0-40.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "yelp-libs": {
+    "version": "49.1-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "yelp-xsl": {
+    "version": "49.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ykclient": {
+    "version": "2.15-23.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "ykpers": {
+    "version": "1.20.0-18.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "yubikey-manager": {
+    "version": "5.9.1-1.20260415gitbc866e8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "yyjson": {
+    "version": "0.12.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "zchunk-libs": {
+    "version": "1.5.1-4.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "zenity": {
+    "version": "4.2.2-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "zeromq": {
+    "version": "4.3.5-22.fc43",
+    "last_seen": "2026-06-12"
+  },
+  "zfs": {
+    "version": "2.3.7-1.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "zimg": {
+    "version": "3.0.6-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "zinnia": {
+    "version": "0.07-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "zinnia-tomoe-ja": {
+    "version": "0.07-8.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "zip": {
+    "version": "3.0-45.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "zix": {
+    "version": "0.8.0-2.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "zlib-ng-compat": {
+    "version": "2.3.3-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "zlib-ng-compat-devel": {
+    "version": "2.3.3-3.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "zram-generator": {
+    "version": "1.2.1-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "zram-generator-defaults": {
+    "version": "1.2.1-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "zsh": {
+    "version": "5.9-20.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "zstd": {
+    "version": "1.5.7-5.fc44",
+    "last_seen": "2026-06-12"
+  },
+  "zvbi": {
+    "version": "0.2.44-3.fc44",
+    "last_seen": "2026-06-12"
+  }
+}

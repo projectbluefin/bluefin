@@ -1,0 +1,29 @@
+name: Update package cadence intervals
+
+# Runs immediately after Execute Release pushes the new :stable image to GHCR.
+# workflow_run ensures we measure the version that users just received, not
+# whatever happened to be in the registry when a cron fired.
+
+on:
+  workflow_run:
+    workflows: ["Execute Release"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      force_reclassify:
+        description: 'Recompute all intervals from observed churn, ignoring bootstrap heuristics'
+        type: boolean
+        default: false
+
+permissions: {}
+
+jobs:
+  cadence:
+    # Only run when the release actually succeeded — skip on cancelled/failed releases.
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    uses: projectbluefin/actions/.github/workflows/reusable-pkg-cadence.yml@v1
+    with:
+      image: ghcr.io/projectbluefin/bluefin:stable
+      repo: projectbluefin/bluefin
+      force_reclassify: ${{ inputs.force_reclassify || false }}
+    secrets: inherit
