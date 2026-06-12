@@ -10,6 +10,8 @@ SCRIPT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
 PACKAGES_SCRIPT="${SCRIPT_DIR}/../../build_files/base/03-packages.sh"
 COPR_HELPERS="${SCRIPT_DIR}/../../build_files/shared/copr-helpers.sh"
 PACKAGE_LIB="${SCRIPT_DIR}/../../build_files/shared/package-lib.sh"
+READ_PACKAGES="${SCRIPT_DIR}/../../build_files/shared/read-packages"
+PKGS_TOML="${SCRIPT_DIR}/../../build_files/packages/base.toml"
 
 setup() {
     TEST_ROOT="${SCRIPT_DIR}/.bats-sandbox/03-packages.${BATS_TEST_NUMBER:-0}.$$"
@@ -52,6 +54,8 @@ EOF
     sed \
         -e "s|source /ctx/build_files/shared/copr-helpers.sh|source ${COPR_HELPERS}|g" \
         -e "s|source /ctx/build_files/shared/package-lib.sh|source ${PACKAGE_LIB}|g" \
+        -e "s|python3 /ctx/build_files/shared/read-packages|python3 ${READ_PACKAGES}|g" \
+        -e "s|/ctx/build_files/packages/base.toml|${PKGS_TOML}|g" \
         -e "s|/usr/share/vulkan|${TEST_ROOT}/usr/share/vulkan|g" \
         "${PACKAGES_SCRIPT}" > "${PATCHED_SCRIPT}"
     chmod +x "${PATCHED_SCRIPT}"
