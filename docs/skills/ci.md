@@ -111,7 +111,9 @@ This is a known gap tracked in [#368](https://github.com/projectbluefin/bluefin/
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `startup_failure` with zero jobs | unsupported permissions scope in that environment | compare `permissions:` with a known-good upstream run |
+| Testing Images `startup_failure` — `Unable to resolve action ... setup-runner@<SHA>` | `build-image-testing.yml` is pinned to an `actions` SHA from a **non-merged feature branch**; that SHA's `reusable-build.yml` references internal action SHAs that don't exist on `main` | Bump the SHA pin to the current `v1` HEAD: `gh api repos/projectbluefin/actions/commits/v1 --jq '.sha'`. Only pin to SHAs reachable from `projectbluefin/actions` `main`. |
+| Testing Images build job **skipped** after `workflow_dispatch` | `build-image-testing.yml` has a guard: `workflow_dispatch` only runs when `github.ref_name == 'main'` or `inputs.pr_number != ''`. Dispatching manually on `testing` without a PR number silently skips the job. | Push a real file change to `testing` (any path not in `paths-ignore`). An **empty commit also does not work** — path filters treat it as all-files-excluded. Touch `image-versions.yml` or `build_files/**` instead. |
+| `v1` tag update silently no-ops with `git push origin refs/tags/v1 --force` | Local git remote may not match the real upstream, or the local tag object is stale. Git reports "Everything up-to-date" even when the remote tag is wrong. | Always update `v1` via the GitHub API: `gh api repos/projectbluefin/actions/git/refs/tags/v1 -X PATCH --field "sha=<NEW_SHA>" --field "force=true"`. Verify: `gh api repos/projectbluefin/actions/git/refs/tags/v1 --jq '.object.sha'`. |
 | `startup_failure` — `promote-to-stable` waits but workflow never starts | `environment: production` with `branch_policy: protected_branches: true` — rulesets are **not** recognized as classic branch protection by environment deployment policies | Switch the `production` environment to `custom_branch_policies: true` and explicitly add `main`: `gh api repos/projectbluefin/bluefin/environments/production -X PUT --field "deployment_branch_policy[custom_branch_policies]=true" --field "deployment_branch_policy[protected_branches]=false"` then `gh api repos/projectbluefin/bluefin/environments/production/deployment-branch-policies -X POST --field "name=main"` |
 | `startup_failure` — workflow that calls `generate-release.yml` | `generate-release.yml` moved to `projectbluefin/actions` as an external reusable workflow | **`generate-release.yml` must remain a LOCAL workflow in this repo.** External cross-repo `workflow_call` reusable workflows cause `startup_failure` in `weekly-testing-promotion.yml` even when actionlint passes and the SHA is reachable. This may be a GitHub bug — do not attempt to centralize it again without testing first. |
 | `startup_failure` — caller passes unknown `with:` inputs to `generate-release.yml` | Extra undeclared inputs in `with:` block for a `workflow_call` job cause startup validation failure | Match the `with:` inputs exactly to the callee's declared `inputs:` block; remove any keys not declared in the callee |
@@ -184,6 +186,10 @@ Workflow consumers in this repo pin `projectbluefin/actions` references to a ful
 
 Floating `@v1` tags are blocked by the repo's `no-floating-action-tags` pre-commit hook. The `# v1` comment is the stable contract; the SHA is the actual pin that Renovate updates.
 
+**Never pin to a SHA from a non-merged feature branch.** Feature branch SHAs in `projectbluefin/actions` may reference internal action SHAs that don't exist on `main`. Always verify: `gh api repos/projectbluefin/actions/commits/<SHA> --jq '.sha'` — if it returns a 422 the commit doesn't exist on `main`.
+
+**After advancing `v1` in `projectbluefin/actions`, bump the SHA pin here too** — even though `reusable-build.yml` resolves `@v1` at runtime, the caller pin in `build-image-testing.yml` is a fixed SHA and must be updated to pick up the new `v1` HEAD. Then push a real file change to trigger a build.
+
 ### Migration pattern
 
 Replace inline workflow steps with action calls:
@@ -231,6 +237,7 @@ Never duplicate an existing shared action inline — doing so creates a second R
 
 ## Hard rules for agents
 
+- **Always wait for and verify build completion before claiming success.** Use `gh run watch <id> --exit-status` to block until done, then confirm with `gh run view <id> --json conclusion --jq .conclusion`. Never assume a merge unblocked builds — read the actual failure logs.
 - **PRs always target `testing`.** Never `main`. If you open a PR targeting `main`, close it and re-open.
 - **Never add shared CI logic to `.github/` or `common`.** New reusable actions go in `projectbluefin/actions` only. See "CI fix workflow for agents" above for the correct sequence.
 - **Never inline a third-party action that is already wrapped in `projectbluefin/actions`.** Use the shared action instead; duplicating the pin creates Renovate drift.
