@@ -1,4 +1,5 @@
 name: Validate Renovate Config
+# Thin caller — logic lives in projectbluefin/actions/reusable-validate-renovate.yml
 
 on:
   pull_request:
@@ -12,24 +13,10 @@ on:
       - ".github/renovate.json5"
       - ".github/workflows/renovate.yml"
 
+permissions: {}
+
 jobs:
   validate:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-        with:
-          node-version: latest
-
-      - name: Install dependencies
-        shell: bash
-        env:
-          RENOVATE_VERSION: latest
-        run: npm install -g "renovate@${RENOVATE_VERSION}"
-
-      - name: Validate Renovate config
-        shell: bash
-        run: renovate-config-validator --strict
+    permissions:
+      contents: read
+    uses: projectbluefin/actions/.github/workflows/reusable-validate-renovate.yml@eee4f93c024d66029863b8d781a4bd1aa94bd253 # v1
