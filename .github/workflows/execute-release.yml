@@ -1,19 +1,42 @@
 name: Execute Release
 
+# Triggered by a push to main whose commit message starts with
+# "chore: promote testing to main" — the squash commit produced by
+# promote-testing-to-main.yml.
+#
+# Why push instead of pull_request: closed:
+# GitHub blocks pull_request-triggered workflows when the triggering PR was
+# created by github-actions[bot] AND the PR modifies .github/workflows/ files.
+# The promotion squash always carries SHA pin bumps from Renovate, so the
+# pull_request: closed trigger would produce startup_failed on every release.
+# A push: [main] trigger is not subject to this restriction.
+
 on:
-  pull_request:
-    types:
-      - closed
+  push:
     branches:
       - main
 
 permissions: {}
 
 jobs:
+  check-trigger:
+    runs-on: ubuntu-latest
+    outputs:
+      is-promotion: ${{ steps.check.outputs.is-promotion }}
+    steps:
+      - id: check
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          if echo "$COMMIT_MSG" | grep -q "^chore: promote testing to main"; then
+            echo "is-promotion=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is-promotion=false" >> "$GITHUB_OUTPUT"
+          fi
+
   execute:
-    if: >
-      github.event.pull_request.merged == true &&
-      github.event.pull_request.head.ref == 'auto/promote-testing-to-main'
+    needs: [check-trigger]
+    if: needs.check-trigger.outputs.is-promotion == 'true'
     permissions:
       actions: read
       contents: write
