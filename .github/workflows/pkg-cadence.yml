@@ -21,7 +21,7 @@ jobs:
   cadence:
     # Only run when the release actually succeeded — skip on cancelled/failed releases.
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
-    uses: projectbluefin/actions/.github/workflows/reusable-pkg-cadence.yml@e6aaccdffd3a2e7447bcadb9a52bc7ef347dedea # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-pkg-cadence.yml@74c4356b36dd94c0eadf15bbe63a26b58a0e7468 # v1
     with:
       image: ghcr.io/projectbluefin/bluefin:stable
       repo: projectbluefin/bluefin
