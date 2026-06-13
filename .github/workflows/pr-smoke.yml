@@ -42,7 +42,7 @@ jobs:
       - name: Setup runner
         # Keep this workflow limited to Bluefin-specific PR image plumbing.
         # If setup/build/push logic becomes reusable, move it to projectbluefin/actions.
-        uses: projectbluefin/actions/bootc-build/setup-runner@e6aaccdffd3a2e7447bcadb9a52bc7ef347dedea # v1
+        uses: projectbluefin/actions/bootc-build/setup-runner@74c4356b36dd94c0eadf15bbe63a26b58a0e7468 # v1
         with:
           storage-backend: btrfs
           update-podman: "true"
