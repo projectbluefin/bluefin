@@ -147,15 +147,13 @@ kargs = ["rd.driver.blacklist=nouveau", "modprobe.blacklist=nouveau", "nvidia-dr
 EOF
 
     # Install NVIDIA Container Toolkit for CDI-based GPU passthrough in Podman.
-    # Uses -base variant only: ships nvidia-ctk + nvidia-cdi-hook without the legacy
-    # OCI hook or libnvidia-container. CDI is the correct path for bootc/rootless.
-    # This is NVIDIA's official C toolkit, not Fedora's golang-github-nvidia-container-toolkit.
+    # -base variant only: ships nvidia-ctk + nvidia-cdi-hook, no libnvidia-container,
+    # no legacy OCI hook. CDI is the correct path for bootc/rootless containers.
+    # Mirrors dakota elements/bluefin-nvidia/nvidia-container-toolkit.bst.
+    # NVIDIA's official C toolkit — distinct from Fedora's golang-github-nvidia-container-toolkit.
     curl -fsSL https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo \
         | tee /etc/yum.repos.d/nvidia-container-toolkit.repo
-    dnf5 -y install \
-        nvidia-container-toolkit-base \
-        libnvidia-container1 \
-        libnvidia-container-tools
+    dnf5 -y install nvidia-container-toolkit-base
     # Configure for rootless Podman: no cgroup device delegation needed with CDI
     nvidia-ctk config --set nvidia-container-cli.no-cgroups --in-place
     # Remove the repo file from the final image
