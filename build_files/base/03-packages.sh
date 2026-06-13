@@ -61,7 +61,6 @@ FEDORA_PACKAGES=(
     alsa-firmware
     alsa-tools-firmware
     autofs
-    bash-color-prompt
     bcache-tools
     bootc
     borgbackup
@@ -82,11 +81,7 @@ FEDORA_PACKAGES=(
     git-credential-libsecret
     glow
     gnome-tweaks
-    google-noto-sans-balinese-fonts
-    google-noto-sans-cjk-fonts
-    google-noto-sans-javanese-fonts
-    google-noto-sans-sundanese-fonts
-    grub2-tools-extra
+    google-noto-sans-cjk-vf-fonts
     gum
     gvfs-nfs
     htop
@@ -105,8 +100,6 @@ FEDORA_PACKAGES=(
     libayatana-appindicator-gtk3
     libcamera-gstreamer
     libcamera-tools
-    libgda
-    libgda-sqlite
     libimobiledevice
     libimobiledevice-utils
     libratbag-ratbagd
@@ -118,9 +111,7 @@ FEDORA_PACKAGES=(
     make
     mesa-libGLU
     mozc
-    mtools
     nautilus-gsconnect
-    net-tools
     nvtop
     oddjob-mkhomedir
     opendyslexic-fonts
@@ -133,9 +124,7 @@ FEDORA_PACKAGES=(
     powerstat
     powertop
     printer-driver-brlaser
-    pulseaudio-utils
     python3-pip
-    python3-pygit2
     rclone
     restic
     samba
@@ -143,7 +132,6 @@ FEDORA_PACKAGES=(
     samba-ldb-ldap-modules
     samba-winbind-clients
     samba-winbind-modules
-    setools-console
     smartmontools
     solaar-udev
     squashfs-tools
@@ -151,18 +139,14 @@ FEDORA_PACKAGES=(
     sssd-krb5
     sssd-nfs-idmap
     switcheroo-control
-    symlinks
     tcpdump
     tmux
     traceroute
-    usbip
     usbmuxd
-    vim
     waypipe
     wireguard-tools
     wl-clipboard
     xdg-terminal-exec
-    xprop
     yubikey-manager
     zenity
     zsh
@@ -173,7 +157,6 @@ case "$FEDORA_MAJOR_VERSION" in
     42)
         FEDORA_PACKAGES+=(
             evolution-ews-core
-            uld
         )
         ;;
     43)
@@ -224,7 +207,7 @@ EXCLUDED_PACKAGES=(
     gnome-software
     gnome-software-rpm-ostree
     gnome-terminal-nautilus
-    google-noto-sans-cjk-vf-fonts
+    google-noto-sans-cjk-fonts
     podman-docker
     totem-video-thumbnailer
     yelp
