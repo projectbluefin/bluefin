@@ -400,3 +400,4 @@ GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, t
 | `moderator.yml` | Issues/comments opened | AI spam + AI-content detection |
 | `skill-drift.yml` | PRs to `main` | Skill/code sync check; fails if `build_files/`, `Justfile`, or workflow files changed without updating `docs/skills/`. Fix by updating `docs/skills/` to match your code changes |
 | `validate-renovate.yml` | Renovate config PRs | Validates renovate.json5 syntax |
+<!-- last-verified: 2026-06-14 -->
