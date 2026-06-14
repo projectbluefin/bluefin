@@ -77,7 +77,10 @@ pre-commit run --all-files
 ### shellcheck failed in CI
 ```bash
 shellcheck build_files/**/*.sh
+shellcheck system_files/**/*.sh
 ```
+
+Both trees are covered by the pre-commit `shellcheck` hook (shellcheck-py `v0.11.0.1`). Scripts under `system_files/` that source runtime paths use `# shellcheck source=/dev/null`; profile.d scripts with no shebang use `# shellcheck shell=bash`.
 
 ## Promotion pipeline mental model
 
@@ -108,7 +111,9 @@ This is a known gap tracked in [#368](https://github.com/projectbluefin/bluefin/
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `startup_failure` with zero jobs | unsupported permissions scope in that environment | compare `permissions:` with a known-good upstream run |
+| Testing Images `startup_failure` — `Unable to resolve action ... setup-runner@<SHA>` | `build-image-testing.yml` is pinned to an `actions` SHA from a **non-merged feature branch**; that SHA's `reusable-build.yml` references internal action SHAs that don't exist on `main` | Bump the SHA pin to the current `v1` HEAD: `gh api repos/projectbluefin/actions/commits/v1 --jq '.sha'`. Only pin to SHAs reachable from `projectbluefin/actions` `main`. |
+| Testing Images build job **skipped** after `workflow_dispatch` | `build-image-testing.yml` has a guard: `workflow_dispatch` only runs when `github.ref_name == 'main'` or `inputs.pr_number != ''`. Dispatching manually on `testing` without a PR number silently skips the job. | Push a real file change to `testing` (any path not in `paths-ignore`). An **empty commit also does not work** — path filters treat it as all-files-excluded. Touch `image-versions.yml` or `build_files/**` instead. |
+| `v1` tag update silently no-ops with `git push origin refs/tags/v1 --force` | Local git remote may not match the real upstream, or the local tag object is stale. Git reports "Everything up-to-date" even when the remote tag is wrong. | Always update `v1` via the GitHub API: `gh api repos/projectbluefin/actions/git/refs/tags/v1 -X PATCH --field "sha=<NEW_SHA>" --field "force=true"`. Verify: `gh api repos/projectbluefin/actions/git/refs/tags/v1 --jq '.object.sha'`. |
 | `startup_failure` — `promote-to-stable` waits but workflow never starts | `environment: production` with `branch_policy: protected_branches: true` — rulesets are **not** recognized as classic branch protection by environment deployment policies | Switch the `production` environment to `custom_branch_policies: true` and explicitly add `main`: `gh api repos/projectbluefin/bluefin/environments/production -X PUT --field "deployment_branch_policy[custom_branch_policies]=true" --field "deployment_branch_policy[protected_branches]=false"` then `gh api repos/projectbluefin/bluefin/environments/production/deployment-branch-policies -X POST --field "name=main"` |
 | `startup_failure` — workflow that calls `generate-release.yml` | `generate-release.yml` moved to `projectbluefin/actions` as an external reusable workflow | **`generate-release.yml` must remain a LOCAL workflow in this repo.** External cross-repo `workflow_call` reusable workflows cause `startup_failure` in `weekly-testing-promotion.yml` even when actionlint passes and the SHA is reachable. This may be a GitHub bug — do not attempt to centralize it again without testing first. |
 | `startup_failure` — caller passes unknown `with:` inputs to `generate-release.yml` | Extra undeclared inputs in `with:` block for a `workflow_call` job cause startup validation failure | Match the `with:` inputs exactly to the callee's declared `inputs:` block; remove any keys not declared in the callee |
@@ -116,16 +121,24 @@ This is a known gap tracked in [#368](https://github.com/projectbluefin/bluefin/
 | Testing Images runner timeout / job cancelled after 20+ min | Syft SBOM scan running for testing stream — both outer SBOM steps AND `sign-and-publish` internal Syft each scan the full image | Ensure `reusable-build.yml` has `stream_name != 'testing'` guard on all 4 outer SBOM steps AND passes `generate-sbom: false` to `sign-and-publish` for testing. Fixed in actions#123 + actions#124. |
 | `No SBOM referrer found` in release generation | testing stream skips SBOM; promoted images lack signed SBOMs | allow missing SBOMs for diff generation and use intersection-only comparisons |
 | promotion says no passing e2e for current SHA | `post-testing-e2e` has not passed the locked `main` commit | wait or rerun after e2e completes |
+| `gate / gate` fails immediately on promotion PR with "No completed post-testing-e2e run found" | `pr-release-gate.yml` was checking the squash commit SHA or the `testing` branch SHA — neither ever has a `post-testing-e2e` run. `post-testing-e2e` only runs for `main` branch commits. | `pr-release-gate.yml` must have a `setup` job that fetches `gh api repos/.../git/ref/heads/main` at runtime and passes it as `head_sha`. See current `pr-release-gate.yml` for the pattern. |
+| `git merge --squash origin/testing` fails with CONFLICT on SHA-pin lines | `main` and `testing` independently updated the same workflow SHA pins | Rebuild the squash branch manually with `-X theirs` (see "SHA-pin conflict on squash" in `workflow.md`). Root cause: `reusable-promote-squash.yml` in `projectbluefin/actions` does not pass `-X theirs`; SHA-pin divergence requires manual rebuild until that is fixed upstream. |
 | required check is skipped | path filter skipped the workflow | verify whether skipped is intentional for that workflow |
 | Renovate PR did not automerge | PR lookup missed mergeraptor author, or `testing` branch protection not set up | accept both `renovate[bot]` and `app/mergeraptor` in jq filter; ensure `testing` has branch protection with `validate` required check and `allow_auto_merge=true` at repo level |
 | Weekly promotion cannot find digest artifact | artifact expired before Tuesday promotion window | push fresh commit to `main` to regenerate artifact |
 | Cosign sign/verify fails | Sigstore outage or key rotation | check `check-cosign-key-rotation.yml` issues; retry after Sigstore recovers |
+| Cosign verify: "expected key signature, not certificate" | Upstream image switched from key-based to keyless (Sigstore OIDC) signing | Pass `keyless` as the key argument to `verify-container` instead of a `.pub` path; uses `--certificate-identity-regexp` + `--certificate-oidc-issuer` |
 | COPR health monitor reports "no succeeded build" | COPR API changed response format — `latest_succeeded_build` moved to `builds.latest_succeeded` | Verify with raw API: `curl "https://copr.fedorainfracloud.org/api_3/package?ownername=X&projectname=Y&packagename=Z&with_latest_succeeded_build=True"` — if `builds.latest_succeeded` is present the repo is healthy; the monitor handles both formats |
 | `validate` passes but enqueue returns "Required status check is expected" | `strict_required_status_checks_policy: true` — `testing` is behind `main` | `sync-main-to-testing.yml` handles this automatically after each promotion; if stuck, manually run `git merge projectbluefin/main` on `testing` and push |
 | PR targeting `main` has no `validate` CI run | `pr-validation.yml` only triggered on `testing` (pre-fix state) | `pr-validation.yml` must list both `testing` and `main` in `branches:`; verify the workflow on `main` branch has been updated |
 
 ## Non-obvious patterns
 
+- **`verify-container` supports keyless mode.** Pass `keyless` as the third argument (key) to use Sigstore OIDC verification instead of a static public key. This uses `--certificate-identity-regexp` matching `projectbluefin/(common|actions)/.github/workflows/` and `--certificate-oidc-issuer=https://token.actions.githubusercontent.com`. Used for `common` image verification since common signs via `sign-and-publish` with `signing-mode: keyless`.
+
+- **`post-testing-e2e` runs on `main` branch SHAs only.** It triggers via `workflow_run` on "Testing Images" completions filtered to `branches: [main]`. It never fires for `testing` branch commits or for the squash commit on `auto/promote-testing-to-main`. Any gate doing an e2e lookup by SHA must use a `main` branch SHA — specifically the current `main` HEAD retrieved at runtime via the API, not the testing branch SHA or the PR head SHA.
+- **`pr-release-gate.yml` setup job** — a `setup` job must call `gh api "repos/${{ github.repository }}/git/ref/heads/main" --jq '.object.sha'` and pass the result as `head_sha` to the reusable gate. The squash commit SHA (`github.event.pull_request.head.sha`) and the testing branch SHA (from the PR body) are both wrong: neither has a `post-testing-e2e` run.
+- **Known upstream bug — `reusable-promote-squash.yml` passes wrong `head_sha`:** it passes `testing_sha` (the testing branch HEAD) to the gate. The testing branch HEAD also never has a `post-testing-e2e` run. Fix pending in `projectbluefin/actions`.
 - `post-testing-e2e.yml` is the continuous gate; weekly promotion assumes it already passed on the exact `main` SHA
 - A skipped workflow can still satisfy a required check if GitHub considers it skipped-by-filter
 - Stable release generation depends on SBOM assets existing for the images being diffed — testing stream skips SBOM generation; promoted images lack signed SBOMs until a separate SBOM pass runs
@@ -140,7 +153,7 @@ This is a known gap tracked in [#368](https://github.com/projectbluefin/bluefin/
 - **`testing`/`main` branch sync — automated:** `sync-main-to-testing.yml` fires on every push to `main` and merges `main` → `testing` automatically. Manual sync is only needed if the workflow aborts due to a direct push to `main` that severs the merge base (CONFLICTING case — see "Testing→main squash history gap" above).
 - **E2E (`testsuite` job) only runs on `merge_group`** — the `testsuite` job in `pr-validation.yml` has a hard `if: github.event_name == 'merge_group'` guard. There is no `detect-changes` conditional; the guard is unconditional. Per-push PR CI is fast validate + unit-tests only (~2 min). Do not add E2E to per-push PR jobs — each push triggering a 10-min QEMU boot is wasteful and blocks Renovate automerge.
 - **Unit tests live in `tests/unit/`, not `build_files/`** — `build_files/**` is in the detect-changes image path filter; placing test files there causes every PR push to trigger image builds and E2E. Test files belong in `tests/unit/` where they are invisible to the image path filter.
-- **`just test-unit` runs bats unit tests** — calls `bats tests/unit/`. The CI `unit-tests` job invokes `bats` directly (not `just`) because `just` is not available on a bare `ubuntu-latest` runner without the `setup-runner` composite action. Test files: `package-lib_test.bats`, `validate-repos_test.bats`, `copr-helpers_test.bats`.
+- **`just test-unit` runs bats unit tests** — calls `bats tests/unit/` (all `.bats` files in the directory). The CI `unit-tests` job invokes `bats` directly (not `just`) because `just` is not available on a bare `ubuntu-latest` runner without the `setup-runner` composite action. Current test files: `00-image-info_test.bats`, `17-cleanup_test.bats`, `18-workarounds_test.bats`, `19-initramfs_test.bats`, `clean-stage_test.bats`, `copr-helpers_test.bats`, `disable-repos_test.bats`, `package-lib_test.bats`, `validate-repos_test.bats`.
 - **Vulnerability scans must use the build digest, not a mutable tag.** `vulnerability-scan.yml` downloads `image-digest-{stream_name}-{brand_name}-{image_flavor}` from the triggering `workflow_run` and passes `image@sha256:...` to the scanner to avoid TOCTOU. Artifact names for the default bluefin build: `image-digest-testing-bluefin-main`, `image-digest-testing-bluefin-nvidia`.
 - Weekly promotion uses retag-only (skopeo copy) — **no rebuild at promotion time**. `:stable` is set exclusively by `weekly-testing-promotion.yml`.
 - Build callers do not pass `secrets: inherit` — `reusable-build.yml` only needs `GITHUB_TOKEN`, which is automatically available
@@ -175,6 +188,10 @@ Workflow consumers in this repo pin `projectbluefin/actions` references to a ful
 ```
 
 Floating `@v1` tags are blocked by the repo's `no-floating-action-tags` pre-commit hook. The `# v1` comment is the stable contract; the SHA is the actual pin that Renovate updates.
+
+**Never pin to a SHA from a non-merged feature branch.** Feature branch SHAs in `projectbluefin/actions` may reference internal action SHAs that don't exist on `main`. Always verify: `gh api repos/projectbluefin/actions/commits/<SHA> --jq '.sha'` — if it returns a 422 the commit doesn't exist on `main`.
+
+**After advancing `v1` in `projectbluefin/actions`, bump the SHA pin here too** — even though `reusable-build.yml` resolves `@v1` at runtime, the caller pin in `build-image-testing.yml` is a fixed SHA and must be updated to pick up the new `v1` HEAD. Then push a real file change to trigger a build.
 
 ### Migration pattern
 
@@ -223,6 +240,7 @@ Never duplicate an existing shared action inline — doing so creates a second R
 
 ## Hard rules for agents
 
+- **Always wait for and verify build completion before claiming success.** Use `gh run watch <id> --exit-status` to block until done, then confirm with `gh run view <id> --json conclusion --jq .conclusion`. Never assume a merge unblocked builds — read the actual failure logs.
 - **PRs always target `testing`.** Never `main`. If you open a PR targeting `main`, close it and re-open.
 - **Never add shared CI logic to `.github/` or `common`.** New reusable actions go in `projectbluefin/actions` only. See "CI fix workflow for agents" above for the correct sequence.
 - **Never inline a third-party action that is already wrapped in `projectbluefin/actions`.** Use the shared action instead; duplicating the pin creates Renovate drift.

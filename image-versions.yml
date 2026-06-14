@@ -1,8 +1,9 @@
+# renovate: managed
 images:
   - name: common
     image: ghcr.io/projectbluefin/common
     tag: latest
-    digest: sha256:b2ce46d4e94e916946b3481e00b0ff9c841534f763dc8509d8fa09652685a88d
+    digest: sha256:33f840c443f2f8503367d99b06f22c7765161db26fdba8be8878b85e57533f3d
   - name: brew
     image: ghcr.io/ublue-os/brew
     tag: latest

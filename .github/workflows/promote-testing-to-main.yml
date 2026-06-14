@@ -30,7 +30,7 @@ permissions:
 
 jobs:
   promote:
-    uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@5f3cabacecd1a7b95b7f64b03aa4c298ff73f918 # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@74c4356b36dd94c0eadf15bbe63a26b58a0e7468 # v1
     with:
       variants: >-
         [{"image":"bluefin"},{"image":"bluefin-nvidia"}]

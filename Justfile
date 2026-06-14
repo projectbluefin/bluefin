@@ -42,7 +42,7 @@ test-unit:
         exit 1
     fi
     echo "Running unit tests..."
-    bats tests/unit/package-lib_test.bats
+    bats tests/unit/
 
 # Fix Just Syntax
 [group('Just')]
@@ -186,7 +186,7 @@ build $image="bluefin" $tag="testing" $flavor="main" rechunk="0" ghcr="0" pipeli
         {{ just }} verify-container "akmods-nvidia-open:${akmods_flavor}-${fedora_version}-${kernel_release}"
     fi
 
-    {{ just }} verify-container "common:latest@${common_image_sha}" ghcr.io/projectbluefin "{{ justfile_directory() }}/keys/projectbluefin-common.pub"
+    {{ just }} verify-container "common:latest@${common_image_sha}" ghcr.io/projectbluefin keyless
     {{ just }} verify-container "brew:latest@${brew_image_sha}" ghcr.io/ublue-os "{{ justfile_directory() }}/keys/ublue-os-brew.pub"
 
     # Get Version
@@ -498,27 +498,47 @@ verify-container container="" registry="ghcr.io/ublue-os" key="":
         echo "cosign installed: $(cosign version 2>/dev/null | awk '/GitVersion:/{print $2}')"
     fi
 
-    # Public Key for Container Verification
-    # Keys are vendored in keys/ — update via PR with justification
-    key={{ key }}
-    if [[ -z "${key:-}" ]]; then
-        key="{{ justfile_directory() }}/keys/ublue-os-brew.pub"
-    fi
-
-    # Verify Container using cosign public key (retry up to 5 times for transient registry errors)
+    # Verify Container using cosign (retry up to 5 times for transient registry errors)
     MAX_RETRIES=5
     RETRY_DELAY=10
-    for attempt in $(seq 1 ${MAX_RETRIES}); do
-        if cosign verify --key "${key}" "{{ registry }}"/"{{ container }}" >/dev/null; then
-            break
+    key={{ key }}
+
+    # Keyless verification for images signed via Sigstore OIDC (e.g. projectbluefin/common)
+    if [[ "${key}" == "keyless" ]]; then
+        CERT_IDENTITY_REGEXP="https://github.com/projectbluefin/(common|actions)/.github/workflows/"
+        CERT_OIDC_ISSUER="https://token.actions.githubusercontent.com"
+        for attempt in $(seq 1 ${MAX_RETRIES}); do
+            if cosign verify \
+                --certificate-identity-regexp="${CERT_IDENTITY_REGEXP}" \
+                --certificate-oidc-issuer="${CERT_OIDC_ISSUER}" \
+                "{{ registry }}"/"{{ container }}" >/dev/null; then
+                break
+            fi
+            if [[ "${attempt}" -eq "${MAX_RETRIES}" ]]; then
+                echo "NOTICE: Keyless verification failed after ${MAX_RETRIES} attempts."
+                exit 1
+            fi
+            echo "NOTICE: Verification attempt ${attempt}/${MAX_RETRIES} failed, retrying in ${RETRY_DELAY}s..."
+            sleep "${RETRY_DELAY}"
+        done
+    else
+        # Key-based verification
+        # Keys are vendored in keys/ — update via PR with justification
+        if [[ -z "${key:-}" ]]; then
+            key="{{ justfile_directory() }}/keys/ublue-os-brew.pub"
         fi
-        if [[ "${attempt}" -eq "${MAX_RETRIES}" ]]; then
-            echo "NOTICE: Verification failed after ${MAX_RETRIES} attempts. Please ensure your public key is correct."
-            exit 1
-        fi
-        echo "NOTICE: Verification attempt ${attempt}/${MAX_RETRIES} failed, retrying in ${RETRY_DELAY}s..."
-        sleep "${RETRY_DELAY}"
-    done
+        for attempt in $(seq 1 ${MAX_RETRIES}); do
+            if cosign verify --key "${key}" "{{ registry }}"/"{{ container }}" >/dev/null; then
+                break
+            fi
+            if [[ "${attempt}" -eq "${MAX_RETRIES}" ]]; then
+                echo "NOTICE: Verification failed after ${MAX_RETRIES} attempts. Please ensure your public key is correct."
+                exit 1
+            fi
+            echo "NOTICE: Verification attempt ${attempt}/${MAX_RETRIES} failed, retrying in ${RETRY_DELAY}s..."
+            sleep "${RETRY_DELAY}"
+        done
+    fi
 
 # Secureboot Check
 [group('Utility')]

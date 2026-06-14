@@ -66,6 +66,7 @@ Bluefin bugs are data donations.
 Non-compliance = rejection.
 
 - Read [`docs/SKILL.md`](docs/SKILL.md) before modifying anything.
+- **After cloning, run `bash .github/scripts/install-hooks.sh` once** to install the pre-push hook that blocks accidental pushes to `origin` (ublue-os/bluefin).
 - Run `just check && pre-commit run --all-files` before every commit.
 - **Pre-commit guard:** `no-floating-action-tags` blocks third-party `@main`/`@v*` floating action tags at commit time. `projectbluefin/` refs (`@v1`, `@main`) are intentional managed tags and are exempted.
 - Use Conventional Commits for every commit and PR title.
@@ -137,3 +138,4 @@ Tests live in `tests/unit/`. Run with `bats tests/unit/` (or a single file). The
   | `disable-repos_test.bats` | `build_files/shared/disable-repos.sh` |
   | `package-lib_test.bats` | `build_files/shared/package-lib.sh` |
   | `validate-repos_test.bats` | `build_files/shared/validate-repos.sh` |
+  | `00-image-info_test.bats` | `build_files/base/00-image-info.sh` |
