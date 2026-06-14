@@ -61,13 +61,9 @@ dnf5 -y install \
     tailscale \
     ffmpeg{,-libs} libavcodec @multimedia gstreamer1-plugins-{bad-free,bad-free-libs,good,base} lame{,-libs} libfdk-aac libjxl ffmpegthumbnailer
 
-# From che/nerd-fonts
-copr_install_isolated "che/nerd-fonts" "nerd-fonts"
-
 # From ublue-os/packages
 copr_install_isolated "ublue-os/packages" \
-    "uupd" \
-    "oversteer-udev"
+    "uupd"
 
 # Packages to exclude — conflicts with or replaced by image content
 # shellcheck disable=SC2034  # passed by name to remove_excluded_packages
