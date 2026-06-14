@@ -1,13 +1,13 @@
 name: Post-Testing E2E
 
-# Runs e2e smoke tests after every successful push build on main.
-# This gates main continuously so the weekly promotion
-# (weekly-testing-promotion.yml) promotes only e2e-verified commits.
+# Runs e2e smoke tests after every successful push build on testing.
+# This gates testing continuously so the promotion workflow
+# (promote-testing-to-main.yml) promotes only e2e-verified commits.
 on:
   workflow_run:
     workflows: ["Testing Images"]
     types: [completed]
-    branches: [main]
+    branches: [testing]
 
 permissions: read-all
 
@@ -43,6 +43,7 @@ jobs:
 
   run-e2e:
     needs: [e2e]
+    timeout-minutes: 120
     permissions:
       packages: write
       contents: read
@@ -62,7 +63,7 @@ jobs:
   #   permissions:
   #     packages: write
   #     contents: read
-  #   uses: projectbluefin/actions/.github/workflows/upgrade-test.yml@3025b5d31f34ce44c19eab41a7fa5d4d5c5b688e # main
+  #   uses: projectbluefin/actions/.github/workflows/upgrade-test.yml@0527fe28c462e3f53cb1f6674c429562861e316c # main
   #   with:
   #     image: ${{ needs.e2e.outputs.image }}
   #     suites: lifecycle
@@ -115,38 +116,6 @@ jobs:
           done < <(find /tmp/all-digests -name "*.txt" -print0)
 
           echo "✅ Promoted ${PROMOTED} flavor(s) to :testing"
-
-  close-failure-issue:
-    # Auto-close any stale e2e failure issue when this run succeeds end-to-end.
-    # Mirrors the close-failure-issue pattern used in reusable-promote-squash.yml.
-    needs: [e2e, run-e2e, promote-to-testing]
-    if: needs.promote-to-testing.result == 'success'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      issues: write
-    steps:
-      - name: Close stale e2e failure issues
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            const existing = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: 'area/testing,kind/bug',
-              state: 'open',
-            });
-            const stale = existing.data.filter(i => i.title.startsWith('ci: e2e smoke test failure'));
-            for (const issue of stale) {
-              await github.rest.issues.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number,
-                state: 'closed',
-                state_reason: 'completed',
-              });
-              core.info(`Closed stale e2e failure issue #${issue.number}`);
-            }
 
   report-failure:
     needs: [e2e, run-e2e, promote-to-testing]
