@@ -30,13 +30,13 @@ permissions:
 
 jobs:
   promote:
-    uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@6231015b336556d2ff0adc1d1e59514bf19dcb42 # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
         [{"image":"bluefin"},{"image":"bluefin-nvidia"}]
       cosign_identity_regexp: >-
         ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
-      run_e2e: false
+      run_e2e: true
       e2e_suites: smoke,common
       e2e_image: ghcr.io/projectbluefin/bluefin:testing
     secrets: inherit
