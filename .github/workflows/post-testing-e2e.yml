@@ -1,13 +1,13 @@
 name: Post-Testing E2E
 
-# Runs e2e smoke tests after every successful push build on main.
-# This gates main continuously so the weekly promotion
-# (weekly-testing-promotion.yml) promotes only e2e-verified commits.
+# Runs e2e smoke tests after every successful push build on testing.
+# This gates testing continuously so the promotion workflow
+# (promote-testing-to-main.yml) promotes only e2e-verified commits.
 on:
   workflow_run:
     workflows: ["Testing Images"]
     types: [completed]
-    branches: [main]
+    branches: [testing]
 
 permissions: read-all
 
@@ -43,6 +43,7 @@ jobs:
 
   run-e2e:
     needs: [e2e]
+    timeout-minutes: 120
     permissions:
       packages: write
       contents: read
