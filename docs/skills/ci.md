@@ -111,7 +111,7 @@ This is a known gap tracked in [#368](https://github.com/projectbluefin/bluefin/
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| Testing Images `startup_failure` — `Unable to resolve action ... setup-runner@<SHA>` | `build-image-testing.yml` is pinned to an `actions` SHA from a **non-merged feature branch**; that SHA's `reusable-build.yml` references internal action SHAs that don't exist on `main` | Bump the SHA pin to the current `v1` HEAD: `gh api repos/projectbluefin/actions/commits/v1 --jq '.sha'`. Only pin to SHAs reachable from `projectbluefin/actions` `main`. |
+| Testing Images `startup_failure` — `Unable to resolve action ... setup-runner@<SHA>` | `build-image-testing.yml` has a SHA pin from a **non-merged feature branch** (or someone manually added a SHA pin instead of `@v1`); that SHA's `reusable-build.yml` references internal action SHAs that don't exist on `main` | Switch back to `@v1`: `uses: projectbluefin/actions/bootc-build/setup-runner@v1`. SHA pins for internal actions are blocked by `no-sha-pins-for-internal-actions`. |
 | Testing Images build job **skipped** after `workflow_dispatch` | `build-image-testing.yml` has a guard: `workflow_dispatch` only runs when `github.ref_name == 'main'` or `inputs.pr_number != ''`. Dispatching manually on `testing` without a PR number silently skips the job. | Push a real file change to `testing` (any path not in `paths-ignore`). An **empty commit also does not work** — path filters treat it as all-files-excluded. Touch `image-versions.yml` or `build_files/**` instead. |
 | `v1` tag update silently no-ops with `git push origin refs/tags/v1 --force` | Local git remote may not match the real upstream, or the local tag object is stale. Git reports "Everything up-to-date" even when the remote tag is wrong. | Always update `v1` via the GitHub API: `gh api repos/projectbluefin/actions/git/refs/tags/v1 -X PATCH --field "sha=<NEW_SHA>" --field "force=true"`. Verify: `gh api repos/projectbluefin/actions/git/refs/tags/v1 --jq '.object.sha'`. |
 | `startup_failure` — `promote-to-stable` waits but workflow never starts | `environment: production` with `branch_policy: protected_branches: true` — rulesets are **not** recognized as classic branch protection by environment deployment policies | Switch the `production` environment to `custom_branch_policies: true` and explicitly add `main`: `gh api repos/projectbluefin/bluefin/environments/production -X PUT --field "deployment_branch_policy[custom_branch_policies]=true" --field "deployment_branch_policy[protected_branches]=false"` then `gh api repos/projectbluefin/bluefin/environments/production/deployment-branch-policies -X POST --field "name=main"` |
@@ -122,7 +122,7 @@ This is a known gap tracked in [#368](https://github.com/projectbluefin/bluefin/
 | `No SBOM referrer found` in release generation | testing stream skips SBOM; promoted images lack signed SBOMs | allow missing SBOMs for diff generation and use intersection-only comparisons |
 | promotion says no passing e2e for current SHA | `post-testing-e2e` has not passed the locked `main` commit | wait or rerun after e2e completes |
 | `gate / gate` fails immediately on promotion PR with "No completed post-testing-e2e run found" | `pr-release-gate.yml` was checking the squash commit SHA or the `testing` branch SHA — neither ever has a `post-testing-e2e` run. `post-testing-e2e` only runs for `main` branch commits. | `pr-release-gate.yml` must have a `setup` job that fetches `gh api repos/.../git/ref/heads/main` at runtime and passes it as `head_sha`. See current `pr-release-gate.yml` for the pattern. |
-| `git merge --squash origin/testing` fails with CONFLICT on SHA-pin lines | `main` and `testing` independently updated the same workflow SHA pins | Rebuild the squash branch manually with `-X theirs` (see "SHA-pin conflict on squash" in `workflow.md`). Root cause: `reusable-promote-squash.yml` in `projectbluefin/actions` does not pass `-X theirs`; SHA-pin divergence requires manual rebuild until that is fixed upstream. |
+| `git merge --squash origin/testing` fails with CONFLICT on SHA-pin lines | `main` and `testing` independently updated SHA pins for the same **external** third-party action (e.g., `actions/checkout@<SHA>`) | Rebuild the squash branch manually with `-X theirs` (see "SHA-pin conflict on squash" in `workflow.md`). Root cause: `reusable-promote-squash.yml` in `projectbluefin/actions` does not pass `-X theirs`; fix pending upstream. `projectbluefin/` internal actions are exempt — they use `@v1` which never creates SHA-pin conflicts. |
 | required check is skipped | path filter skipped the workflow | verify whether skipped is intentional for that workflow |
 | Renovate PR did not automerge | PR lookup missed mergeraptor author, or `testing` branch protection not set up | accept both `renovate[bot]` and `app/mergeraptor` in jq filter; ensure `testing` has branch protection with `validate` required check and `allow_auto_merge=true` at repo level |
 | Weekly promotion cannot find digest artifact | artifact expired before Tuesday promotion window | push fresh commit to `main` to regenerate artifact |
@@ -181,17 +181,17 @@ Common CI/CD logic lives in reusable GitHub Actions at **https://github.com/proj
 
 ### Caller pinning rule
 
-Workflow consumers in this repo pin `projectbluefin/actions` references to a full commit SHA and keep the release channel in a trailing comment:
+Workflow consumers in this repo use the **`@v1` managed tag** for all `projectbluefin/actions` references:
 
 ```yaml
-- uses: projectbluefin/actions/bootc-build/setup-runner@13e3593568d87cfe075a86e3995930e350f8c5ea # v1
+- uses: projectbluefin/actions/bootc-build/setup-runner@v1
 ```
 
-Floating `@v1` tags are blocked by the repo's `no-floating-action-tags` pre-commit hook. The `# v1` comment is the stable contract; the SHA is the actual pin that Renovate updates.
+The `no-sha-pins-for-internal-actions` pre-commit hook **blocks SHA pins** for `projectbluefin/` actions — SHA format (`@<40-hex>`) is rejected; `@v1` is required. The `no-floating-action-tags` hook exempts `projectbluefin/` refs so `@v1` is allowed. Renovate is configured to **not** update `projectbluefin/` action refs (see `renovate.json` `packageRules`) because `@v1` is a maintainer-managed rolling tag — updating it to a SHA would break the hook.
 
-**Never pin to a SHA from a non-merged feature branch.** Feature branch SHAs in `projectbluefin/actions` may reference internal action SHAs that don't exist on `main`. Always verify: `gh api repos/projectbluefin/actions/commits/<SHA> --jq '.sha'` — if it returns a 422 the commit doesn't exist on `main`.
+**How `@v1` advances:** maintainers of `projectbluefin/actions` fast-forward the `v1` tag to the new HEAD after every merged PR. This repo picks up the change automatically on next run — no PR needed here.
 
-**After advancing `v1` in `projectbluefin/actions`, bump the SHA pin here too** — even though `reusable-build.yml` resolves `@v1` at runtime, the caller pin in `build-image-testing.yml` is a fixed SHA and must be updated to pick up the new `v1` HEAD. Then push a real file change to trigger a build.
+**Never use a SHA from a non-merged feature branch** in `projectbluefin/actions`. Feature branch SHAs may reference internal action SHAs that don't exist on `main`. Managed tags (`@v1`) always point to merged, validated commits.
 
 ### Migration pattern
 
@@ -213,7 +213,7 @@ Replace inline workflow steps with action calls:
 
 - Each action is independently consumable (no monolithic action bundle)
 - Signing mode is an input (`keyless` or `key-based`), not hardcoded
-- Consumer repos pin SHAs; Renovate tracks updates via the `github-actions` manager and preserves the `# v1` release-channel comment
+- Consumer repos use `@v1` managed tags; Renovate is configured to skip `projectbluefin/` action updates since `@v1` self-advances
 - The full catalog and authoring guide lives at **https://github.com/projectbluefin/actions/tree/main/docs/skills**
 
 ### CI fix workflow for agents
@@ -232,7 +232,7 @@ When you encounter a CI issue that involves duplicated inline steps, path-filter
 1. Open a PR in `projectbluefin/actions` on a feature branch
 2. Open a draft PR here pinned to the feature branch SHA (e.g. `projectbluefin/actions/bootc-build/detect-changes@<SHA>`)
 3. CI must pass on this draft PR before the actions PR merges
-4. After the actions PR merges, update this repo to the released `v1` SHA (keep the trailing `# v1` comment)
+4. After the actions PR merges, `v1` is fast-forwarded by the actions maintainer — no update needed in this repo
 
 **Release-action consumer validation pattern:** if the shared action under test expects a semver tag or a `cliff.toml` but this repo does not ship them, add a draft-only manual workflow on the validation branch that creates a temporary local semver tag plus a temporary cliff config before calling the pinned shared action SHA. Link that workflow run in the actions PR as consumer-validation evidence.
 

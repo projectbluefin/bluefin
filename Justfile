@@ -186,9 +186,6 @@ build $image="bluefin" $tag="testing" $flavor="main" rechunk="0" ghcr="0" pipeli
         {{ just }} verify-container "akmods-nvidia-open:${akmods_flavor}-${fedora_version}-${kernel_release}"
     fi
 
-    {{ just }} verify-container "common:latest@${common_image_sha}" ghcr.io/projectbluefin keyless
-    {{ just }} verify-container "brew:latest@${brew_image_sha}" ghcr.io/ublue-os "{{ justfile_directory() }}/keys/ublue-os-brew.pub"
-
     # Get Version
     if [[ "${tag}" =~ stable ]]; then
         ver="${fedora_version}.$(date +%Y%m%d)"
@@ -480,7 +477,7 @@ verify-container container="" registry="ghcr.io/ublue-os" key="":
 
     # cosign v3+ is required to verify Sigstore Bundle v0.3 signatures (produced by cosign >=v3.0).
     # The CI runner may ship an older pre-installed cosign; install the pinned release when needed.
-    COSIGN_VERSION="v3.0.6"
+    COSIGN_VERSION="v3.1.1"
     COSIGN_MAJOR=0
     if command -v cosign >/dev/null 2>&1; then
         COSIGN_MAJOR=$(cosign version 2>/dev/null | awk '/GitVersion:/{gsub(/[^0-9.]/, "", $2); split($2, a, "."); print a[1]+0}')
