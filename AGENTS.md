@@ -63,9 +63,7 @@ All three image repos consume `projectbluefin/actions` reusables:
 - No WIP PRs.
 - Max 4 open PRs per agent.
 - **`main` uses a merge queue (ruleset 17070404).** The automated `auto/promote-testing-to-main` promotion PR targets `main` and therefore enters the merge queue. It requires 2 `projectbluefin/maintainers` approvals plus all gate checks passing before the queue runner merges it. See `docs/skills/ci.md` → "Promotion PR merge queue" for the GraphQL snippet to enqueue.
-- **`gh pr merge --auto` is blocked on `main`-targeting PRs.** `--auto` calls `enablePullRequestAutoMerge` which the merge queue ruleset rejects. The `reusable-promote-squash.yml` automation handles enqueue via `enqueuePullRequest` GraphQL. Do not use `--auto` directly.
-
-> ⚠️ **Known automation gap:** `reusable-promote-squash.yml` currently falls back to `gh pr merge --auto` with a silent warning rather than using `enqueuePullRequest` GraphQL. Until this is fixed in `projectbluefin/actions`, maintainers must enqueue or `--admin` bypass the promotion PR after approvals land. Track: projectbluefin/actions#[issue].
+- **`gh pr merge --auto` is blocked on `main`-targeting PRs.** `--auto` calls `enablePullRequestAutoMerge` which the merge queue ruleset rejects. The `reusable-promote-squash.yml` automation handles enqueue via `enqueuePullRequest` GraphQL when `use_merge_queue: true` is set (bluefin passes this). Do not use `--auto` directly.
 
 ## Data donation
 
@@ -84,7 +82,7 @@ Non-compliance = rejection.
 - Read [`docs/SKILL.md`](docs/SKILL.md) before modifying anything.
 - **After cloning, run `bash .github/scripts/install-hooks.sh` once** to install the pre-push hook that blocks accidental pushes to `origin` (ublue-os/bluefin).
 - Run `just check && pre-commit run --all-files` before every commit.
-- **Pre-commit guard:** `no-floating-action-tags` blocks third-party `@main`/`@v*` floating action tags at commit time. `projectbluefin/` refs (`@v1`, `@main`) are intentional managed tags and are exempted.
+- **Pre-commit guard:** `no-floating-action-tags` blocks third-party `@main`/`@v*` floating action tags at commit time. `projectbluefin/actions/` refs (`@v1`) are intentional managed tags and are exempted. `projectbluefin/testsuite` is SHA-pinned in `run-testsuite.yml` and managed by Renovate.
 - Use Conventional Commits for every commit and PR title.
 - Every AI-authored commit must include `Assisted-by: <Model> via <Tool>`.
 - Keep open PR count at 4 or fewer.
@@ -113,7 +111,7 @@ PR merges to testing
                                           └─ :testing → :stable
 ```
 
-**Known bug in release gate (open in projectbluefin/actions):** `reusable-promote-squash.yml` resolves the e2e gate `head_sha` from `main` instead of `testing`. The gate queries for post-testing-e2e runs by `head_sha=<main-SHA>` but those runs carry `head_sha=<testing-SHA>` — the gate never finds them and marks the PR as `release/blocked`. Fix: change `E2E_HEAD_BRANCH: main` → `E2E_HEAD_BRANCH: ${{ inputs.source_branch }}` in the reusable.
+**`reusable-promote-squash.yml` correctly resolves the e2e gate `head_sha` from `inputs.source_branch`** (`testing` for bluefin). The gate queries post-testing-e2e runs by the testing branch HEAD SHA and marks the PR `release/ready` once a passing run is found.
 
 ## PR and issue comment policy
 
