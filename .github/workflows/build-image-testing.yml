@@ -41,7 +41,7 @@ jobs:
       should_build: ${{ steps.detect.outputs.should_build }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-      - uses: projectbluefin/actions/bootc-build/detect-changes@v1
+      - uses: projectbluefin/actions/bootc-build/detect-changes@6231015b336556d2ff0adc1d1e59514bf19dcb42 # v1
         id: detect
 
   build-image-testing:
@@ -54,7 +54,7 @@ jobs:
       (github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || inputs.pr_number != '') &&
       (github.event_name != 'pull_request' ||
        needs.detect-changes.outputs.should_build == 'true')
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@v1
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@6231015b336556d2ff0adc1d1e59514bf19dcb42 # v1
     permissions:
       contents: read
       packages: write

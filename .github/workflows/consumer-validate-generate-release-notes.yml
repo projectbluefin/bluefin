@@ -53,7 +53,7 @@ jobs:
       - name: Run shared generate-release-notes action
         # consumer-validation: uses @v1 managed tag so fixes in
         # projectbluefin/actions propagate here without a Renovate bump PR.
-        uses: projectbluefin/actions/bootc-build/generate-release-notes@v1
+        uses: projectbluefin/actions/bootc-build/generate-release-notes@6231015b336556d2ff0adc1d1e59514bf19dcb42 # v1
         with:
           tag: v0.0.0
           output-file: CHANGELOG.md
