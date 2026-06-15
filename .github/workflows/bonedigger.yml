@@ -19,7 +19,7 @@ jobs:
   lifecycle:
     # TODO: restore pull_request: opened trigger once bonedigger lifecycle handles PRs
     # (tracked in projectbluefin/bluefin#TBD)
-    uses: projectbluefin/bonedigger/.github/workflows/lifecycle.yml@af62628cb964b7529fbd869ff7eac60bcf35713a
+    uses: projectbluefin/bonedigger/.github/workflows/lifecycle.yml@v1
     with:
       brand_name: "Bluefin"
       brand_emoji: "🦖"
