@@ -193,7 +193,7 @@ dnf5 copr disable -y ublue-os/akmods
 # 19-initramfs.sh that dracut already ran for this kernel.
 echo "Generating initramfs for ${KERNEL}"
 export DRACUT_NO_XATTR=1
-/usr/bin/dracut --no-hostonly --kver "${KERNEL}" --reproducible \
+/usr/bin/dracut --no-hostonly --kver "${KERNEL}" --reproducible --tmpdir /boot \
     -v --add ostree -f "/lib/modules/${KERNEL}/initramfs.img"
 chmod 0600 "/lib/modules/${KERNEL}/initramfs.img"
 touch "/lib/modules/${KERNEL}/.bluefin-initramfs-done"
