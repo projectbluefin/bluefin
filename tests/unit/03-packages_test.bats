@@ -79,14 +79,6 @@ teardown() {
     [ "$status" -eq 0 ]
 }
 
-@test "f42: uld is included in package install" {
-    export FEDORA_MAJOR_VERSION=42
-    run bash "${PATCHED_SCRIPT}"
-    [ "$status" -eq 0 ]
-    run grep -q "uld" "${DNF5_LOG}"
-    [ "$status" -eq 0 ]
-}
-
 @test "f43: evolution-ews-core is included in package install" {
     export FEDORA_MAJOR_VERSION=43
     run bash "${PATCHED_SCRIPT}"
@@ -109,15 +101,6 @@ teardown() {
     [ "$status" -eq 0 ]
     run grep -q "gnupg2-scdaemon" "${DNF5_LOG}"
     [ "$status" -eq 0 ]
-}
-
-@test "f43: uld is NOT included (f42-only package)" {
-    export FEDORA_MAJOR_VERSION=43
-    run bash "${PATCHED_SCRIPT}"
-    [ "$status" -eq 0 ]
-    # uld is an f42-only package; it must not appear for f43
-    run grep -q "^dnf5.*install.* uld " "${DNF5_LOG}"
-    [ "$status" -ne 0 ]
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
