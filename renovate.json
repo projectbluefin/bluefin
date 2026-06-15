@@ -11,6 +11,12 @@
       "automerge": true,
       "automergeType": "pr",
       "automergeStrategy": "squash"
+    },
+    {
+      "description": "Do not SHA-pin projectbluefin/ internal actions — they use @v1 managed tags enforced by no-sha-pins-for-internal-actions pre-commit hook",
+      "matchManagers": ["github-actions"],
+      "matchPackagePatterns": ["^projectbluefin/"],
+      "enabled": false
     }
   ]
 }

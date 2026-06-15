@@ -480,7 +480,7 @@ verify-container container="" registry="ghcr.io/ublue-os" key="":
 
     # cosign v3+ is required to verify Sigstore Bundle v0.3 signatures (produced by cosign >=v3.0).
     # The CI runner may ship an older pre-installed cosign; install the pinned release when needed.
-    COSIGN_VERSION="v3.0.6"
+    COSIGN_VERSION="v3.1.1"
     COSIGN_MAJOR=0
     if command -v cosign >/dev/null 2>&1; then
         COSIGN_MAJOR=$(cosign version 2>/dev/null | awk '/GitVersion:/{gsub(/[^0-9.]/, "", $2); split($2, a, "."); print a[1]+0}')
