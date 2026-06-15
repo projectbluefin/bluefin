@@ -82,7 +82,7 @@ Non-compliance = rejection.
 - Read [`docs/SKILL.md`](docs/SKILL.md) before modifying anything.
 - **After cloning, run `bash .github/scripts/install-hooks.sh` once** to install the pre-push hook that blocks accidental pushes to `origin` (ublue-os/bluefin).
 - Run `just check && pre-commit run --all-files` before every commit.
-- **Pre-commit guard:** `no-floating-action-tags` blocks third-party `@main`/`@v*` floating action tags at commit time. `projectbluefin/actions/` refs (`@v1`) are intentional managed tags and are exempted. `projectbluefin/testsuite` is SHA-pinned in `run-testsuite.yml` and managed by Renovate.
+- **Pre-commit guard:** `no-floating-action-tags` blocks third-party `@main`/`@v*` floating action tags at commit time. `projectbluefin/actions/` and `projectbluefin/bonedigger/` refs are intentional managed tags and are exempted. `projectbluefin/testsuite` is SHA-pinned in `run-testsuite.yml` and managed by Renovate.
 - Use Conventional Commits for every commit and PR title.
 - Every AI-authored commit must include `Assisted-by: <Model> via <Tool>`.
 - Keep open PR count at 4 or fewer.
