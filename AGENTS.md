@@ -20,36 +20,52 @@ Bluefin is [`projectbluefin/bluefin`](https://github.com/projectbluefin/bluefin)
 common ──────────────────────────┐
 (shared OCI layer)               │
                                  ▼
-bluefin  (main→stable)       ←── images ──→ testsuite (e2e gate)
-bluefin-lts (main→lts)       ←── images ──→ testsuite (e2e gate)
-dakota  (main→:latest)       ←── images ──→ testsuite (e2e gate)
+bluefin  (PRs→testing; testing→main via promotion PR; main→:stable on release)
+bluefin-lts (PRs→testing*; testing→main; main→lts on release)
+dakota  (PRs→testing; testing→main via promotion PR; main→:stable on release)
                                  │
                                  ▼
                                 iso (installation media)
 ```
 
+(*) bluefin-lts currently targets `main`; alignment with the `testing` model is in progress.
+
 Each image repo consumes `projectbluefin/common`. `projectbluefin/testsuite` gates promotion.
+
+**Git branch model (authoritative):**
+
+| Repo | PR target | Promotion path | Release action |
+|---|---|---|---|
+| `bluefin` | `testing` | `testing→main` | `execute-release.yml` copies `:testing`→`:stable` |
+| `bluefin-lts` | `testing`* | `testing→main` | `execute-release.yml` copies `:testing`→`:lts` |
+| `dakota` | `testing` | `testing→main` | `execute-release.yml` fires on push to main |
+
+Never target `main` directly for feature work. `main` receives only squash-merge promotion commits.
 
 ### Shared CI building blocks (`projectbluefin/actions`)
 
-```text
-projectbluefin/actions  ←── shared CI: composite actions + reusable-build.yml
-        │
-        ├── projectbluefin/bluefin      (calls reusable-build.yml@v1)
-        ├── projectbluefin/bluefin-lts  (à la carte composite actions)
-        └── projectbluefin/dakota       (partial adoption)
-```
+All three image repos consume `projectbluefin/actions` reusables:
 
-**Before fixing a CI issue here:** check if the broken logic lives in a shared composite action in `projectbluefin/actions`. If so, fix it there first. See `docs/skills/ci.md` → "CI fix workflow for agents" for the correct PR sequence.
+| Reusable | Callers |
+|---|---|
+| `reusable-promote-squash.yml` | bluefin, bluefin-lts, dakota |
+| `reusable-sync-branches.yml` | bluefin, bluefin-lts, dakota |
+| `reusable-release-gate.yml` | called by reusable-promote-squash |
+| `reusable-execute-release.yml` | bluefin, bluefin-lts |
+| `reusable-vulnerability-scan.yml` | bluefin, bluefin-lts, dakota |
+
+**Before fixing a CI issue here:** check if the broken logic lives in a shared reusable in `projectbluefin/actions`. If so, fix it there first — a single fix propagates to all consumers. See `docs/skills/ci.md` → "CI fix workflow for agents" for the correct PR sequence.
 
 ## Repo rules
 
-- All PRs target `testing`. Never `main`.
+- All PRs target `testing`. **Never `main`.**
 - Merge method: **squash only**.
 - No WIP PRs.
 - Max 4 open PRs per agent.
-- **`main` uses a merge queue (ruleset 17070404):** PRs targeting `main` need 1 approval + `validate` passing on an up-to-date HEAD. Enqueue via GraphQL (see `docs/skills/ci.md` → "Non-obvious patterns"). The automated testing→main promotion PR is authored by `github-actions`; approve it as maintainer, then enqueue or use `--admin` bypass.
-- **Never use `gh pr merge --auto` on `main`-targeting PRs.** `--auto` calls `enablePullRequestAutoMerge` which is blocked by the merge queue. Use `enqueuePullRequest` GraphQL or `gh pr merge --squash --admin` to unblock.
+- **`main` uses a merge queue (ruleset 17070404).** The automated `auto/promote-testing-to-main` promotion PR targets `main` and therefore enters the merge queue. It requires 2 `projectbluefin/maintainers` approvals plus all gate checks passing before the queue runner merges it. See `docs/skills/ci.md` → "Promotion PR merge queue" for the GraphQL snippet to enqueue.
+- **`gh pr merge --auto` is blocked on `main`-targeting PRs.** `--auto` calls `enablePullRequestAutoMerge` which the merge queue ruleset rejects. The `reusable-promote-squash.yml` automation handles enqueue via `enqueuePullRequest` GraphQL. Do not use `--auto` directly.
+
+> ⚠️ **Known automation gap:** `reusable-promote-squash.yml` currently falls back to `gh pr merge --auto` with a silent warning rather than using `enqueuePullRequest` GraphQL. Until this is fixed in `projectbluefin/actions`, maintainers must enqueue or `--admin` bypass the promotion PR after approvals land. Track: projectbluefin/actions#[issue].
 
 ## Data donation
 
@@ -74,13 +90,30 @@ Non-compliance = rejection.
 - Keep open PR count at 4 or fewer.
 - Do not open WIP PRs.
 - **NEVER interact with repos outside the [`projectbluefin`](https://github.com/projectbluefin) org.** Do not open, comment on, or modify issues, PRs, or code in `ublue-os`, `coreos`, or any other org. Only `projectbluefin/*` repos are in scope.
-- **Agents MUST NOT push directly to `main` unless breaking a bootstrap deadlock.** All normal changes go via PR from a feature branch. Exception: when a CI configuration bug on `main` prevents any PR from passing required checks (bootstrap deadlock), an org-admin direct push is permitted to unblock — document the reason in the commit message.
-- **Production promotion** (`weekly-testing-promotion.yml`) requires 2 distinct human approvals in the GitHub `production` Environment before `:stable` is updated. No agent may trigger, approve, or bypass this gate. Every admin bypass is permanently logged in Environment deployment history.
+- **Agents MUST NOT push directly to `main`.** All normal changes go via PR from a feature branch targeting `testing`. `main` only receives squash-merge promotion commits via `auto/promote-testing-to-main`.
+- **Releases** are cut by merging the `auto/promote-testing-to-main` PR. `execute-release.yml` fires automatically on merge, re-verifies cosign, and copies `:testing` → `:stable`. No separate weekly-promotion workflow exists.
 - **`.github/workflows/`, `Justfile`, and `build_files/` are CODEOWNERS-protected** — PRs touching these paths require maintainer review.
 
   > **⚠️ Git remote trap:** A pre-push hook blocks any push to a remote named
   > `origin` regardless of its URL. **Always push explicitly:**
   > `git push projectbluefin <branch>`. Verify with `git remote -v` before any push.
+
+## Promotion pipeline — how it works
+
+```
+PR merges to testing
+  └─ "Testing Images" build fires
+       └─ post-testing-e2e.yml fires (on workflow_run, testing branch)
+            └─ e2e smoke + common suites run against :testing
+                 └─ on success: promote-to-testing publishes verified digest as :testing
+                      └─ promote-testing-to-main.yml fires (push: testing)
+                           └─ reusable-promote-squash.yml opens/updates auto/promote-testing-to-main PR
+                                └─ release gate checks: cosign verify + e2e confirmation
+                                     └─ 2 maintainer approvals → merge queue → execute-release.yml
+                                          └─ :testing → :stable
+```
+
+**Known bug in release gate (open in projectbluefin/actions):** `reusable-promote-squash.yml` resolves the e2e gate `head_sha` from `main` instead of `testing`. The gate queries for post-testing-e2e runs by `head_sha=<main-SHA>` but those runs carry `head_sha=<testing-SHA>` — the gate never finds them and marks the PR as `release/blocked`. Fix: change `E2E_HEAD_BRANCH: main` → `E2E_HEAD_BRANCH: ${{ inputs.source_branch }}` in the reusable.
 
 ## PR and issue comment policy
 
