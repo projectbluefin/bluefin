@@ -13,9 +13,9 @@
       "automergeStrategy": "squash"
     },
     {
-      "description": "Do not SHA-pin projectbluefin/ internal actions — they use @v1 managed tags enforced by no-sha-pins-for-internal-actions pre-commit hook",
+      "description": "Do not SHA-pin projectbluefin/actions refs — they use @v1 managed tags enforced by no-sha-pins-for-internal-actions pre-commit hook",
       "matchManagers": ["github-actions"],
-      "matchPackagePatterns": ["^projectbluefin/"],
+      "matchPackagePatterns": ["^projectbluefin/actions"],
       "enabled": false
     }
   ]
