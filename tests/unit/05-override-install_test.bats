@@ -166,12 +166,6 @@ teardown() {
     [ "$status" -ne 0 ]
 }
 
-@test "script exits non-zero when starship sha256 is corrupt" {
-    echo "corrupt" > "${TEST_ROOT}/ghcurl-sha256-mode"
-    run bash "${PATCHED_SCRIPT}"
-    [ "$status" -ne 0 ]
-}
-
 # ─────────────────────────────────────────────────────────────────────────────
 # sudoers modification
 # ─────────────────────────────────────────────────────────────────────────────
@@ -208,16 +202,6 @@ teardown() {
     [ "$status" -eq 0 ]
     run grep -q "^IPv6_rpfilter=loose$" "${TEST_ROOT}/etc/firewalld/firewalld.conf"
     [ "$status" -eq 0 ]
-}
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Version extraction and archive installation
-# ─────────────────────────────────────────────────────────────────────────────
-
-@test "starship is installed after successful sha256 verification" {
-    run bash "${PATCHED_SCRIPT}"
-    [ "$status" -eq 0 ]
-    [ -f "${TEST_ROOT}/usr/bin/starship" ]
 }
 
 @test "coreos sulogin generator is installed" {

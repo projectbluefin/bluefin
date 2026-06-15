@@ -149,6 +149,24 @@ exit 0
 EOF
     chmod +x "${STUB_BIN}/depmod"
 
+    # ── curl stub ────────────────────────────────────────────────────────────
+    # Used by the nvidia CDI block: curl ... | tee <repo-file>
+    # Just emit a line to stdout so tee has something to write.
+    cat > "${STUB_BIN}/curl" <<'EOF'
+#!/usr/bin/bash
+echo "[nvidia-container-toolkit]"
+exit 0
+EOF
+    chmod +x "${STUB_BIN}/curl"
+
+    # ── nvidia-ctk stub ──────────────────────────────────────────────────────
+    # Used by nvidia CDI block to configure container runtime.
+    cat > "${STUB_BIN}/nvidia-ctk" <<'EOF'
+#!/usr/bin/bash
+exit 0
+EOF
+    chmod +x "${STUB_BIN}/nvidia-ctk"
+
     # ── ln stub ──────────────────────────────────────────────────────────────
     cat > "${STUB_BIN}/ln" <<'EOF'
 #!/usr/bin/bash
