@@ -70,5 +70,5 @@ jobs:
           || '["main", "nvidia"]'
         }}
       stream_name: testing
-      publish_stream_tag: "false"
+      publish_stream_tag: "true"
       pr_number: ${{ inputs.pr_number }}
