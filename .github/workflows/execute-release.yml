@@ -1,8 +1,14 @@
 name: Execute Release
+
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
+
 permissions:
   id-token: write
+
 jobs:
   check-trigger:
     runs-on: ubuntu-latest
@@ -33,15 +39,18 @@ jobs:
     with:
       registry: ghcr.io/projectbluefin
       variants: >-
-        [{"image":"bluefin","source_tag":"testing","target_tag":"stable"}]
-      cosign_identity_regexp: ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
+        [
+          {"image":"bluefin","source_tag":"testing","target_tag":"stable"},
+          {"image":"bluefin-nvidia","source_tag":"testing","target_tag":"stable"}
+        ]
+      cosign_identity_regexp: >-
+        ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
     secrets: inherit
 
   release-notes:
     needs: [execute]
     if: always() && needs.execute.result == 'success'
     permissions:
-      actions: read
       contents: write
       id-token: write
       packages: read
@@ -49,4 +58,17 @@ jobs:
     with:
       stream_name: stable
       image: ghcr.io/projectbluefin/bluefin
+      project_name: Bluefin
+      badge_label: Stable
+      accent_color: "#0ea5e9"
+      cert_identity_regexp: >-
+        ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
+      notable_packages: >-
+        [
+          {"sbom_name": "kernel", "label": "Kernel"},
+          {"sbom_name": "gnome-shell", "label": "GNOME Shell"},
+          {"sbom_name": "flatpak", "label": "Flatpak"},
+          {"sbom_name": "systemd", "label": "systemd"}
+        ]
+      docs_url: https://docs.projectbluefin.io/changelogs
     secrets: inherit
