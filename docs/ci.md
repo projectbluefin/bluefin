@@ -14,6 +14,7 @@ Bluefin's CI is split between PR validation, image builds, post-build e2e, weekl
 | `weekly-testing-promotion.yml` | Tuesday 06:00 UTC, manual dispatch | Verifies e2e on current `main`, retaggs tested digests to `:stable`, generates release |
 | `renovate-automerge.yml` | Successful `PR Validation — testsuite` | Enables squash auto-merge (`gh pr merge --auto --squash`) for Renovate/mergeraptor PRs |
 | `bonedigger.yml` | Issue events, issue comments, daily schedule | Runs the Bluefin 🦖 issue lifecycle bot |
+| `skill-drift.yml` | PRs to `main` | Checks whether code paths (`build_files/`, `Justfile`, `recipes/`, `.github/workflows/`) have drifted from skill docs (`docs/skills/`, `AGENTS.md`). Fails if docs are out of sync. **Fix:** update `docs/skills/` to reflect your code change |
 
 ## Centralized actions (`projectbluefin/actions`)
 
@@ -41,6 +42,16 @@ uses: projectbluefin/actions/bootc-build/detect-changes@v1
 ```
 
 Renovate tracks SHA pins automatically (`config:best-practices` includes `github-actions` manager).
+
+**Never pin to a SHA from a non-merged feature branch.** Feature branch SHAs may reference internal action SHAs that don't exist on `main`, causing `startup_failure` with `Unable to resolve action`. Verify reachability: `gh api repos/projectbluefin/actions/commits/<SHA> --jq '.sha'` — a 422 means the commit is not on `main`.
+
+**Advancing the `v1` tag must use the GitHub API**, not `git push --force` (which can silently no-op):
+```bash
+gh api repos/projectbluefin/actions/git/refs/tags/v1 -X PATCH \
+  --field "sha=<NEW_SHA>" --field "force=true"
+# Verify:
+gh api repos/projectbluefin/actions/git/refs/tags/v1 --jq '.object.sha'
+```
 
 ### Available shared components
 
@@ -356,6 +367,9 @@ GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, t
 | Cosign sign/verify fails | Sigstore Fulcio/Rekor outage or key rotation | Check `check-cosign-key-rotation.yml` issues; retry after Sigstore recovers |
 | Promotion PR shows CONFLICTING | Commit landed directly on `main` without going through `testing`, severing git merge base | Run `git merge projectbluefin/main --allow-unrelated-histories -X ours` on `testing` and push — see "Squash-merge history gap" above |
 | Trivy scan crashes: "No SARIF file found" | Image reference passed to scan no longer exists — `tag-images` untags the default tag | Verify `tag-images` Justfile recipe re-applies the default tag after alias-tag loop; scan must use `oci-archive:/tmp/scan-image.tar` |
+| Testing Images `startup_failure` — `Unable to resolve action ... setup-runner@<SHA>` | SHA pin in `build-image-testing.yml` points to a non-merged `actions` feature branch; that SHA's `reusable-build.yml` internally references action SHAs that don't exist on `main` | Bump the pin to current `v1` HEAD: `gh api repos/projectbluefin/actions/commits/v1 --jq '.sha'`. Only pin SHAs reachable from `projectbluefin/actions` `main`. |
+| Testing Images build job **skipped** after `workflow_dispatch` on `testing` branch | `build-image-testing.yml` guards `workflow_dispatch` to `main` or non-empty `pr_number` only | Push a real file change to `testing`. An empty commit also skips — path filters treat no-file-change as all-excluded. Touch `image-versions.yml` or any `build_files/**` file. |
+| `v1` tag update silently no-ops (`git push ... --force` says "Everything up-to-date") | Local git remote tracking is stale or mismatched | Use the API: `gh api repos/projectbluefin/actions/git/refs/tags/v1 -X PATCH --field "sha=<SHA>" --field "force=true"`. Verify with `gh api repos/projectbluefin/actions/git/refs/tags/v1 --jq '.object.sha'`. |
 | `weekly-testing-promotion.yml` dispatch returns HTTP 422 "secret name 'github_token' can not be used" | GitHub enforces (2026-06-07+) that `github_token` is a reserved name in `workflow_call` secrets | In the callee, remove `secrets: { github_token: ... }` block; replace all `secrets.github_token` usages with `github.token` |
 | `weekly-testing-promotion.yml` dispatches succeed but `startup_failure` with 0 jobs | `environment: production` in any job + `branch_policy: protected_branches: true` when `main` only has a **ruleset** (not classic branch protection) | Switch environment to custom branch policy: `gh api repos/projectbluefin/bluefin/environments/production -X PUT --field "deployment_branch_policy[custom_branch_policies]=true" --field "deployment_branch_policy[protected_branches]=false"` then add `main`: `gh api .../environments/production/deployment-branch-policies -X POST --field "name=main"` |
 | `generate-release.yml` is called as external reusable workflow and causes `startup_failure` | `generate-release.yml` was moved to `projectbluefin/actions` — external cross-repo `workflow_call` causes startup_failure in this workflow chain | **`generate-release.yml` must be a LOCAL workflow.** Restore from git history (`git show <known-good-sha>:.github/workflows/generate-release.yml`) and keep it in-repo. Do not centralize to `projectbluefin/actions`. |
@@ -384,4 +398,6 @@ GitHub provides 10 GB per repo. With 4 flavor+image combinations each ~2-3 GB, t
 | `cherry-pick-to-stable.yml` | PR closed with `cherry-pick` label | Backports to `stable` via GitHub App token |
 | `bonedigger.yml` | Issue events, daily | Issue lifecycle bot |
 | `moderator.yml` | Issues/comments opened | AI spam + AI-content detection |
+| `skill-drift.yml` | PRs to `main` | Skill/code sync check; fails if `build_files/`, `Justfile`, or workflow files changed without updating `docs/skills/`. Fix by updating `docs/skills/` to match your code changes |
 | `validate-renovate.yml` | Renovate config PRs | Validates renovate.json5 syntax |
+<!-- last-verified: 2026-06-14 -->

@@ -10,6 +10,14 @@ Install the tools used by the local validation flow before opening a PR:
 
 `just check` validates Justfile syntax and related script checks. `pre-commit run --all-files` runs the repository linting and formatting hooks.
 
+## After cloning
+
+```bash
+bash .github/scripts/install-hooks.sh   # Install pre-push hook (run once after cloning)
+```
+
+> **⚠️ Git remote trap:** In this repo, `origin` points to `ublue-os/bluefin` — the archived upstream where direct pushes are forbidden. The pre-push hook installed above blocks accidental pushes to `origin`. Always push via: `git push projectbluefin <branch>`. Verify with `git remote -v` before any push.
+
 ## Branch and stream workflow
 
 ### I want to submit a fix or feature — what do I do?
@@ -40,6 +48,8 @@ Every Tuesday at 06:00 UTC the `weekly-testing-promotion` workflow:
 2. Runs the full developer + vanilla-gnome e2e suite
 3. Fast-forwards `latest` and `stable` branches to `testing`
 4. Triggers the `stable` and `latest` image builds
+
+> **Security gate:** Promotion to `:stable` requires **2 distinct human approvals** in the GitHub `production` Environment before any retag happens. No agent or automated system can bypass this gate — every admin bypass is permanently logged in Environment deployment history.
 
 Changes land in `testing` → promoted to `stable`/`latest` weekly on CI green.
 

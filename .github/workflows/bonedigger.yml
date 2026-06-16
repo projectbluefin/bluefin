@@ -17,7 +17,9 @@ permissions:
 
 jobs:
   lifecycle:
-    uses: projectbluefin/bonedigger/.github/workflows/lifecycle.yml@main
+    # TODO: restore pull_request: opened trigger once bonedigger lifecycle handles PRs
+    # (tracked in projectbluefin/bluefin#TBD)
+    uses: projectbluefin/bonedigger/.github/workflows/lifecycle.yml@v1
     with:
       brand_name: "Bluefin"
       brand_emoji: "🦖"

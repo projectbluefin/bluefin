@@ -145,6 +145,19 @@ if [[ "${IMAGE_NAME}" =~ nvidia ]]; then
     tee /usr/lib/bootc/kargs.d/00-nvidia.toml <<EOF
 kargs = ["rd.driver.blacklist=nouveau", "modprobe.blacklist=nouveau", "nvidia-drm.modeset=1", "initcall_blacklist=simpledrm_platform_driver_init"]
 EOF
+
+    # Install NVIDIA Container Toolkit for CDI-based GPU passthrough in Podman.
+    # -base variant only: ships nvidia-ctk + nvidia-cdi-hook, no libnvidia-container,
+    # no legacy OCI hook. CDI is the correct path for bootc/rootless containers.
+    # Mirrors dakota elements/bluefin-nvidia/nvidia-container-toolkit.bst.
+    # NVIDIA's official C toolkit — distinct from Fedora's golang-github-nvidia-container-toolkit.
+    curl -fsSL https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo \
+        | tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+    dnf5 -y install nvidia-container-toolkit-base
+    # Configure for rootless Podman: no cgroup device delegation needed with CDI
+    nvidia-ctk config --set nvidia-container-cli.no-cgroups --in-place
+    # Remove the repo file from the final image
+    rm -f /etc/yum.repos.d/nvidia-container-toolkit.repo
 fi
 
 # ZFS for stable
@@ -180,7 +193,7 @@ dnf5 copr disable -y ublue-os/akmods
 # 19-initramfs.sh that dracut already ran for this kernel.
 echo "Generating initramfs for ${KERNEL}"
 export DRACUT_NO_XATTR=1
-/usr/bin/dracut --no-hostonly --kver "${KERNEL}" --reproducible \
+/usr/bin/dracut --no-hostonly --kver "${KERNEL}" --reproducible --tmpdir /boot \
     -v --add ostree -f "/lib/modules/${KERNEL}/initramfs.img"
 chmod 0600 "/lib/modules/${KERNEL}/initramfs.img"
 touch "/lib/modules/${KERNEL}/.bluefin-initramfs-done"
