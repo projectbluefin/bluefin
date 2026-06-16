@@ -106,6 +106,7 @@ curl -s https://raw.githubusercontent.com/ublue-os/aurora/main/Justfile | grep -
 | PR has no validation run | wrong base branch | retarget PR to `testing` |
 | build fails with low disk space | stale build artifacts | run `just clean` |
 | workflow shows `startup_failure` with no jobs | unsupported org-only permission scope on the runner/fork | compare permissions block with a working upstream workflow |
+| nvidia build fails: `dracut[E]: FAILED … -D /var/tmp/dracut.*/initramfs` | `04-install-kernel-akmods.sh` calls `dracut` without `--tmpdir /boot`; `/var/tmp` and `/boot` are separate tmpfs mounts in a container `RUN` layer — `rename(2)` across devices fails with EXDEV | add `--tmpdir /boot` to the explicit `/usr/bin/dracut` call in `04-install-kernel-akmods.sh`. See PR #586. |
 
 ## Build pipeline and shared actions
 
