@@ -1,3 +1,4 @@
+# ci: trigger build after push-image authfile fix
 repo_organization := "projectbluefin"
 base_image_org := "quay.io/fedora-ostree-desktops"
 base_image_name := "silverblue"
