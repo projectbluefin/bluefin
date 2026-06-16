@@ -1,8 +1,23 @@
 name: Execute Release
 on:
   workflow_dispatch:
+permissions:
+  id-token: write
 jobs:
-  hello:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo hello
+  execute:
+    permissions:
+      actions: read
+      contents: write
+      issues: write
+      packages: write
+      pull-requests: write
+    uses: projectbluefin/actions/.github/workflows/reusable-execute-release.yml@v1
+    with:
+      registry: ghcr.io/projectbluefin
+      variants: >-
+        [
+          {"image":"bluefin","source_tag":"testing","target_tag":"stable"},
+          {"image":"bluefin-nvidia","source_tag":"testing","target_tag":"stable"}
+        ]
+      cosign_identity_regexp: ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
+    secrets: inherit
