@@ -58,6 +58,8 @@ jobs:
     with:
       stream_name: stable
       image: ghcr.io/projectbluefin/bluefin
+      generate_sbom_inline: true
+      checkout_ref: main
       project_name: Bluefin
       badge_label: Stable
       accent_color: "#0ea5e9"
