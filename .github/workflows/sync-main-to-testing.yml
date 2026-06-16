@@ -21,6 +21,7 @@ jobs:
     uses: projectbluefin/actions/.github/workflows/reusable-sync-branches.yml@v1
     permissions:
       contents: write
+    secrets: inherit
 
   cleanup-squash-branch:
     name: Delete squash promotion branch
