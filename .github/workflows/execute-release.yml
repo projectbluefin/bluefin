@@ -1,19 +1,34 @@
 name: Execute Release
 
 on:
-  pull_request:
-    types:
-      - closed
+  push:
     branches:
       - main
+  workflow_dispatch:
 
-permissions: {}
+permissions:
+  id-token: write
 
 jobs:
+  check-trigger:
+    runs-on: ubuntu-latest
+    outputs:
+      is-promotion: ${{ steps.check.outputs.is-promotion }}
+    steps:
+      - id: check
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ] || echo "$COMMIT_MSG" | grep -qE "^ci\(promote\): bluefin testing"; then
+            echo "is-promotion=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is-promotion=false" >> "$GITHUB_OUTPUT"
+          fi
+
   execute:
-    if: >
-      github.event.pull_request.merged == true &&
-      github.event.pull_request.head.ref == 'auto/promote-testing-to-main'
+    needs: [check-trigger]
+    if: needs.check-trigger.outputs.is-promotion == 'true'
     permissions:
       actions: read
       contents: write
@@ -28,7 +43,8 @@ jobs:
           {"image":"bluefin","source_tag":"testing","target_tag":"stable"},
           {"image":"bluefin-nvidia","source_tag":"testing","target_tag":"stable"}
         ]
-      cosign_identity_regexp: ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
+      cosign_identity_regexp: >-
+        ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
     secrets: inherit
 
   release-notes:
@@ -42,8 +58,6 @@ jobs:
     with:
       stream_name: stable
       image: ghcr.io/projectbluefin/bluefin
-      generate_sbom_inline: true
-      checkout_ref: main
       project_name: Bluefin
       badge_label: Stable
       accent_color: "#0ea5e9"
