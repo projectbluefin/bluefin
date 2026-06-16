@@ -43,14 +43,14 @@ jobs:
           {"image":"bluefin","source_tag":"testing","target_tag":"stable"},
           {"image":"bluefin-nvidia","source_tag":"testing","target_tag":"stable"}
         ]
-      cosign_identity_regexp: >-
-        ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
+      cosign_identity_regexp: ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
     secrets: inherit
 
   release-notes:
     needs: [execute]
     if: always() && needs.execute.result == 'success'
     permissions:
+      actions: read
       contents: write
       id-token: write
       packages: read
