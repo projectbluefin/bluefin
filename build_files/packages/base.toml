@@ -1,0 +1,117 @@
+# Package manifest for the bluefin base image.
+# Read by build_files/base/03-packages.sh via build_files/shared/read-packages.
+#
+# Sections:
+#   [multimedia_overrides]   packages synced from fedora-multimedia repo
+#   [fedora]                 base Fedora packages, all versions
+#   [fedora_v42]             additions for Fedora 42 only
+#   [fedora_v43]             additions for Fedora 43 only
+#   [fedora_v44]             additions for Fedora 44 only
+#   [excluded]               packages removed from the base image
+
+[multimedia_overrides]
+# Replace mesa and friends with less-crippled versions from negativo17/fedora-multimedia.
+# Versions are pinned with `dnf5 versionlock` after install.
+packages = [
+    "intel-gmmlib",
+    "intel-mediasdk",
+    "intel-vpl-gpu-rt",
+    "libheif",
+    "libva",
+    "libva-intel-media-driver",
+    "mesa-dri-drivers",
+    "mesa-filesystem",
+    "mesa-libEGL",
+    "mesa-libGL",
+    "mesa-libgbm",
+    "mesa-vulkan-drivers",
+]
+
+[fedora]
+# Base packages from Fedora repos — common to all supported Fedora versions.
+packages = [
+    "adw-gtk3-theme",
+    "adwaita-fonts-all",
+    "alsa-firmware",
+    "alsa-tools-firmware",
+    "bootc",
+    "containerd",
+    "ddcutil",
+    "distrobox",
+    "evtest",
+    "fastfetch",
+    "firewall-config",
+    "fish",
+    "flatpak-spawn",
+    "gcc",
+    "gcc-c++",
+    "git-credential-libsecret",
+    "gnome-tweaks",
+    "google-noto-sans-cjk-vf-fonts",
+    "gum",
+    "gvfs-nfs",
+    "ibus-mozc",
+    "ibus-unikey",
+    "igt-gpu-tools",
+    "input-remapper",
+    "just",
+    "libappindicator-gtk3",
+    "libayatana-appindicator-gtk3",
+    "libcamera-gstreamer",
+    "libcamera-tools",
+    "libva-utils",
+    "libxcrypt-compat",
+    "make",
+    "mesa-libGLU",
+    "mozc",
+    "nautilus-gsconnect",
+    "opendyslexic-fonts",
+    "openrgb-udev-rules",
+    "openssh-askpass",
+    "pipewire-libs-extra",
+    "switcheroo-control",
+    "waypipe",
+    "wireguard-tools",
+    "wl-clipboard",
+    "xdg-terminal-exec",
+    "zenity",
+    "zsh",
+]
+
+[fedora_v42]
+# TODO: remove when F42 is dropped
+packages = [
+    "evolution-ews-core",
+]
+
+[fedora_v43]
+packages = [
+    "evolution-ews-core",
+    "gnupg2-scdaemon",
+]
+
+[fedora_v44]
+packages = [
+    "gnupg2-scdaemon",
+]
+
+[excluded]
+# Packages removed from the base image — conflicts with or replaced by image content.
+packages = [
+    "default-fonts-cjk-sans",
+    "fedora-bookmarks",
+    "fedora-chromium-config",
+    "fedora-chromium-config-gnome",
+    "fedora-third-party",
+    "firefox",
+    "firefox-langpacks",
+    "gnome-extensions-app",
+    "gnome-shell-extension-background-logo",
+    "gnome-software",
+    "gnome-software-rpm-ostree",
+    "gnome-terminal-nautilus",
+    "google-noto-sans-cjk-fonts",
+    "podman-docker",
+    "totem-video-thumbnailer",
+    "yelp",
+]

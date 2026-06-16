@@ -26,23 +26,30 @@
 
 | Type | Location | Notes |
 |---|---|---|
-| Base RPMs | `build_files/base/03-packages.sh` | Main `FEDORA_PACKAGES` list |
+| Base RPMs | `build_files/packages/base.toml` | TOML manifest; sections: `[fedora]`, `[fedora_v42/43/44]`, `[multimedia_overrides]`, `[excluded]` |
 | COPR helper | `build_files/shared/copr-helpers.sh` | Use `copr_install_isolated()` |
 | Flatpak setup hooks | `system_files/shared/usr/share/ublue-os/privileged-setup.hooks.d/99-flatpaks.sh` | This repo currently carries setup, not the full app list |
 | Brew-triggered user setup | `system_files/shared/usr/share/ublue-os/user-setup.hooks.d/` | Example: Framework laptop casks |
 
 ## RPM changes
 
-Edit the correct array, then validate syntax:
+Base image packages live in `build_files/packages/base.toml`, not inline in the shell script.
+Edit the relevant TOML section, then validate:
+
 ```bash
-bash -n build_files/base/03-packages.sh
+# Verify the manifest parses cleanly
+python3 build_files/shared/read-packages build_files/packages/base.toml fedora | head
 just check && pre-commit run --all-files
 ```
 
-Base image packages belong in:
-```bash
-build_files/base/03-packages.sh
-```
+Section guide:
+
+| Section | What goes here |
+|---|---|
+| `[fedora]` | Base packages for all supported Fedora versions |
+| `[fedora_v42]` / `[fedora_v43]` / `[fedora_v44]` | Version-specific additions |
+| `[multimedia_overrides]` | mesa/VA-API packages synced from fedora-multimedia (pinned with versionlock) |
+| `[excluded]` | Packages removed from the base image after install |
 
 ## COPR changes
 
@@ -119,4 +126,6 @@ podman run --rm docker.io/homebrew/brew:latest bash -c "
 
 ## Lessons learned
 
-<!-- Add reusable package patterns here -->
+- **Package arrays belong in TOML, not shell.** `build_files/packages/base.toml` is the data; `build_files/base/03-packages.sh` is the logic. Adding a package = editing the TOML. Never add inline bash arrays to the shell script.
+- **`read-packages` helper uses `tomllib` (Python 3.11+ stdlib).** No new dependencies needed in the build container. Called as `python3 /ctx/build_files/shared/read-packages <toml> <section>` and consumed with `readarray`.
+- **COPR packages stay isolated in the shell script.** The TOML only covers Fedora/multimedia repo packages. COPR installs stay in `03-packages.sh` via `copr_install_isolated()` — this is a security boundary, not an oversight.

@@ -33,19 +33,6 @@ mkdir -p /usr/lib/systemd/system-generators
 ghcurl "https://raw.githubusercontent.com/coreos/fedora-coreos-config/refs/heads/stable/overlay.d/05core/usr/lib/systemd/system-generators/coreos-sulogin-force-generator" --retry 3 -Lo /usr/lib/systemd/system-generators/coreos-sulogin-force-generator
 chmod +x /usr/lib/systemd/system-generators/coreos-sulogin-force-generator
 
-# Starship Shell Prompt
-STARSHIP_VERSION="$(grep -A1 'datasource=github-releases depName=starship/starship' /ctx/image-versions.yml | grep 'starship:' | awk '{print $2}' | tr -d '"')"
-STARSHIP_BASE="https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-x86_64-unknown-linux-gnu.tar.gz"
-ghcurl "${STARSHIP_BASE}"        --retry 3 -o /tmp/starship.tar.gz
-ghcurl "${STARSHIP_BASE}.sha256" --retry 3 -o /tmp/starship.tar.gz.sha256
-# Verify download integrity before extracting (CWE-494)
-# starship releases provide a raw hash file (no filename suffix), construct the checksum line
-(cd /tmp && echo "$(tr -d '[:space:]' < starship.tar.gz.sha256)  starship.tar.gz" | sha256sum -c)
-tar -xzf /tmp/starship.tar.gz -C /tmp
-install -c -m 0755 /tmp/starship /usr/bin
-# Tag for rechunker — standalone binary not tracked by RPM
-setfattr -n user.component -v starship /usr/bin/starship
-
 # Configure firewalld with Fedora Workstation defaults
 # https://src.fedoraproject.org/rpms/firewalld/blob/rawhide/f/firewalld.spec
 ghcurl "https://src.fedoraproject.org/rpms/firewalld/raw/rawhide/f/FedoraWorkstation.xml" --retry 3 -Lo /usr/lib/firewalld/zones/FedoraWorkstation.xml

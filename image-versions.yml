@@ -2,13 +2,8 @@ images:
   - name: common
     image: ghcr.io/projectbluefin/common
     tag: latest
-    digest: sha256:b2ce46d4e94e916946b3481e00b0ff9c841534f763dc8509d8fa09652685a88d
+    digest: sha256:6c5316774b100f52e79ac6029f6a35cda0781d8917ff623778c7beab1b6af887
   - name: brew
     image: ghcr.io/ublue-os/brew
     tag: latest
-    digest: sha256:5228826790d13d5e265f1fdbb41b65e3fac20361ee0d31b2fd496d81e1db14f6
-
-# Pinned versions for direct binary downloads (managed by Renovate)
-downloads:
-  # renovate: datasource=github-releases depName=starship/starship
-  starship: "1.25.1"
+    digest: sha256:5c5b6dea4b9faaab4d6fa81d7fc4f37f218c8a75a0839c72ae70b268bfdf4b0f
