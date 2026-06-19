@@ -19,6 +19,11 @@ on:
     workflows: ["Post-Testing E2E"]
     types: [completed]
     branches: [testing]
+  # Re-run enqueue after each approval so the PR enters the merge queue
+  # automatically once 2 maintainers approve — no manual button required.
+  # Filtered in the job to the promotion PR only.
+  pull_request_review:
+    types: [submitted]
 
 concurrency:
   group: promote-testing-to-main
@@ -36,6 +41,11 @@ permissions:
 
 jobs:
   promote:
+    # For pull_request_review events, only run on the promotion PR itself.
+    # Other PRs' reviews would otherwise trigger a full promote cycle.
+    if: >
+      github.event_name != 'pull_request_review' ||
+      github.event.pull_request.head.ref == 'auto/promote-testing-to-main'
     uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
