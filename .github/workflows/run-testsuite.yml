@@ -1,7 +1,8 @@
 name: Run Testsuite
 
 # Reusable wrapper around projectbluefin/testsuite e2e.yml.
-# Centralises the testsuite SHA pin — Renovate manages it here only.
+# Uses @main (managed floating tag) — internal projectbluefin/ refs are never SHA-pinned.
+# See docs/skills/ci-tooling.md for the internal vs external pin policy.
 # Callers resolve their own image digest, then pass the full image ref.
 # Callers can access overall result via needs.<job-id>.result.
 on:
@@ -22,10 +23,11 @@ permissions:
 
 jobs:
   e2e:
-    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@f1236f70ee13e2e40d698609640123f3e2cf5df7 # main
+    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@main
     permissions:
       packages: write
       contents: read
     with:
       image: ${{ inputs.image }}
       suites: ${{ inputs.suites }}
+    secrets: inherit
