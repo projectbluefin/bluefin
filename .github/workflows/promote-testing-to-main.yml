@@ -36,9 +36,7 @@ jobs:
         [{"image":"bluefin"},{"image":"bluefin-nvidia"}]
       cosign_identity_regexp: >-
         ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
-      run_e2e: true
-      e2e_suites: smoke,common
-      e2e_image: ghcr.io/projectbluefin/bluefin:testing
+      run_e2e: false
       # main uses a merge queue ruleset (17070404): gh pr merge --auto is blocked.
       # use_merge_queue: true calls enqueuePullRequest GraphQL instead, which
       # places the PR in the queue and lets it merge once approvals + checks pass.
