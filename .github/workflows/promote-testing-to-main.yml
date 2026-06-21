@@ -11,7 +11,7 @@ on:
     branches:
       - testing
   schedule:
-    - cron: '0 23 * * *'
+    - cron: '0 4 * * 2'
   workflow_dispatch:
 
 concurrency:
@@ -42,5 +42,5 @@ jobs:
       # main uses a merge queue ruleset (17070404): gh pr merge --auto is blocked.
       # use_merge_queue: true calls enqueuePullRequest GraphQL instead, which
       # places the PR in the queue and lets it merge once approvals + checks pass.
-      use_merge_queue: true
+      use_merge_queue: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     secrets: inherit
