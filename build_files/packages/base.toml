@@ -65,7 +65,6 @@ packages = [
     "mesa-libGLU",
     "mozc",
     "nautilus-gsconnect",
-    "opendyslexic-fonts",
     "openrgb-udev-rules",
     "openssh-askpass",
     "pipewire-libs-extra",
