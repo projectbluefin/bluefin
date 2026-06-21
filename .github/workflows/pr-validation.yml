@@ -47,6 +47,8 @@ jobs:
 
   unit-tests:
     name: Unit tests
+    needs: [check-base-branch]
+    if: always() && (needs.check-base-branch.result == 'success' || needs.check-base-branch.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -59,7 +61,14 @@ jobs:
         run: sudo apt-get install -y bats
 
       - name: Run unit tests
-        run: bats tests/unit/
+        run: bats --formatter tap tests/unit/ | tee results.tap
+
+      - name: Upload TAP results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bats-tap-results
+          path: results.tap
 
   testsuite:
     name: E2E smoke
