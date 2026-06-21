@@ -171,3 +171,21 @@ Tests live in `tests/unit/`. Run with `bats tests/unit/` (or a single file). The
   | `package-lib_test.bats` | `build_files/shared/package-lib.sh` |
   | `validate-repos_test.bats` | `build_files/shared/validate-repos.sh` |
   | `00-image-info_test.bats` | `build_files/base/00-image-info.sh` |
+
+---
+
+## Self-Improvement
+
+Every session: ship the work AND update the relevant skill file in `docs/skills/`. Same PR. Not a follow-up.
+
+Banned:
+- No changelog files. Delete `IMPROVEMENTS.md`, `CHANGELOG.md` (for agent notes), `SESSION.md` if found.
+- No session notes committed to the repo.
+- No "append here" docs. Route to a specific `docs/skills/<file>.md`.
+
+Before marking work done:
+- [ ] Discovered a workaround, pattern, or convention?
+- [ ] Skill file updated or created?
+- [ ] Committed in this same PR?
+
+Full mandate: [`docs/skills/skill-improvement.md`](docs/skills/skill-improvement.md)
