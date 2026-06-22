@@ -95,6 +95,8 @@ Non-compliance = rejection.
 - **Agents MUST NOT push directly to `main`.** All normal changes go via PR from a feature branch targeting `testing`. `main` only receives squash-merge promotion commits via `auto/promote-testing-to-main`.
 - **Releases** are cut by merging the `auto/promote-testing-to-main` PR. `execute-release.yml` fires automatically on merge, re-verifies cosign, and copies `:testing` → `:stable`. No separate weekly-promotion workflow exists.
 - **`.github/workflows/`, `Justfile`, and `build_files/` are CODEOWNERS-protected** — PRs touching these paths require maintainer review.
+- **After pushing, verify CI is green before claiming done:** `gh run list --repo projectbluefin/bluefin --limit 5` — read the output; running or failing = not done. "Done" means CI green, not "I pushed."
+- **Never claim a task complete without verifying.** "I've updated the file" is not done. Run the checks. Read the output.
 
   > **⚠️ Git remote trap:** A pre-push hook blocks any push to a remote named
   > `origin` regardless of its URL. **Always push explicitly:**
