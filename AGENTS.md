@@ -139,7 +139,6 @@ Static system files (udev rules, sysctl, modprobe configs, setup hooks) belong i
 - **`build_files/shared/build.sh` is dead code.** It is an unused orchestrator left over from the pre-Stage-1/2 split. The Containerfile calls scripts directly. Do not update, test, or reference it.
 - **`/tmp` does not persist across RUN instructions.** Each `RUN` gets a fresh tmpfs. Sentinel or marker files that must survive Stage 1 → Stage 2 must be written to the committed filesystem (e.g. `/lib/modules/<kver>/`, `/var/cache/`). Note: `clean-stage.sh` removes all of `/var/*` except `cache/`, so `/var/cache/` subdirs are the safest persistent scratch space.
 - **Initramfs marker file:** `04-install-kernel-akmods.sh` runs dracut in Stage 1 and touches `/lib/modules/<kver>/.bluefin-initramfs-done`. `19-initramfs.sh` in Stage 2 skips dracut when the marker is present (Stage 1 cache hit). Set `FORCE_INITRAMFS=1` to regenerate unconditionally (weekly/stable CI does this).
-- **Dracut EXDEV / cross-device rename (os error 18):** the Containerfile mounts `/boot` and `/var` as separate tmpfs; dracut's default tmpdir (`/var/tmp`) is on a different device than the output (`/boot`), causing `rename(2)` to fail with EXDEV. Fix: pass `--tmpdir /boot` to all explicit `dracut` calls in build scripts so both tmpdir and output are on the same `/boot` tmpfs. The `%posttrans` kernel-install hook uses an internal rename that dracut.conf.d `tmpdir` cannot override — avoid triggering it by installing kernel RPMs with `--setopt=tsflags=noscripts`, then call dracut explicitly.
 
 ## BATS unit test conventions
 
@@ -171,21 +170,3 @@ Tests live in `tests/unit/`. Run with `bats tests/unit/` (or a single file). The
   | `package-lib_test.bats` | `build_files/shared/package-lib.sh` |
   | `validate-repos_test.bats` | `build_files/shared/validate-repos.sh` |
   | `00-image-info_test.bats` | `build_files/base/00-image-info.sh` |
-
----
-
-## Self-Improvement
-
-Every session: ship the work AND update the relevant skill file in `docs/skills/`. Same PR. Not a follow-up.
-
-Banned:
-- No changelog files. Delete `IMPROVEMENTS.md`, `CHANGELOG.md` (for agent notes), `SESSION.md` if found.
-- No session notes committed to the repo.
-- No "append here" docs. Route to a specific `docs/skills/<file>.md`.
-
-Before marking work done:
-- [ ] Discovered a workaround, pattern, or convention?
-- [ ] Skill file updated or created?
-- [ ] Committed in this same PR?
-
-Full mandate: [`docs/skills/skill-improvement.md`](docs/skills/skill-improvement.md)
