@@ -40,7 +40,7 @@ PR merges to testing
 
 `execute-release.yml` has three jobs:
 
-1. **check-trigger** — passes only for promotion commits (`ci(promote): bluefin testing`) or `workflow_dispatch`
+1. **check-trigger** — passes only for promotion commits (`chore: promote testing to main`) or `workflow_dispatch`
 2. **execute** — calls `reusable-execute-release.yml@v1`; cosign-verifies and re-tags images `:testing → :stable`
 3. **release-notes** — calls `reusable-release.yml@v1`; generates SBOM inline, renders release card, creates GitHub Release
 
@@ -87,7 +87,7 @@ gh workflow run execute-release.yml --repo projectbluefin/bluefin --ref main
 
 ## Non-obvious patterns
 
-- `execute-release.yml` trigger: `workflow_dispatch` always passes; push to `main` only passes if commit message matches `^ci\(promote\): bluefin testing`
+- `execute-release.yml` trigger: `workflow_dispatch` always passes; push to `main` only passes if commit message matches `^chore: promote testing to main`
 - `reusable-release.yml` computes tag as `stable-$(date -u +%Y%m%d)`. If a release with that tag already exists (e.g. manually created), `create-release` skips creation silently.
 - The centralized `create-release@v1` renders the full release body: release card, key components table, full SPDX package inventory, supply chain verification. A `post-release-variants` job can prepend the variants table (present in bluefin-lts; removed from bluefin).
 - bluefin-lts uses `image: ghcr.io/projectbluefin/bluefin-lts-hwe` for release notes so the HWE kernel version appears in the key components table.

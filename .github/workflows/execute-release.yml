@@ -20,7 +20,7 @@ jobs:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
           EVENT: ${{ github.event_name }}
         run: |
-          if [ "$EVENT" = "workflow_dispatch" ] || echo "$COMMIT_MSG" | grep -qE "^ci\(promote\): bluefin testing"; then
+          if [ "$EVENT" = "workflow_dispatch" ] || echo "$COMMIT_MSG" | grep -qE "^chore: promote testing to main"; then
             echo "is-promotion=true" >> "$GITHUB_OUTPUT"
           else
             echo "is-promotion=false" >> "$GITHUB_OUTPUT"
