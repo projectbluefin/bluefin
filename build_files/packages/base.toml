@@ -59,6 +59,7 @@ packages = [
     "libayatana-appindicator-gtk3",
     "libcamera-gstreamer",
     "libcamera-tools",
+    "libratbag-ratbagd",
     "libva-utils",
     "libxcrypt-compat",
     "make",
