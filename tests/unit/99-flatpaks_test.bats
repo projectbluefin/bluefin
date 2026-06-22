@@ -55,3 +55,16 @@ teardown() {
     # Bug: rm uses quoted glob, old file survives — test documents known regression
     [ -f "${PREF_DIR}/bluefin-stale.js" ]
 }
+
+@test "99-flatpaks: aarch64 skips firefox config setup" {
+    cat > "${STUB_BIN}/arch" <<'EOF'
+#!/usr/bin/bash
+echo "aarch64"
+EOF
+    chmod +x "${STUB_BIN}/arch"
+
+    run bash "${PATCHED_SCRIPT}"
+
+    [ "$status" -eq 0 ]
+    [ ! -d "${TEST_ROOT}/var/lib/flatpak/extension/org.mozilla.firefox.systemconfig/aarch64" ]
+}

@@ -50,3 +50,42 @@ teardown() {
     [ "$status" -eq 0 ]
     grep -q "install" "${STUB_BIN}/brew.log"
 }
+
+@test "20-framework: missing brew exits cleanly" {
+    echo "Framework" > "${TEST_ROOT}/chassis_vendor"
+    rm -f "${STUB_BIN}/brew"
+    export PATH="${STUB_BIN}:/usr/bin:/bin"
+
+    run bash "${PATCHED_SCRIPT}"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Warning: brew not found"* ]]
+}
+
+@test "20-framework: non-writable brew prefix skips install with warning" {
+    echo "Framework" > "${TEST_ROOT}/chassis_vendor"
+    chmod 555 "${TEST_ROOT}/linuxbrew"
+
+    run bash "${PATCHED_SCRIPT}"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"user lacks write permission"* ]]
+    [ ! -f "${STUB_BIN}/brew.log" ]
+}
+
+@test "20-framework: installed casks are skipped without install calls" {
+    cat > "${STUB_BIN}/brew" <<EOF
+#!/usr/bin/bash
+echo "brew \$*" >> "${STUB_BIN}/brew.log"
+[[ "\$1" == "list" ]] && exit 0
+exit 0
+EOF
+    chmod +x "${STUB_BIN}/brew"
+    echo "Framework" > "${TEST_ROOT}/chassis_vendor"
+
+    run bash "${PATCHED_SCRIPT}"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"already installed, skipping"* ]]
+    ! grep -q "install" "${STUB_BIN}/brew.log"
+}
