@@ -110,6 +110,7 @@ PR merges to testing
 | Renovate PR not automerging | `PR Validation — testsuite` did not complete successfully | Check `pr-validation.yml`; ensure `validate` job passed |
 | `skill-drift.yml` warning | Workflow/build change without matching `docs/skills/` update | Update the relevant skill file in the same PR |
 | `execute-release.yml` skips | Commit message does not match `^ci\(promote\): bluefin testing` | Message is set by `reusable-promote-squash.yml`; squash-merge the promotion PR correctly |
+| Checkout fails with `No url found for submodule path '.workflow-scripts' in .gitmodules` | A gitlink was committed without a matching `.gitmodules` entry | Remove the stray gitlink (`git rm -f .workflow-scripts`), then verify every remaining mode `160000` path is declared in `.gitmodules` |
 
 ## Non-obvious patterns
 
@@ -117,6 +118,8 @@ PR merges to testing
 - **Merge queue, not auto-merge:** `promote-testing-to-main.yml` uses `use_merge_queue: true` → GraphQL `enqueuePullRequest`. `gh pr merge --auto --squash` is blocked by ruleset 17070404.
 - **`promote-testing-to-main.yml` has 5 triggers:** push to `testing`, daily 23:00 UTC, `workflow_dispatch`, `workflow_run: ["Post-Testing E2E"]` (re-evaluates immediately after e2e), and `pull_request_review: [submitted]` (auto-enqueues after 2nd approval).
 - **`pr-validation.yml` also fires on PRs to `main`** — only to run `check-base-branch` which blocks the PR with an error. Do not bypass.
+- **Gitlinks must be declared:** Bluefin has legitimate submodules under `system_files/shared/...`, so the CI guard in `pr-validation.yml` does **not** ban mode `160000` entries outright. It fails only when a gitlink path is missing from `.gitmodules` (for example a stray `.workflow-scripts` entry).
+- **Guard inspects the PR head tree:** the undeclared-gitlink check reads `github.event.pull_request.head.sha` on PRs instead of the synthetic merge ref, so a testing→main promotion PR can pass once the `testing` head no longer carries the stray gitlink even if `main` still does.
 - **E2E (`testsuite` job) only runs on `merge_group`** — per-push PR CI is fast: `validate` + `unit-tests` only (~2 min).
 - **Unit tests run the whole directory:** `bats --formatter tap tests/unit/` — not a specific file.
 - **`consumer-validate-generate-release-notes.yml` intentionally uses `@v1`** (not SHA-pinned) so action fixes propagate without a Renovate bump. Explicit exception to the SHA-pinning rule.
