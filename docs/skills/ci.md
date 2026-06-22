@@ -1,68 +1,58 @@
-# CI/CD Troubleshooting
+# CI/CD Reference
 
 ## When to use
-
 - A GitHub Actions workflow failed
 - A PR has no checks or the wrong checks
-- Testing/stable/latest promotion behavior looks wrong
-- Release generation or automerge is stuck
+- Promotion or release behavior looks wrong
+- Renovate automerge is stuck
 
 ## When NOT to use
-
 - Pure local validation issues → [build.md](build.md)
 - Package placement decisions → [packages.md](packages.md)
-- ISO pipeline work in the separate repo → [iso.md](iso.md)
+- ISO pipeline work → [iso.md](iso.md)
 
 ## First triage
-
-List recent runs:
 ```bash
 gh run list --repo projectbluefin/bluefin --limit 20
-```
-
-Inspect a failed run:
-```bash
 gh run view RUN_ID --repo projectbluefin/bluefin --log-failed
-```
-
-Retry only failed jobs:
-```bash
 gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 ```
 
-## Workflow map (high-signal workflows)
+## Workflow map (all 24 workflows)
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| `promote-testing-to-main.yml` | Push to `testing`, daily 23:00 UTC, manual dispatch | Upserts the long-lived `testing` → `main` promotion PR and enables squash auto-merge |
-| `sync-main-to-testing.yml` | Push to `main` | Merges `main` → `testing` after each squash-merge promotion; prevents next promotion PR opening `BEHIND` |
-| `pr-smoke.yml` | PRs touching build files | Full image build + smoke test |
-| `build-image-testing.yml` | Push to `main`, dispatch | Testing image builds via centralized `projectbluefin/actions` workflow |
-| `post-testing-e2e.yml` | Testing build on `main` | Smoke+common continuous e2e gate |
-| `weekly-testing-promotion.yml` | Tuesday 06:00 UTC | Full e2e → retag to :stable + generate release |
-| ~~`reusable-build.yml`~~ (deleted) | Replaced by `projectbluefin/actions/.github/workflows/reusable-build.yml` | **All build callers now use the centralized workflow — no local copy** |
-| `run-testsuite.yml` | Called by all e2e workflows | **Canonical testsuite wrapper — always use this, never e2e.yml directly** |
-| `nightly.yml` | 02:00 UTC daily | smoke+common+vanilla-gnome against :testing |
-| `vulnerability-scan.yml` | Testing build + weekly | Grype → SARIF to Security tab |
-| `renovate-automerge.yml` | PR Validation success | Auto-merge all Renovate/mergeraptor PRs via `gh pr merge --auto --squash` (no high-risk/smoke distinction) |
-| `e2e-dispatch.yml` | `/e2e` comment (write+ only) | Manual e2e on PR |
-| `generate-release.yml` | Stable build, dispatch | GitHub Release + changelog |
-| `copr-health-monitor.yml` | Daily 07:00 UTC | COPR staleness check |
-| `check-cosign-key-rotation.yml` | Monday 06:00 UTC | Key rotation detection → P1 issue |
-| `cache-maintenance.yml` | Monday 06:00 UTC | GHA cache pruning |
-| `clean.yml` | Sunday 00:15 UTC | GHCR image cleanup (>90d) |
-| `scorecard.yml` | Push to main, weekly | OSSF Scorecard |
-| `cherry-pick-to-stable.yml` | `cherry-pick` label on PR | Backport via GitHub App token |
-| `bonedigger.yml` | Issue events, daily | Issue lifecycle |
+| `bonedigger.yml` | Issue events, daily | Issue lifecycle automation |
+| `build-image-testing.yml` | Push to `main`+`testing` (paths-filtered), PRs→`main`, `merge_group`, dispatch, `workflow_call` | Testing image builds via `reusable-build.yml@v1`. Sets `publish_stream_tag: false` — does **not** apply `:testing` tag directly |
+| `cache-maintenance.yml` | Monday 06:00 UTC, dispatch | Audits and prunes GHA caches (warns ≥80% of 10 GB limit; prunes deleted-branch or 14d-stale caches) |
+| `cherry-pick-to-stable.yml` | `cherry-pick` label applied to a PR | Backports the PR to the `stable` branch via GitHub App token |
+| `consumer-validate-generate-release-notes.yml` | PRs to `testing` touching this file or `docs/skills/ci.md`, dispatch | Contract-tests the shared `generate-release-notes@v1` action from `projectbluefin/actions` |
+| `copr-health-monitor.yml` | Daily 07:00 UTC | COPR staleness check → opens issue on failure |
+| `e2e-dispatch.yml` | `/e2e` comment (write+ only) | Manual E2E trigger on a PR |
+| `execute-release.yml` | Push to `main`, dispatch | Detects promotion by commit message pattern `^ci\(promote\): bluefin testing`; delegates to `reusable-execute-release.yml@v1` → copies `:testing`→`:stable` |
 | `moderator.yml` | Issues/comments | AI spam detection |
-| `skill-drift.yml` | PRs to `testing` (on `testing` branch) / PRs to `main` (on `main` branch) | Guardrail: workflow/build changes must update matching docs/skills. SHA-pinned (`@6274199cfb...`). Includes `.github/actions/**` in code-paths. |
+| `nightly.yml` | 02:00 UTC daily, dispatch | Runs `smoke,common,vanilla-gnome` suites against `:testing`. Diagnostic: smoke=fail+vanilla-gnome=pass → Bluefin-specific regression; both fail → upstream GNOME issue |
+| `pkg-cadence.yml` | After `Execute Release` completes, dispatch | Measures per-package update frequency after each release via `reusable-pkg-cadence.yml@v1` |
+| `post-testing-e2e.yml` | `workflow_run: ["Testing Images"]` (completed, branches: main+testing) | Downloads build digest; runs `smoke,common` E2E; `promote-to-testing` job copies digests to `:testing` tag — **only when `head_branch == 'main'`** |
+| `pr-release-gate.yml` | PRs to `main` (job runs only for `auto/promote-testing-to-main` head) | Cosign signature verification + `smoke,common` E2E via `reusable-release-gate.yml@v1`; must pass for promotion PR to merge |
+| `pr-validation.yml` | PRs to `testing` AND `main`, `merge_group` | `check-base-branch` (fails PRs targeting `main` unless from `auto/promote-testing-to-main`) → `validate` → `unit-tests` → `testsuite` (merge_group only) |
+| `promote-testing-to-main.yml` | Push to `testing`, daily 23:00 UTC, dispatch, `workflow_run: ["Post-Testing E2E"]` (completed), `pull_request_review: [submitted]` | Opens/updates `auto/promote-testing-to-main` squash PR via `reusable-promote-squash.yml@v1`; uses merge queue (`enqueuePullRequest` GraphQL) — `gh pr merge --auto` is blocked |
+| `release-reminder.yml` | Daily 12:00 UTC, dispatch | Posts overdue-release reminders via `reusable-release-reminder.yml@v1` (warn at 7d, escalate at 14d) |
+| `renovate-automerge.yml` | `workflow_run: ["PR Validation — testsuite"]` (completed) | Auto-merges qualifying Renovate PRs via `reusable-renovate-automerge.yml@v1` |
+| `run-testsuite.yml` | Called by all E2E workflows | **Canonical testsuite wrapper** — always use this, never call the testsuite directly |
+| `scorecard.yml` | Push to `main`, weekly | OSSF Scorecard security assessment → Security tab |
+| `skill-drift.yml` | PRs to `testing` | Warns when `.github/workflows/**`, `build_files/**`, `Justfile`, or `recipes/**` change without a matching `docs/skills/**` or `docs/*.md` update |
+| `sync-main-to-testing.yml` | Push to `main` | Merges `main`→`testing` after squash promotion; also deletes the `auto/promote-testing-to-main` branch |
+| `track-common.yml` | `repository_dispatch: common-updated`, dispatch | Updates `image-versions.yml` with latest `ghcr.io/projectbluefin/common:latest` digest via Mergeraptor app |
+| `validate-renovate.yml` | PRs touching Renovate configs, dispatch | Validates Renovate configuration |
+| `vulnerability-scan.yml` | Testing build completion + weekly | Grype CVE scan → SARIF upload to Security tab |
 
 ## Fast checks by symptom
 
 ### PR has no CI
-- Confirm the PR targets `testing`
-- Confirm the changed files are not excluded by workflow path filters
-- Re-open or retarget the PR if needed
+- Confirm the PR targets `testing` (not `main`)
+- Confirm changed files are not excluded by workflow path filters
+- Re-open or retarget if needed
 
 ### `just check` failed in CI
 ```bash
@@ -77,213 +67,110 @@ pre-commit run --all-files
 ### shellcheck failed in CI
 ```bash
 shellcheck build_files/**/*.sh
-shellcheck system_files/**/*.sh
 ```
-
-Both trees are covered by the pre-commit `shellcheck` hook (shellcheck-py `v0.11.0.1`). Scripts under `system_files/` that source runtime paths use `# shellcheck source=/dev/null`; profile.d scripts with no shebang use `# shellcheck shell=bash`.
 
 ## Promotion pipeline mental model
 
-### Bluefin (this repo)
+```
+PR merges to testing
+  └─ build-image-testing.yml builds the image (publish_stream_tag: false — no :testing tag yet)
+       └─ post-testing-e2e.yml fires (workflow_run on "Testing Images", both branches)
+            └─ smoke + common E2E suites run
+                 └─ promote-testing-to-main.yml fires (push to testing)
+                      └─ reusable-promote-squash.yml opens/updates auto/promote-testing-to-main PR
+                           └─ pr-release-gate.yml: cosign verify + smoke,common E2E gate
+                                └─ 2 maintainer approvals → merge queue → squash-merge to main
+                                     └─ execute-release.yml: :testing → :stable
+                                     └─ sync-main-to-testing.yml: merges main→testing; deletes promotion branch
+                                          └─ build-image-testing.yml fires on main push
+                                               └─ post-testing-e2e.yml (head_branch == 'main'): tags :testing
+```
 
-1. Push to `testing` → `build-image-testing.yml` publishes `:testing` images (gated behind post-build e2e)
-2. `post-testing-e2e.yml` smoke-tests that exact digest
-3. `weekly-testing-promotion.yml` (Tuesday 06:00 UTC) locks the `:testing` digest, verifies e2e passed, cosign-verifies, skopeo-copies → `:stable`, generates GitHub release
-4. 7-day floor enforced; `workflow_dispatch` bypasses it
-5. A separate `promote-testing-to-main.yml` keeps the `testing → main` git branch in sync via a squash-merge PR (see **testing→main squash history gap** below)
+**Key facts:**
+- `:testing` tag is applied by `post-testing-e2e.yml → promote-to-testing` job, and **only** when `head_branch == 'main'` (after a build on `main`, not `testing`)
+- `execute-release.yml` triggers by commit message pattern `^ci\(promote\): bluefin testing`, not a schedule
+- There is no `weekly-testing-promotion.yml` — that workflow does not exist
 
-### Dakota
-
-Same digest-promotion model. `weekly-testing-promotion.yml` resolves `:testing` digest, runs e2e, cosign-verifies, skopeo-copies → `:stable`. No git branch PR.
-
-### Bluefin LTS
-
-**Current state:** `scheduled-lts-release.yml` dispatches fresh weekly builds from the `lts` branch (rebuilds from source — violates build-once principle).
-**Target state:** digest promotion matching bluefin/dakota — tracked in [bluefin-lts#77](https://github.com/projectbluefin/bluefin-lts/issues/77), unblocked since PR #73 merged.
-
-### Testing→main squash history gap (bluefin only)
-
-`promote-testing-to-main.yml` squash-merges `testing → main`. Because the feature PRs were already squash-merged into `testing`, the squash on `main` creates a new SHA — the graphs diverge. Every subsequent sync requires a merge commit to reconnect them, making the promotion PR show the full accumulated history (50+ commits) instead of just the new work.
-
-This is a known gap tracked in [#368](https://github.com/projectbluefin/bluefin/issues/368). The long-term fix (per [common#516](https://github.com/projectbluefin/common/issues/516)) is to replace the git-branch PR with branch fast-forward only, aligning with the dakota model.
+### Testing→main squash history gap
+`promote-testing-to-main.yml` squash-merges `testing → main`. Feature PRs were already squash-merged into `testing`, so the squash on `main` creates a new SHA — graphs diverge. `sync-main-to-testing.yml` reconciles by merging `main` back into `testing` after each promotion. Tracked in [#368](https://github.com/projectbluefin/bluefin/issues/368).
 
 ## Common failure modes
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| Testing Images `startup_failure` — `Unable to resolve action ... setup-runner@<SHA>` | `build-image-testing.yml` has a SHA pin from a **non-merged feature branch** (or someone manually added a SHA pin instead of `@v1`); that SHA's `reusable-build.yml` references internal action SHAs that don't exist on `main` | Switch back to `@v1`: `uses: projectbluefin/actions/bootc-build/setup-runner@v1`. SHA pins for internal actions are blocked by `no-sha-pins-for-internal-actions`. |
-| Testing Images build job **skipped** after `workflow_dispatch` | `build-image-testing.yml` has a guard: `workflow_dispatch` only runs when `github.ref_name == 'main'` or `inputs.pr_number != ''`. Dispatching manually on `testing` without a PR number silently skips the job. | Push a real file change to `testing` (any path not in `paths-ignore`). An **empty commit also does not work** — path filters treat it as all-files-excluded. Touch `image-versions.yml` or `build_files/**` instead. |
-| `v1` tag update silently no-ops with `git push origin refs/tags/v1 --force` | Local git remote may not match the real upstream, or the local tag object is stale. Git reports "Everything up-to-date" even when the remote tag is wrong. | Always update `v1` via the GitHub API: `gh api repos/projectbluefin/actions/git/refs/tags/v1 -X PATCH --field "sha=<NEW_SHA>" --field "force=true"`. Verify: `gh api repos/projectbluefin/actions/git/refs/tags/v1 --jq '.object.sha'`. |
-| `startup_failure` — `promote-to-stable` waits but workflow never starts | `environment: production` with `branch_policy: protected_branches: true` — rulesets are **not** recognized as classic branch protection by environment deployment policies | Switch the `production` environment to `custom_branch_policies: true` and explicitly add `main`: `gh api repos/projectbluefin/bluefin/environments/production -X PUT --field "deployment_branch_policy[custom_branch_policies]=true" --field "deployment_branch_policy[protected_branches]=false"` then `gh api repos/projectbluefin/bluefin/environments/production/deployment-branch-policies -X POST --field "name=main"` |
-| `startup_failure` — workflow that calls `generate-release.yml` | `generate-release.yml` moved to `projectbluefin/actions` as an external reusable workflow | **`generate-release.yml` must remain a LOCAL workflow in this repo.** External cross-repo `workflow_call` reusable workflows cause `startup_failure` in `weekly-testing-promotion.yml` even when actionlint passes and the SHA is reachable. This may be a GitHub bug — do not attempt to centralize it again without testing first. |
-| `startup_failure` — caller passes unknown `with:` inputs to `generate-release.yml` | Extra undeclared inputs in `with:` block for a `workflow_call` job cause startup validation failure | Match the `with:` inputs exactly to the callee's declared `inputs:` block; remove any keys not declared in the callee |
-| `workflow_dispatch` returns HTTP 422 "secret name 'github_token' can not be used" | GitHub (enforced 2026-06-07) now blocks `github_token` as a `workflow_call` secret name — it collides with the system reserved name | Replace `secrets: { github_token: ... }` with no secrets block; use `github.token` directly inside the callee workflow |
-| Testing Images runner timeout / job cancelled after 20+ min | Syft SBOM scan running for testing stream — both outer SBOM steps AND `sign-and-publish` internal Syft each scan the full image | Ensure `reusable-build.yml` has `stream_name != 'testing'` guard on all 4 outer SBOM steps AND passes `generate-sbom: false` to `sign-and-publish` for testing. Fixed in actions#123 + actions#124. |
-| `No SBOM referrer found` in release generation | testing stream skips SBOM; promoted images lack signed SBOMs | allow missing SBOMs for diff generation and use intersection-only comparisons |
-| promotion says no passing e2e for current SHA | `post-testing-e2e` has not passed the locked `main` commit | wait or rerun after e2e completes |
-| `gate / gate` fails immediately on promotion PR with "No completed post-testing-e2e run found" | `pr-release-gate.yml` was checking the squash commit SHA or the `testing` branch SHA — neither ever has a `post-testing-e2e` run. `post-testing-e2e` only runs for `main` branch commits. | `pr-release-gate.yml` must have a `setup` job that fetches `gh api repos/.../git/ref/heads/main` at runtime and passes it as `head_sha`. See current `pr-release-gate.yml` for the pattern. |
-| `git merge --squash origin/testing` fails with CONFLICT on SHA-pin lines | `main` and `testing` independently updated SHA pins for the same **external** third-party action (e.g., `actions/checkout@<SHA>`) | Rebuild the squash branch manually with `-X theirs` (see "SHA-pin conflict on squash" in `workflow.md`). Root cause: `reusable-promote-squash.yml` in `projectbluefin/actions` does not pass `-X theirs`; fix pending upstream. `projectbluefin/` internal actions are exempt — they use `@v1` which never creates SHA-pin conflicts. |
-| required check is skipped | path filter skipped the workflow | verify whether skipped is intentional for that workflow |
-| Renovate PR did not automerge | PR lookup missed mergeraptor author, or `testing` branch protection not set up | accept both `renovate[bot]` and `app/mergeraptor` in jq filter; ensure `testing` has branch protection with `validate` required check and `allow_auto_merge=true` at repo level |
-| Weekly promotion cannot find digest artifact | artifact expired before Tuesday promotion window | push fresh commit to `main` to regenerate artifact |
-| Cosign sign/verify fails | Sigstore outage or key rotation | check `check-cosign-key-rotation.yml` issues; retry after Sigstore recovers |
-| Cosign verify: "expected key signature, not certificate" | Upstream image switched from key-based to keyless (Sigstore OIDC) signing | Pass `keyless` as the key argument to `verify-container` instead of a `.pub` path; uses `--certificate-identity-regexp` + `--certificate-oidc-issuer` |
-| COPR health monitor reports "no succeeded build" | COPR API changed response format — `latest_succeeded_build` moved to `builds.latest_succeeded` | Verify with raw API: `curl "https://copr.fedorainfracloud.org/api_3/package?ownername=X&projectname=Y&packagename=Z&with_latest_succeeded_build=True"` — if `builds.latest_succeeded` is present the repo is healthy; the monitor handles both formats |
-| `validate` passes but enqueue returns "Required status check is expected" | `strict_required_status_checks_policy: true` — `testing` is behind `main` | `sync-main-to-testing.yml` handles this automatically after each promotion; if stuck, manually run `git merge projectbluefin/main` on `testing` and push |
-| PR targeting `main` has no `validate` CI run | `pr-validation.yml` only triggered on `testing` (pre-fix state) | `pr-validation.yml` must list both `testing` and `main` in `branches:`; verify the workflow on `main` branch has been updated |
+| PR has no status checks | PR targets `main` not `testing` | `gh pr edit <n> --base testing` |
+| `just check` or `pre-commit` fails in CI but not locally | Hooks not installed locally | `pre-commit install && pre-commit run --all-files` |
+| Unit tests pass locally, fail in CI | Running single file locally vs. `bats tests/unit/` in CI | Run `bats tests/unit/` locally |
+| `:testing` tag not updated after testing branch build | `promote-to-testing` only runs for `main` branch builds | Normal; tag updates after promotion cycle completes |
+| Promotion PR stuck, no `release/ready` label | `reusable-promote-squash.yml` waiting for post-testing-e2e to pass | Trigger `gh run rerun` on failed post-testing-e2e run |
+| Promotion PR cosign verification fails | Identity regexp mismatch | Check `cosign_identity_regexp` in `pr-release-gate.yml`: must match `projectbluefin/(bluefin\|actions)/` |
+| `promote-testing-to-main.yml` enqueue fails | Merge queue requires 2 approvals | Wait for approvals; do NOT use `gh pr merge --auto` |
+| `sync-main-to-testing.yml` fails | Merge conflict between `main` and `testing` | Manual merge + force-push to `testing` per `workflow.md` |
+| `track-common.yml` not firing | `repository_dispatch: common-updated` not sent by `common` | Manual: `gh workflow run track-common.yml --repo projectbluefin/bluefin` |
+| Renovate PR not automerging | `PR Validation — testsuite` did not complete successfully | Check `pr-validation.yml`; ensure `validate` job passed |
+| `skill-drift.yml` warning | Workflow/build change without matching `docs/skills/` update | Update the relevant skill file in the same PR |
+| `execute-release.yml` skips | Commit message does not match `^ci\(promote\): bluefin testing` | Message is set by `reusable-promote-squash.yml`; squash-merge the promotion PR correctly |
 
 ## Non-obvious patterns
 
-- **`verify-container` supports keyless mode.** Pass `keyless` as the third argument (key) to use Sigstore OIDC verification instead of a static public key. This uses `--certificate-identity-regexp` matching `projectbluefin/(common|actions)/.github/workflows/` and `--certificate-oidc-issuer=https://token.actions.githubusercontent.com`. Used for `common` image verification since common signs via `sign-and-publish` with `signing-mode: keyless`.
-
-- **`post-testing-e2e` runs on `main` branch SHAs only.** It triggers via `workflow_run` on "Testing Images" completions filtered to `branches: [main]`. It never fires for `testing` branch commits or for the squash commit on `auto/promote-testing-to-main`. Any gate doing an e2e lookup by SHA must use a `main` branch SHA — specifically the current `main` HEAD retrieved at runtime via the API, not the testing branch SHA or the PR head SHA.
-- **`pr-release-gate.yml` setup job** — a `setup` job must call `gh api "repos/${{ github.repository }}/git/ref/heads/main" --jq '.object.sha'` and pass the result as `head_sha` to the reusable gate. The squash commit SHA (`github.event.pull_request.head.sha`) and the testing branch SHA (from the PR body) are both wrong: neither has a `post-testing-e2e` run.
-- **Known upstream bug — `reusable-promote-squash.yml` passes wrong `head_sha`:** it passes `testing_sha` (the testing branch HEAD) to the gate. The testing branch HEAD also never has a `post-testing-e2e` run. Fix pending in `projectbluefin/actions`.
-- `post-testing-e2e.yml` is the continuous gate; weekly promotion assumes it already passed on the exact `main` SHA
-- A skipped workflow can still satisfy a required check if GitHub considers it skipped-by-filter
-- Stable release generation depends on SBOM assets existing for the images being diffed — testing stream skips SBOM generation; promoted images lack signed SBOMs until a separate SBOM pass runs
-- Bluefin docs-only changes often skip image builds due to path filters; that is usually expected
-- **`testing` branch has branch protection** — required status check: `validate`. `allow_auto_merge` enabled at repo level. `gh pr merge --auto --squash` works. No merge queue.
-- **`main` branch has a merge queue (ruleset 17070404)** — required approvals: 1. Required check: `validate` (integration_id 15368). Merge method: squash. `strict_required_status_checks_policy: true` — the `validate` check must have passed against a HEAD that is fully up-to-date with `main` before enqueue is accepted. Enqueue via GraphQL:
-  ```bash
-  NODE_ID=$(gh pr view $PR --repo projectbluefin/bluefin --json id --jq .id)
-  gh api graphql -f query="mutation { enqueuePullRequest(input: { pullRequestId: \"${NODE_ID}\" }) { mergeQueueEntry { id position } } }"
-  ```
-  If enqueue returns `"Required status check ... is expected."` despite validate passing, `testing` is behind `main` — sync first (see below). Org admins can bypass: `gh pr merge --squash --admin`.
-- **`testing`/`main` branch sync — automated:** `sync-main-to-testing.yml` fires on every push to `main` and merges `main` → `testing` automatically. Manual sync is only needed if the workflow aborts due to a direct push to `main` that severs the merge base (CONFLICTING case — see "Testing→main squash history gap" above).
-- **E2E (`testsuite` job) only runs on `merge_group`** — the `testsuite` job in `pr-validation.yml` has a hard `if: github.event_name == 'merge_group'` guard. There is no `detect-changes` conditional; the guard is unconditional. Per-push PR CI is fast validate + unit-tests only (~2 min). Do not add E2E to per-push PR jobs — each push triggering a 10-min QEMU boot is wasteful and blocks Renovate automerge.
-- **Unit tests live in `tests/unit/`, not `build_files/`** — `build_files/**` is in the detect-changes image path filter; placing test files there causes every PR push to trigger image builds and E2E. Test files belong in `tests/unit/` where they are invisible to the image path filter.
-- **`just test-unit` runs bats unit tests** — calls `bats tests/unit/` (all `.bats` files in the directory). The CI `unit-tests` job invokes `bats` directly (not `just`) because `just` is not available on a bare `ubuntu-latest` runner without the `setup-runner` composite action. Current test files: `00-image-info_test.bats`, `17-cleanup_test.bats`, `18-workarounds_test.bats`, `19-initramfs_test.bats`, `clean-stage_test.bats`, `copr-helpers_test.bats`, `disable-repos_test.bats`, `package-lib_test.bats`, `validate-repos_test.bats`.
-- **Vulnerability scans must use the build digest, not a mutable tag.** `vulnerability-scan.yml` downloads `image-digest-{stream_name}-{brand_name}-{image_flavor}` from the triggering `workflow_run` and passes `image@sha256:...` to the scanner to avoid TOCTOU. Artifact names for the default bluefin build: `image-digest-testing-bluefin-main`, `image-digest-testing-bluefin-nvidia`.
-- Weekly promotion uses retag-only (skopeo copy) — **no rebuild at promotion time**. `:stable` is set exclusively by `weekly-testing-promotion.yml`.
-- Build callers do not pass `secrets: inherit` — `reusable-build.yml` only needs `GITHUB_TOKEN`, which is automatically available
-- **`generate-release.yml` must be LOCAL** — never centralize it to `projectbluefin/actions`. External cross-repo `workflow_call` reusable workflows called from `weekly-testing-promotion.yml` cause `startup_failure` with 0 jobs starting, even when actionlint passes and the SHA is reachable. Root cause appears to be a GitHub validation interaction with the `production` environment and external callee. Verified 2026-06-07 after multiple failed centralization attempts.
-- **`production` environment branch policy** — use `custom_branch_policies: true` with `main` explicitly added. The `protected_branches: true` policy does NOT recognize GitHub rulesets as branch protection (only classic branch protection rules count). A `main` branch protected only by a ruleset (merge queue) will cause `startup_failure` when any job uses `environment: production`.
-- **`github_token` is a reserved workflow_call secret name** — GitHub enforces this (observed 2026-06-07). Using it returns HTTP 422 at dispatch time. Use `github.token` directly inside the callee instead.
+- **`:testing` tag assignment:** `build-image-testing.yml` sets `publish_stream_tag: false`. The `:testing` tag is only applied by `post-testing-e2e.yml → promote-to-testing`, and only when `head_branch == 'main'`.
+- **Merge queue, not auto-merge:** `promote-testing-to-main.yml` uses `use_merge_queue: true` → GraphQL `enqueuePullRequest`. `gh pr merge --auto --squash` is blocked by ruleset 17070404.
+- **`promote-testing-to-main.yml` has 5 triggers:** push to `testing`, daily 23:00 UTC, `workflow_dispatch`, `workflow_run: ["Post-Testing E2E"]` (re-evaluates immediately after e2e), and `pull_request_review: [submitted]` (auto-enqueues after 2nd approval).
+- **`pr-validation.yml` also fires on PRs to `main`** — only to run `check-base-branch` which blocks the PR with an error. Do not bypass.
+- **E2E (`testsuite` job) only runs on `merge_group`** — per-push PR CI is fast: `validate` + `unit-tests` only (~2 min).
+- **Unit tests run the whole directory:** `bats --formatter tap tests/unit/` — not a specific file.
+- **`consumer-validate-generate-release-notes.yml` intentionally uses `@v1`** (not SHA-pinned) so action fixes propagate without a Renovate bump. Explicit exception to the SHA-pinning rule.
+- **Two GitHub App identities:** `MERGERAPTOR` (used by `track-common.yml`) and `BLUEFINBOT` (used by `sync-main-to-testing.yml`).
+- **Artifact names include architecture suffix:** `image-digest-testing-bluefin-main-x86_64` (not `image-digest-testing-bluefin-main`).
+- **`production` environment branch policy:** use `custom_branch_policies: true` with `main` explicitly added. `protected_branches: true` does NOT recognize GitHub rulesets.
+- **`github_token` is a reserved `workflow_call` secret name** — returns HTTP 422. Use `github.token` directly.
 
 ## Shared actions architecture (projectbluefin/actions)
 
-Common CI/CD logic lives in reusable GitHub Actions at **https://github.com/projectbluefin/actions** (current release: `v1`). These actions serve bluefin, aurora, bazzite, and any bootc image builder.
+All workflow files are thin callers. Shared logic lives in `projectbluefin/actions`.
 
-| Action | Status | Purpose |
-|---|---|---|
-| `bootc-build/setup-runner` | ✅ released on `v1` | Update podman from Ubuntu resolute, BTRFS mount, install just/cosign/oras/syft |
-| `bootc-build/dnf-cache` | ✅ released on `v1` | Restore/save buildah cache with chmod 777 workaround |
-| `bootc-build/ghcr-cleanup` | ✅ released on `v1` | Parameterized GHCR image retention |
-| `bootc-build/preflight` | ✅ released on `v1` | Validate registry auth, normalize image refs, check required secrets |
-| `bootc-build/detect-changes` | ✅ released on `v1` | Detect changed paths; compute image-flavor build matrix (`image_flavors`, `should_build`) |
-| `bootc-build/validate-pr` | ✅ released on `v1` | PR validation: just check, shellcheck, hadolint, pre-commit — all tool pins live here |
-| `bootc-build/push-image` | ✅ released on `v1` | Push once + skopeo copy for alias tags, digest capture |
-| `bootc-build/sign-and-publish` | ✅ released on `v1` | Cosign sign (keyless or key-based) + Syft SBOM + ORAS attach + attestation |
-| `bootc-build/rechunk` | ✅ released on `v1` | rpm-ostree chunkah rechunking with delta support |
-| `bootc-build/generate-tags` | ✅ released on `v1` | Produce OCI tags from branch, date, Fedora version |
-| `bootc-build/generate-release` | 🔲 planned | Changelog from RPM diff + SBOM comparison |
+| Reusable | Caller in this repo |
+|---|---|
+| `reusable-build.yml` | `build-image-testing.yml` |
+| `reusable-promote-squash.yml` | `promote-testing-to-main.yml` |
+| `reusable-release-gate.yml` | `pr-release-gate.yml` |
+| `reusable-execute-release.yml` | `execute-release.yml` |
+| `reusable-sync-branches.yml` | `sync-main-to-testing.yml` |
+| `reusable-vulnerability-scan.yml` | `vulnerability-scan.yml` |
+| `reusable-renovate-automerge.yml` | `renovate-automerge.yml` |
+| `reusable-release-reminder.yml` | `release-reminder.yml` |
+| `reusable-pkg-cadence.yml` | `pkg-cadence.yml` |
+| `skill-drift-check.yml` | `skill-drift.yml` |
+| `generate-release-notes` (action) | `consumer-validate-generate-release-notes.yml` |
 
 ### Caller pinning rule
-
-Workflow consumers in this repo use the **`@v1` managed tag** for all `projectbluefin/actions` references:
-
-```yaml
-- uses: projectbluefin/actions/bootc-build/setup-runner@v1
-```
-
-The `no-sha-pins-for-internal-actions` pre-commit hook **blocks SHA pins** for `projectbluefin/` actions — SHA format (`@<40-hex>`) is rejected; `@v1` is required. The `no-floating-action-tags` hook exempts `projectbluefin/` refs so `@v1` is allowed. Renovate is configured to **not** update `projectbluefin/` action refs (see `renovate.json` `packageRules`) because `@v1` is a maintainer-managed rolling tag — updating it to a SHA would break the hook.
-
-**How `@v1` advances:** maintainers of `projectbluefin/actions` fast-forward the `v1` tag to the new HEAD after every merged PR. This repo picks up the change automatically on next run — no PR needed here.
-
-**Never use a SHA from a non-merged feature branch** in `projectbluefin/actions`. Feature branch SHAs may reference internal action SHAs that don't exist on `main`. Managed tags (`@v1`) always point to merged, validated commits.
-
-### Migration pattern
-
-Replace inline workflow steps with action calls:
-```yaml
-# Before: 15-line inline step
-- name: Set up runner
-  run: |
-    sudo apt-get install ...
-    sudo systemctl ...
-
-# After: single action call
-- uses: projectbluefin/actions/bootc-build/setup-runner@<SHA> # v1
-  with:
-    podman-version: "5.4"
-```
-
-### Design decisions
-
-- Each action is independently consumable (no monolithic action bundle)
-- Signing mode is an input (`keyless` or `key-based`), not hardcoded
-- Consumer repos use `@v1` managed tags; Renovate is configured to skip `projectbluefin/` action updates since `@v1` self-advances
-- The full catalog and authoring guide lives at **https://github.com/projectbluefin/actions/tree/main/docs/skills**
+- Use `@v1` managed tag for all `projectbluefin/actions` references.
+- `no-sha-pins-for-internal-actions` pre-commit hook **blocks SHA pins** for `projectbluefin/` actions.
+- `no-floating-action-tags` exempts `projectbluefin/` refs so `@v1` is allowed.
+- Renovate does NOT update `projectbluefin/` action refs.
 
 ### CI fix workflow for agents
 
-When you encounter a CI issue that involves duplicated inline steps, path-filter logic, or pinned third-party actions in `.github/workflows/`, check whether the fix belongs in `projectbluefin/actions` first:
+Before fixing something here, check whether the logic belongs in `projectbluefin/actions`:
 
 | Belongs in `projectbluefin/actions` | Stays in this repo |
 |---|---|
-| Shared step sequences (validate-pr, detect-changes) | Caller permissions scoping |
-| Third-party action pins (hadolint, install-action, paths-filter) | `reusable-build.yml` caller inputs |
-| Logic used in ≥2 workflows or ≥2 consumer repos | Repo-specific Justfile recipes |
-| Path-filter definitions shared across workflows | Workflow scheduling, triggers, concurrency |
+| Shared step sequences used by ≥2 workflows or repos | Repo-specific triggers, schedules, concurrency |
+| Third-party action SHA pins | Caller permissions scoping |
+| Logic shared across bluefin, bluefin-lts, dakota | Repo-specific Justfile recipes |
 
-**Correct sequence when a fix belongs in `projectbluefin/actions`:**
-
-1. Open a PR in `projectbluefin/actions` on a feature branch
-2. Open a draft PR here pinned to the feature branch SHA (e.g. `projectbluefin/actions/bootc-build/detect-changes@<SHA>`)
-3. CI must pass on this draft PR before the actions PR merges
-4. After the actions PR merges, `v1` is fast-forwarded by the actions maintainer — no update needed in this repo
-
-**Release-action consumer validation pattern:** if the shared action under test expects a semver tag or a `cliff.toml` but this repo does not ship them, add a draft-only manual workflow on the validation branch that creates a temporary local semver tag plus a temporary cliff config before calling the pinned shared action SHA. Link that workflow run in the actions PR as consumer-validation evidence.
-
-Never duplicate an existing shared action inline — doing so creates a second Renovate pin that drifts independently.
+Correct sequence:
+1. Open PR in `projectbluefin/actions` on a feature branch
+2. Open draft PR here pinned to the feature branch SHA
+3. CI must pass before the actions PR merges
+4. After actions PR merges, `v1` is fast-forwarded — no update needed here
 
 ## Hard rules for agents
-
-- **Always wait for and verify build completion before claiming success.** Use `gh run watch <id> --exit-status` to block until done, then confirm with `gh run view <id> --json conclusion --jq .conclusion`. Never assume a merge unblocked builds — read the actual failure logs.
-- **PRs always target `testing`.** Never `main`. If you open a PR targeting `main`, close it and re-open.
-- **Never add shared CI logic to `.github/` or `common`.** New reusable actions go in `projectbluefin/actions` only. See "CI fix workflow for agents" above for the correct sequence.
-- **Never inline a third-party action that is already wrapped in `projectbluefin/actions`.** Use the shared action instead; duplicating the pin creates Renovate drift.
-- **Bluefin workflow files are thin callers.** Local workflow edits should usually stop at triggers, permissions, concurrency, repo-specific constraints, and inputs to shared actions/workflows.
-- **Workflow behavior changes must update `docs/skills/ci.md` in the same PR.** `skill-drift.yml` now runs on PRs to `testing` to enforce this on the real landing branch.
-- **Read the actual workflow files before writing about them.** Stored memory about tags, steps, or behavior can be stale. Open the file and verify.
-- **PATs are forbidden in projectbluefin repos.** Never add `RENOVATE_TOKEN` or any PAT secret. Renovate uses GitHub App auth via `projectbluefin/renovate-config`. Trigger Renovate: `gh workflow run "Renovate Self-Hosted" --repo projectbluefin/renovate-config`
-- **No personal tool artifacts in community files.** This repo is shared; do not include powerlevel ratings, personal skill patterns, or client-specific references in `docs/`.
-
-## Reference patterns
-
-### PR rechunk guard requires a PR-only OCI export step
-
-When adding `if: github.event_name != 'pull_request'` to the rechunk step, the "Upload OCI dir as Artifact" step breaks on PRs because `${{ env.IMAGE_NAME }}_build` (the rechunk output dir) no longer exists. Fix: add a PR-only step before the upload that exports the un-rechunked image:
-
-```yaml
-- name: Export image to OCI dir (PR only)
-  if: github.event_name == 'pull_request'
-  shell: bash
-  run: |
-    mkdir -p ${{ env.IMAGE_NAME }}_build
-    sudo podman save --format oci-dir -o ${{ env.IMAGE_NAME }}_build \
-      ${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
-```
-
-### skopeo copy for alias tags
-
-`skopeo copy docker://... docker://...` needs the registry to be authenticated. The `Login to GitHub Container Registry` step must run before the push block (it already does in reusable-build.yml). No separate login needed for skopeo — it uses the credential store populated by `podman login`.
-
-### `just check` in build matrix is redundant
-
-`pr-validation.yml` already runs `just check` as a required check before merge. Running it in every matrix cell wastes ~60-120s per build with zero added value. Remove it from `reusable-build.yml`; keep it only in `pr-validation.yml`.
-
-### Security posture — verified-good
-
-Full adversarial review of all 23 workflow files completed. All findings resolved. Current verified-good state:
-
-**Verified-good — do not remove:**
-- All action pins use SHA (not floating tags)
-- Workflow and job-level `permissions` scoped to minimum required
-- Build callers do not use `secrets: inherit`
-- `/e2e` dispatch gated to write/maintain/admin collaborators only
-- Shell injection protected via env-variable binding for PR branch names
-- GitHub App tokens (not PATs) for cherry-pick workflow
-- OSSF Scorecard + Grype scanning active
-- Weekly cosign key rotation detection (`check-cosign-key-rotation.yml`)
+- PRs always target `testing`. Never `main`.
+- Never add shared CI logic here. New reusable actions go in `projectbluefin/actions` only.
+- Never inline a third-party action already wrapped in `projectbluefin/actions`.
+- All workflow files are thin callers — no inline business logic.
+- Workflow behavior changes must update `docs/skills/ci.md` in the same PR. `skill-drift.yml` warns if you forget.
+- Read the actual workflow files before writing about them. Source wins over memory.
+- **PATs are forbidden.** Never add `RENOVATE_TOKEN` or any PAT secret.
+- Always verify build completion: `gh run watch <id> --exit-status`
