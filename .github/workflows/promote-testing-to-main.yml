@@ -11,8 +11,19 @@ on:
     branches:
       - testing
   schedule:
-    - cron: '0 4 * * 2'
+    - cron: '0 23 * * *'
   workflow_dispatch:
+  # Re-evaluate the release gate immediately after post-testing-e2e completes
+  # instead of waiting for the next push or midnight cron (e2e-ci.md Requirement 2).
+  workflow_run:
+    workflows: ["Post-Testing E2E"]
+    types: [completed]
+    branches: [testing]
+  # Re-run enqueue after each approval so the PR enters the merge queue
+  # automatically once 2 maintainers approve — no manual button required.
+  # Filtered in the job to the promotion PR only.
+  pull_request_review:
+    types: [submitted]
 
 concurrency:
   group: promote-testing-to-main
@@ -30,6 +41,11 @@ permissions:
 
 jobs:
   promote:
+    # For pull_request_review events, only run on the promotion PR itself.
+    # Other PRs' reviews would otherwise trigger a full promote cycle.
+    if: >
+      github.event_name != 'pull_request_review' ||
+      github.event.pull_request.head.ref == 'auto/promote-testing-to-main'
     uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
@@ -37,8 +53,15 @@ jobs:
       cosign_identity_regexp: >-
         ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
       run_e2e: false
+      # run_e2e is intentionally false for bluefin. The post-testing-e2e workflow
+      # gates :testing continuously but the gate SHA lookup is broken until the
+      # branches:[main,testing] fix (post-testing-e2e.yml) reaches main via
+      # promotion. Model matches dakota: cosign verification only at the PR gate
+      # level; E2E evidence is gathered separately by post-testing-e2e.yml.
+      # Re-enable once post-testing-e2e reliably files evidence under the testing
+      # branch HEAD SHA. See docs/skills/ci.md and common e2e-ci.md for details.
       # main uses a merge queue ruleset (17070404): gh pr merge --auto is blocked.
       # use_merge_queue: true calls enqueuePullRequest GraphQL instead, which
       # places the PR in the queue and lets it merge once approvals + checks pass.
-      use_merge_queue: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+      use_merge_queue: true
     secrets: inherit

@@ -7,6 +7,7 @@ Agent entry point. Load only the skill that matches the task in front of you.
 | I need to... | Load |
 |---|---|
 | Build, validate, or test an image change | `docs/skills/build.md` |
+| Add or extend Bats coverage for setup hook scripts | `docs/skills/setup-hook-tests.md` |
 | Add, remove, or adjust RPMs, Flatpaks, or Brewfiles | `docs/skills/packages.md` |
 | Debug GitHub Actions or understand workflow behavior | `docs/skills/ci.md` |
 | Understand image variants, streams, or flavors | `docs/skills/variants.md` |
@@ -17,6 +18,7 @@ Agent entry point. Load only the skill that matches the task in front of you.
 | Review or change COPR isolation logic or the enable/disable/install sequence | `docs/skills/copr-security.md` |
 | Work on the LTS image or LTS-specific policy | `docs/skills/lts.md` |
 | Build or promote installation ISOs | `docs/skills/iso.md` |
+| Ship a learning from this session / self-improvement mandate | `docs/skills/skill-improvement.md` |
 
 ## Reference docs
 

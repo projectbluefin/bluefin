@@ -40,26 +40,35 @@ jobs:
       PIP_CONSTRAINT: ${{ github.workspace }}/.github/requirements-ci.txt
     steps:
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - name: Validate
         uses: projectbluefin/actions/bootc-build/validate-pr@v1
 
   unit-tests:
     name: Unit tests
+    needs: [check-base-branch]
+    if: always() && (needs.check-base-branch.result == 'success' || needs.check-base-branch.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - name: Install bats
         run: sudo apt-get install -y bats
 
       - name: Run unit tests
-        run: bats tests/unit/
+        run: bats --formatter tap tests/unit/ | tee results.tap
+
+      - name: Upload TAP results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bats-tap-results
+          path: results.tap
 
   testsuite:
     name: E2E smoke

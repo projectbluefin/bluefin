@@ -30,3 +30,15 @@ teardown() {
     [ "$status" -eq 0 ]
     grep -q "/usr/bin/ublue-privileged-setup" "${STUB_BIN}/pkexec.log"
 }
+
+@test "99-privileged: pkexec failure exits non-zero" {
+    cat > "${STUB_BIN}/pkexec" <<EOF
+#!/usr/bin/bash
+exit 23
+EOF
+    chmod +x "${STUB_BIN}/pkexec"
+
+    run bash "${HOOK_SCRIPT}"
+
+    [ "$status" -eq 23 ]
+}

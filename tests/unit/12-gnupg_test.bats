@@ -45,3 +45,25 @@ teardown() {
     [ "$status" -eq 0 ]
     [ ! -f "${HOME}/.gnupg/gpg-agent.conf" ]
 }
+
+@test "12-gnupg: creates .gnupg with mode 700" {
+    rm -rf "${HOME}/.gnupg"
+    touch "${TEST_ROOT}/usr/libexec/scdaemon"
+
+    run bash "${PATCHED_SCRIPT}"
+
+    [ "$status" -eq 0 ]
+    [ -d "${HOME}/.gnupg" ]
+    [ "$(stat -c '%a' "${HOME}/.gnupg")" = "700" ]
+}
+
+@test "12-gnupg: running twice does not duplicate scdaemon-program line" {
+    touch "${TEST_ROOT}/usr/libexec/scdaemon"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -eq 0 ]
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -eq 0 ]
+    [ "$(grep -c '^scdaemon-program ' "${HOME}/.gnupg/gpg-agent.conf")" -eq 1 ]
+}
