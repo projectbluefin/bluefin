@@ -17,6 +17,7 @@ Agent entry point. Load only the skill that matches the task in front of you.
 | Review or change COPR isolation logic or the enable/disable/install sequence | `docs/skills/copr-security.md` |
 | Work on the LTS image or LTS-specific policy | `docs/skills/lts.md` |
 | Build or promote installation ISOs | `docs/skills/iso.md` |
+| Ship a learning from this session / self-improvement mandate | `docs/skills/skill-improvement.md` |
 
 ## Reference docs
 

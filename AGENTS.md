@@ -10,7 +10,7 @@ Bluefin is [`projectbluefin/bluefin`](https://github.com/projectbluefin/bluefin)
 - [`docs/workflow.md`](docs/workflow.md) — issue lifecycle, bonedigger, labels, PR policy
 - [`docs/pr-checklist.md`](docs/pr-checklist.md) — PR gates by change type
 - [`docs/build.md`](docs/build.md) — build model and local validation loop
-- [`docs/ci.md`](docs/ci.md) — CI, promotion, and failure modes
+- [`docs/skills/ci.md`](docs/skills/ci.md) — CI workflows, triggers, and failure modes
 
 ## Org pipeline — projectbluefin
 
@@ -48,11 +48,15 @@ All three image repos consume `projectbluefin/actions` reusables:
 
 | Reusable | Callers |
 |---|---|
+| `reusable-build.yml` | bluefin, bluefin-lts, dakota |
 | `reusable-promote-squash.yml` | bluefin, bluefin-lts, dakota |
 | `reusable-sync-branches.yml` | bluefin, bluefin-lts, dakota |
-| `reusable-release-gate.yml` | called by reusable-promote-squash |
+| `reusable-release-gate.yml` | bluefin, bluefin-lts, dakota |
 | `reusable-execute-release.yml` | bluefin, bluefin-lts |
 | `reusable-vulnerability-scan.yml` | bluefin, bluefin-lts, dakota |
+| `reusable-renovate-automerge.yml` | bluefin, bluefin-lts, dakota |
+| `reusable-release-reminder.yml` | bluefin, bluefin-lts, dakota |
+| `skill-drift-check.yml` | bluefin, bluefin-lts, dakota, actions |
 
 **Before fixing a CI issue here:** check if the broken logic lives in a shared reusable in `projectbluefin/actions`. If so, fix it there first — a single fix propagates to all consumers. See `docs/skills/ci.md` → "CI fix workflow for agents" for the correct PR sequence.
 
@@ -100,16 +104,22 @@ Non-compliance = rejection.
 
 ```
 PR merges to testing
-  └─ "Testing Images" build fires
-       └─ post-testing-e2e.yml fires (on workflow_run, testing branch)
-            └─ e2e smoke + common suites run against :testing
-                 └─ on success: promote-to-testing publishes verified digest as :testing
-                      └─ promote-testing-to-main.yml fires (push: testing)
-                           └─ reusable-promote-squash.yml opens/updates auto/promote-testing-to-main PR
-                                └─ release gate checks: cosign verify + e2e confirmation
-                                     └─ 2 maintainer approvals → merge queue → execute-release.yml
-                                          └─ :testing → :stable
+  └─ "Testing Images" build fires (publish_stream_tag: false — no :testing tag yet)
+       └─ post-testing-e2e.yml fires (on workflow_run, branches: main+testing)
+            └─ e2e smoke + common suites run
+                 └─ promote-testing-to-main.yml fires (push to testing)
+                      └─ reusable-promote-squash.yml opens/updates auto/promote-testing-to-main PR
+                           └─ pr-release-gate.yml: cosign verify + smoke,common E2E gate
+                                └─ 2 maintainer approvals → merge queue → squash-merge to main
+                                     └─ execute-release.yml: :testing → :stable
+                                     └─ sync-main-to-testing.yml: merges main→testing; deletes promotion branch
+                                          └─ build on main: post-testing-e2e promote-to-testing job tags :testing
 ```
+
+**Key facts:**
+- `:testing` tag is applied by `post-testing-e2e.yml → promote-to-testing` and **only** when `head_branch == 'main'` (after a build triggered by a push to `main`, not `testing`)
+- `execute-release.yml` triggers by commit message pattern, not a schedule — no `weekly-testing-promotion.yml` exists
+- `promote-testing-to-main.yml` uses the merge queue (`enqueuePullRequest` GraphQL) — `gh pr merge --auto` is blocked
 
 **`reusable-promote-squash.yml` correctly resolves the e2e gate `head_sha` from `inputs.source_branch`** (`testing` for bluefin). The gate queries post-testing-e2e runs by the testing branch HEAD SHA and marks the PR `release/ready` once a passing run is found.
 
@@ -127,6 +137,22 @@ PR merges to testing
 ## Analysis vs. implementation
 
 When asked an analysis question ("what's the fix?", "how should we handle X?", "is there a better approach?"), **answer the question — do not implement**. Only write or change code when explicitly asked to make the change. Discussing a solution and implementing it are separate steps; wait for the user to cross that line.
+
+## Self-Improvement
+
+Every session produces two outputs: **the work** and **the learning**.
+
+- Did I discover a workaround, pattern, or convention? → Update or create a skill file in `docs/skills/`.
+- Skill file goes in the **same PR** as the work. Not a follow-up.
+
+**Banned:** No changelog files (CHANGELOG.md, IMPROVEMENTS.md, SESSION.md). No session notes committed to the repo. No "append here" instructions — route learnings to the matching skill file.
+
+Before marking work done:
+- [ ] Discovered a workaround, pattern, or convention?
+- [ ] Skill file updated or created?
+- [ ] Committed in this same PR?
+
+Full mandate: [`docs/skills/skill-improvement.md`](docs/skills/skill-improvement.md)
 
 ## Cross-repo file placement
 
