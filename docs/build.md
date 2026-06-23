@@ -90,7 +90,7 @@ just clean
 |---|---|---|
 | `bluefin` | `testing`, `stable` | `main`, `nvidia` |
 
-`:testing` is built daily from `main`. `:stable` is promoted weekly from `:testing` via `weekly-testing-promotion.yml` after e2e passes.
+`:testing` is built daily from `main`. `:stable` is promoted daily via the automated factory (`promote-testing-to-main.yml` → merge queue → `execute-release.yml`).
 
 ## Package locations
 

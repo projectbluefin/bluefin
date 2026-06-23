@@ -61,7 +61,7 @@ ghcr.io/projectbluefin/bluefin:stable-nvidia
 
 ## Non-obvious patterns
 
-- This repo builds two streams: `testing` (daily from `main`) and `stable` (weekly gated promotion)
+- This repo builds two streams: `testing` (daily from `main`) and `stable` (daily automated promotion via factory)
 - LTS is a separate repo and workflow model
 - For development, do **not** rely on the VS Code Flatpak; use the Homebrew package instead
 

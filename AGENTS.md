@@ -92,7 +92,7 @@ Bluefin bugs are data donations.
 Non-compliance = rejection.
 
 - Read [`docs/SKILL.md`](docs/SKILL.md) before modifying anything.
-- **After cloning, run `bash .github/scripts/install-hooks.sh` once** to install the pre-push hook that blocks accidental pushes to `origin` (ublue-os/bluefin).
+- **After cloning, run `bash .github/scripts/install-hooks.sh` once** to install the pre-push hook that blocks accidental pushes to `origin` (projectbluefin/bluefin).
 - Run `just check && pre-commit run --all-files` before every commit.
 - Never use `git add -A` or `git add .`. After any script execution, build step, or cross-repo checkout:
   `git status`                        # check for unexpected tracked paths
