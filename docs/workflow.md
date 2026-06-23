@@ -50,22 +50,19 @@ When the user indicates production is down or the factory is blocked, use `--adm
 # Merge a PR without waiting for checks
 gh pr merge <PR> --repo projectbluefin/bluefin --squash --admin
 
-# Dispatch a workflow immediately
-gh workflow run weekly-testing-promotion.yml --repo projectbluefin/bluefin
+# Dispatch promote manually
+gh workflow run promote-testing-to-main.yml --repo projectbluefin/bluefin --ref testing
 ```
 
 Do not stop mid-task to request permission for merges, tag-pushes, or workflow dispatches when production is actively broken.
 
 ## Waiting on CI runs
 
-Use `gh run watch` to block until a build completes — do not write custom polling loops (they die in detached shells):
+Use `gh run watch` to block until a build completes:
 
 ```bash
 # Block until done; exit 1 on failure
 gh run watch <RUN_ID> --repo projectbluefin/bluefin --exit-status
-
-# Then dispatch the promotion
-gh workflow run weekly-testing-promotion.yml --repo projectbluefin/bluefin
 ```
 
 
@@ -297,42 +294,6 @@ git push --force projectbluefin auto/promote-testing-to-main
 ```
 
 The `reusable-promote-squash.yml` workflow in `projectbluefin/actions` does not currently pass `-X theirs`, so SHA-pin divergence requires this manual rebuild until that is fixed upstream.
-
-### Promotion PR reviewer assignment (CODEOWNERS)
-
-The promotion PR (`auto/promote-testing-to-main` → `main`) must request the `@projectbluefin/maintainers` team, not individual handles. `.github/CODEOWNERS` controls this. The correct form:
-
-```
-# Default: any one maintainer approves
-* @projectbluefin/maintainers
-
-# Sensitive paths — require maintainer review
-.github/workflows/  @projectbluefin/maintainers
-Justfile            @projectbluefin/maintainers
-build_files/        @projectbluefin/maintainers
-```
-
-If the promotion PR has individual reviewers instead of the team, CODEOWNERS on `main` still has the old individual handles. The fix lands on `main` when the promotion PR itself merges (CODEOWNERS is updated on `testing` and squashed in). When reopening a promotion PR manually before the fix lands, pass `--reviewer projectbluefin/maintainers` explicitly:
-
-```bash
-gh pr create --repo projectbluefin/bluefin \
-  --base main --head auto/promote-testing-to-main \
-  --title "chore: promote testing to main" \
-  --body "..." \
-  --reviewer projectbluefin/maintainers
-```
-
-### Auto-merge cannot be enabled
-
-`testing` has branch protection with `validate` as required check, and `allow_auto_merge` is enabled at the repo level. `gh pr merge --auto --squash` works.
-
-If you see "Protected branch rules not configured":
-```bash
-# Verify branch protection exists
-gh api repos/projectbluefin/bluefin/branches/testing/protection
-# Verify allow_auto_merge is set
-gh api repos/projectbluefin/bluefin --jq .allow_auto_merge
-```
 
 ### Docs-only changes
 

@@ -69,7 +69,7 @@ All three image repos consume `projectbluefin/actions` reusables:
 - Before opening a PR, check for existing ones covering the same work:
   `gh pr list --repo projectbluefin/bluefin --state open --search "<topic>"`
   If one exists, comment on it rather than opening a duplicate.
-- **`main` uses a merge queue (ruleset 17070404).** The automated `auto/promote-testing-to-main` promotion PR targets `main` and therefore enters the merge queue. It requires 2 `projectbluefin/maintainers` approvals plus all gate checks passing before the queue runner merges it. See `docs/skills/ci.md` → "Promotion PR merge queue" for the GraphQL snippet to enqueue.
+- **`main` uses a merge queue (ruleset 17070404).** The automated `auto/promote-testing-to-main` promotion PR enters the merge queue with **0 approvals required** — fully automated. See `docs/skills/ci.md` for the pipeline.
 - **`gh pr merge --auto` is blocked on `main`-targeting PRs.** `--auto` calls `enablePullRequestAutoMerge` which the merge queue ruleset rejects. The `reusable-promote-squash.yml` automation handles enqueue via `enqueuePullRequest` GraphQL when `use_merge_queue: true` is set (bluefin passes this). Do not use `--auto` directly.
 
 ## Data donation
