@@ -24,7 +24,5 @@ jobs:
         [{"image":"bluefin"},{"image":"bluefin-nvidia"}]
       cosign_identity_regexp: ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
       target_tag: testing
-      run_e2e: true
-      e2e_suites: smoke,common
-      e2e_image: ghcr.io/projectbluefin/bluefin:testing
+      run_e2e: false
     secrets: inherit

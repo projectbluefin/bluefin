@@ -29,7 +29,7 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 | `consumer-validate-generate-release-notes.yml` | PRs to `testing` touching this file or `docs/skills/ci.md`, dispatch | Contract-tests the shared `generate-release-notes@v1` action from `projectbluefin/actions` |
 | `copr-health-monitor.yml` | Daily 07:00 UTC | COPR staleness check → opens issue on failure |
 | `e2e-dispatch.yml` | `/e2e` comment (write+ only) | Manual E2E trigger on a PR |
-| `execute-release.yml` | Push to `main`, dispatch | Detects promotion by commit message pattern `^ci\(promote\): bluefin testing`; delegates to `reusable-execute-release.yml@v1` → copies `:testing`→`:stable` |
+| `execute-release.yml` | Push to `main`, dispatch | Detects promotion by commit message pattern `^chore: promote testing to main`; delegates to `reusable-execute-release.yml@v1` → copies `:testing`→`:stable` |
 | `moderator.yml` | Issues/comments | AI spam detection |
 | `nightly.yml` | 02:00 UTC daily, dispatch | Runs `smoke,common,vanilla-gnome` suites against `:testing`. Diagnostic: smoke=fail+vanilla-gnome=pass → Bluefin-specific regression; both fail → upstream GNOME issue |
 | `pkg-cadence.yml` | After `Execute Release` completes, dispatch | Measures per-package update frequency after each release via `reusable-pkg-cadence.yml@v1` |
@@ -88,7 +88,7 @@ PR merges to testing
 
 **Key facts:**
 - `:testing` tag is applied by `post-testing-e2e.yml → promote-to-testing` job, and **only** when `head_branch == 'main'` (after a build on `main`, not `testing`)
-- `execute-release.yml` triggers by commit message pattern `^ci\(promote\): bluefin testing`, not a schedule
+- `execute-release.yml` triggers by commit message pattern `^chore: promote testing to main`, not a schedule
 - There is no `weekly-testing-promotion.yml` — that workflow does not exist
 
 ### Testing→main squash history gap
@@ -109,14 +109,18 @@ PR merges to testing
 | `track-common.yml` not firing | `repository_dispatch: common-updated` not sent by `common` | Manual: `gh workflow run track-common.yml --repo projectbluefin/bluefin` |
 | Renovate PR not automerging | `PR Validation — testsuite` did not complete successfully | Check `pr-validation.yml`; ensure `validate` job passed |
 | `skill-drift.yml` warning | Workflow/build change without matching `docs/skills/` update | Update the relevant skill file in the same PR |
-| `execute-release.yml` skips | Commit message does not match `^ci\(promote\): bluefin testing` | Message is set by `reusable-promote-squash.yml`; squash-merge the promotion PR correctly |
+| `execute-release.yml` skips | Commit message does not match `^chore: promote testing to main` | `reusable-promote-squash.yml` sets the promotion branch commit title, and the squash merge reuses that title on `main` |
+| Checkout fails with `No url found for submodule path '.workflow-scripts' in .gitmodules` | A gitlink was committed without a matching `.gitmodules` entry | Remove the stray gitlink (`git rm -f .workflow-scripts`), then verify every remaining mode `160000` path is declared in `.gitmodules` |
 
 ## Non-obvious patterns
 
 - **`:testing` tag assignment:** `build-image-testing.yml` sets `publish_stream_tag: false`. The `:testing` tag is only applied by `post-testing-e2e.yml → promote-to-testing`, and only when `head_branch == 'main'`.
+- **Promotion trigger source:** `execute-release.yml` must match the squash-merged promotion commit title on `main` (`chore: promote testing to main`), not the PR title. `reusable-promote-squash.yml` creates that branch commit title before the PR is opened.
 - **Merge queue, not auto-merge:** `promote-testing-to-main.yml` uses `use_merge_queue: true` → GraphQL `enqueuePullRequest`. `gh pr merge --auto --squash` is blocked by ruleset 17070404.
-- **`promote-testing-to-main.yml` has 5 triggers:** push to `testing`, daily 23:00 UTC, `workflow_dispatch`, `workflow_run: ["Post-Testing E2E"]` (re-evaluates immediately after e2e), and `pull_request_review: [submitted]` (auto-enqueues after 2nd approval).
+- **`promote-testing-to-main.yml` has 3 triggers:** push to `testing`, daily 04:00 UTC, and `workflow_dispatch`. Fully automated — 0 approvals required.
 - **`pr-validation.yml` also fires on PRs to `main`** — only to run `check-base-branch` which blocks the PR with an error. Do not bypass.
+- **Gitlinks must be declared:** Bluefin has legitimate submodules under `system_files/shared/...`, so the CI guard in `pr-validation.yml` does **not** ban mode `160000` entries outright. It fails only when a gitlink path is missing from `.gitmodules` (for example a stray `.workflow-scripts` entry).
+- **Guard inspects the PR head tree:** the undeclared-gitlink check reads `github.event.pull_request.head.sha` on PRs instead of the synthetic merge ref, so a testing→main promotion PR can pass once the `testing` head no longer carries the stray gitlink even if `main` still does.
 - **E2E (`testsuite` job) only runs on `merge_group`** — per-push PR CI is fast: `validate` + `unit-tests` only (~2 min).
 - **Unit tests run the whole directory:** `bats --formatter tap tests/unit/` — not a specific file.
 - **`consumer-validate-generate-release-notes.yml` intentionally uses `@v1`** (not SHA-pinned) so action fixes propagate without a Renovate bump. Explicit exception to the SHA-pinning rule.
