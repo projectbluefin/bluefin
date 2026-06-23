@@ -109,7 +109,9 @@ PR merges to testing
 | `track-common.yml` not firing | `repository_dispatch: common-updated` not sent by `common` | Manual: `gh workflow run track-common.yml --repo projectbluefin/bluefin` |
 | Renovate PR not automerging | `PR Validation — testsuite` did not complete successfully | Check `pr-validation.yml`; ensure `validate` job passed |
 | `skill-drift.yml` warning | Workflow/build change without matching `docs/skills/` update | Update the relevant skill file in the same PR |
-| `execute-release.yml` skips | Commit message does not match `^chore: promote testing to main` | `reusable-promote-squash.yml` sets the promotion branch commit title, and the squash merge reuses that title on `main` |
+| `execute-release.yml` `release-notes` job fails (OOM, exit 137) | `syft` scanning full desktop image OOM-kills 7 GB runner | `reusable-release.yml@v1` now uses `--override-default-catalogers rpm-db-cataloger` + `GOMEMLIMIT=6GiB GOGC=25`. All notable packages are RPMs; full filesystem scan is unnecessary. If still failing, `gh run rerun <id> --failed`. |
+| Merge queue dequeues PR immediately after enqueue | Stale `action_required` check suites on squash SHA (from bot-triggered PRs) block `ALLGREEN` | Ruleset 17070404 now uses `HEADGREEN` strategy — only the required `validate` check on the HEAD commit must pass. If dequeue recurs: `gh pr merge <n> --squash --admin` to bypass. |
+| `promote-testing-to-main.yml` fails: HTTP 403 on Statuses API | `promote` job missing `statuses: write` permission | Fixed in `reusable-promote-squash.yml@v1` (PR#292). If recurs: check job-level permissions block. |
 | Checkout fails with `No url found for submodule path '.workflow-scripts' in .gitmodules` | A gitlink was committed without a matching `.gitmodules` entry | Remove the stray gitlink (`git rm -f .workflow-scripts`), then verify every remaining mode `160000` path is declared in `.gitmodules` |
 
 ## Non-obvious patterns
