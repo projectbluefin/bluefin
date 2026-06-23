@@ -125,7 +125,7 @@ PR merges to testing
 - **E2E (`testsuite` job) only runs on `merge_group`** — per-push PR CI is fast: `validate` + `unit-tests` only (~2 min).
 - **Unit tests run the whole directory:** `bats --formatter tap tests/unit/` — not a specific file.
 - **`consumer-validate-generate-release-notes.yml` intentionally uses `@v1`** (not SHA-pinned) so action fixes propagate without a Renovate bump. Explicit exception to the SHA-pinning rule.
-- **Two GitHub App identities:** `MERGERAPTOR` (used by `track-common.yml`) and `BLUEFINBOT` (used by `sync-main-to-testing.yml`).
+- **Two GitHub App identities:** `MERGERAPTOR` (used by `track-common.yml`) and `BLUEFINBOT` (used historically; `sync-main-to-testing.yml` now uses `github.token` directly).
 - **Artifact names include architecture suffix:** `image-digest-testing-bluefin-main-x86_64` (not `image-digest-testing-bluefin-main`).
 - **`production` environment branch policy:** use `custom_branch_policies: true` with `main` explicitly added. `protected_branches: true` does NOT recognize GitHub rulesets.
 - **`github_token` is a reserved `workflow_call` secret name** — returns HTTP 422. Use `github.token` directly.
