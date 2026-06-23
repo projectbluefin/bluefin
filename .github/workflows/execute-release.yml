@@ -67,11 +67,15 @@ jobs:
         ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
       notable_packages: >-
         [
-          {"sbom_name": "kernel",            "label": "Kernel"},
-          {"sbom_name": "gnome-shell",        "label": "GNOME Shell"},
-          {"sbom_name": "mesa-filesystem",    "label": "Mesa"},
-          {"sbom_name": "flatpak",            "label": "Flatpak"},
-          {"sbom_name": "systemd",            "label": "systemd"}
+          {"sbom_name": "kernel", "label": "Kernel"},
+          {"sbom_name": "gnome-shell", "label": "GNOME Shell"},
+          {"sbom_name": "podman", "label": "Podman"},
+          {"sbom_name": "distrobox", "label": "Distrobox"},
+          {"sbom_name": "systemd", "label": "systemd"},
+          {"sbom_name": "mesa-vulkan-drivers", "label": "Mesa"},
+          {"sbom_name": "pipewire", "label": "PipeWire"},
+          {"sbom_name": "flatpak", "label": "Flatpak"},
+          {"sbom_name": "bootc", "label": "bootc"}
         ]
       docs_url: https://docs.projectbluefin.io/changelogs
     secrets: inherit
