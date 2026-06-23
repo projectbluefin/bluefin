@@ -4,6 +4,11 @@ Bluefin is [`projectbluefin/bluefin`](https://github.com/projectbluefin/bluefin)
 
 **Read [`docs/SKILL.md`](docs/SKILL.md) before doing any work.** Load only the docs that match the task.
 
+> **Before using any tool or library: look up its docs via Context7 first. Always.**
+> bootc, cosign, skopeo, buildah, GitHub Actions, rpm-ostree — every tool has live, authoritative docs.
+> Pattern: `resolve-library-id` → `get-library-docs` → implement → cite the section.
+> Guessing, flag-hunting, and trial-and-error are banned. The docs exist. Read them.
+
 ## Docs router
 
 - [`docs/SKILL.md`](docs/SKILL.md) — task router
