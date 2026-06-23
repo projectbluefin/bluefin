@@ -36,7 +36,7 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 | `post-testing-e2e.yml` | `workflow_run: ["Testing Images"]` (completed, branches: main+testing) | Downloads build digest; runs `smoke,common` E2E; `promote-to-testing` job copies digests to `:testing` tag — **only when `head_branch == 'main'`** |
 | `pr-release-gate.yml` | PRs to `main` (job runs only for `auto/promote-testing-to-main` head) | Cosign signature verification + `smoke,common` E2E via `reusable-release-gate.yml@v1`; must pass for promotion PR to merge |
 | `pr-validation.yml` | PRs to `testing` AND `main`, `merge_group` | `check-base-branch` (fails PRs targeting `main` unless from `auto/promote-testing-to-main`) → `validate` → `unit-tests` → `testsuite` (merge_group only) |
-| `promote-testing-to-main.yml` | Push to `testing`, daily 23:00 UTC, dispatch, `workflow_run: ["Post-Testing E2E"]` (completed), `pull_request_review: [submitted]` | Opens/updates `auto/promote-testing-to-main` squash PR via `reusable-promote-squash.yml@v1`; uses merge queue (`enqueuePullRequest` GraphQL) — `gh pr merge --auto` is blocked |
+| `promote-testing-to-main.yml` | Push to `testing`, daily 04:00 UTC, dispatch | Opens/updates `auto/promote-testing-to-main` squash PR via `reusable-promote-squash.yml@v1`; uses merge queue (`enqueuePullRequest` GraphQL) — `gh pr merge --auto` is blocked |
 | `release-reminder.yml` | Daily 12:00 UTC, dispatch | Posts overdue-release reminders via `reusable-release-reminder.yml@v1` (warn at 7d, escalate at 14d) |
 | `renovate-automerge.yml` | `workflow_run: ["PR Validation — testsuite"]` (completed) | Auto-merges qualifying Renovate PRs via `reusable-renovate-automerge.yml@v1` |
 | `run-testsuite.yml` | Called by all E2E workflows | **Canonical testsuite wrapper** — always use this, never call the testsuite directly |
@@ -78,8 +78,8 @@ PR merges to testing
             └─ smoke + common E2E suites run
                  └─ promote-testing-to-main.yml fires (push to testing)
                       └─ reusable-promote-squash.yml opens/updates auto/promote-testing-to-main PR
-                           └─ pr-release-gate.yml: cosign verify + smoke,common E2E gate
-                                └─ 2 maintainer approvals → merge queue → squash-merge to main
+                           └─ pr-release-gate.yml: cosign verify gate
+                                └─ merge queue: pr-validation.yml runs validate on merge-group → squash-merge to main
                                      └─ execute-release.yml: :testing → :stable
                                      └─ sync-main-to-testing.yml: merges main→testing; deletes promotion branch
                                           └─ build-image-testing.yml fires on main push
@@ -104,7 +104,7 @@ PR merges to testing
 | `:testing` tag not updated after testing branch build | `promote-to-testing` only runs for `main` branch builds | Normal; tag updates after promotion cycle completes |
 | Promotion PR stuck, no `release/ready` label | `reusable-promote-squash.yml` waiting for post-testing-e2e to pass | Trigger `gh run rerun` on failed post-testing-e2e run |
 | Promotion PR cosign verification fails | Identity regexp mismatch | Check `cosign_identity_regexp` in `pr-release-gate.yml`: must match `projectbluefin/(bluefin\|actions)/` |
-| `promote-testing-to-main.yml` enqueue fails | Merge queue requires 2 approvals | Wait for approvals; do NOT use `gh pr merge --auto` |
+| `promote-testing-to-main.yml` enqueue fails | Merge queue `validate` check missing on squash HEAD; GITHUB_TOKEN pushes do not trigger pr-validation.yml | `reusable-promote-squash.yml@v1` now posts `validate=success` via Statuses API before `enqueuePullRequest`. If failing: re-run promote workflow manually. Ruleset 17070404 must not set `integration_id` on the `validate` check (so Status API posts satisfy it). |
 | `sync-main-to-testing.yml` fails | Merge conflict between `main` and `testing` | Manual merge + force-push to `testing` per `workflow.md` |
 | `track-common.yml` not firing | `repository_dispatch: common-updated` not sent by `common` | Manual: `gh workflow run track-common.yml --repo projectbluefin/bluefin` |
 | Renovate PR not automerging | `PR Validation — testsuite` did not complete successfully | Check `pr-validation.yml`; ensure `validate` job passed |
@@ -118,6 +118,7 @@ PR merges to testing
 - **Promotion trigger source:** `execute-release.yml` must match the squash-merged promotion commit title on `main` (`chore: promote testing to main`), not the PR title. `reusable-promote-squash.yml` creates that branch commit title before the PR is opened.
 - **Merge queue, not auto-merge:** `promote-testing-to-main.yml` uses `use_merge_queue: true` → GraphQL `enqueuePullRequest`. `gh pr merge --auto --squash` is blocked by ruleset 17070404.
 - **`promote-testing-to-main.yml` has 3 triggers:** push to `testing`, daily 04:00 UTC, and `workflow_dispatch`. Fully automated — 0 approvals required.
+- **`validate` check on squash branch:** GITHUB_TOKEN pushes don't trigger workflows. `reusable-promote-squash.yml@v1` posts `validate=success` via the Statuses API after each squash push, before `enqueuePullRequest`. Ruleset 17070404 must have no `integration_id` on `validate` so Status API posts satisfy it. Check run for the merge-group is produced by `pr-validation.yml` on `merge_group` event.
 - **`pr-validation.yml` also fires on PRs to `main`** — only to run `check-base-branch` which blocks the PR with an error. Do not bypass.
 - **Gitlinks must be declared:** Bluefin has legitimate submodules under `system_files/shared/...`, so the CI guard in `pr-validation.yml` does **not** ban mode `160000` entries outright. It fails only when a gitlink path is missing from `.gitmodules` (for example a stray `.workflow-scripts` entry).
 - **Guard inspects the PR head tree:** the undeclared-gitlink check reads `github.event.pull_request.head.sha` on PRs instead of the synthetic merge ref, so a testing→main promotion PR can pass once the `testing` head no longer carries the stray gitlink even if `main` still does.
