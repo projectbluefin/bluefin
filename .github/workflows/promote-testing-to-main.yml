@@ -52,14 +52,8 @@ jobs:
         [{"image":"bluefin"},{"image":"bluefin-nvidia"}]
       cosign_identity_regexp: >-
         ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
-      run_e2e: false
-      # run_e2e is intentionally false for bluefin. The post-testing-e2e workflow
-      # gates :testing continuously but the gate SHA lookup is broken until the
-      # branches:[main,testing] fix (post-testing-e2e.yml) reaches main via
-      # promotion. Model matches dakota: cosign verification only at the PR gate
-      # level; E2E evidence is gathered separately by post-testing-e2e.yml.
-      # Re-enable once post-testing-e2e reliably files evidence under the testing
-      # branch HEAD SHA. See docs/skills/ci.md and common e2e-ci.md for details.
+      run_e2e: true
+      e2e_suites: smoke,common
       # main uses a merge queue ruleset (17070404): gh pr merge --auto is blocked.
       # use_merge_queue: true calls enqueuePullRequest GraphQL instead, which
       # places the PR in the queue and lets it merge once approvals + checks pass.
