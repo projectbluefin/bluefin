@@ -11,19 +11,8 @@ on:
     branches:
       - testing
   schedule:
-    - cron: '0 23 * * *'
+    - cron: '0 4 * * *'
   workflow_dispatch:
-  # Re-evaluate the release gate immediately after post-testing-e2e completes
-  # instead of waiting for the next push or midnight cron (e2e-ci.md Requirement 2).
-  workflow_run:
-    workflows: ["Post-Testing E2E"]
-    types: [completed]
-    branches: [testing]
-  # Re-run enqueue after each approval so the PR enters the merge queue
-  # automatically once 2 maintainers approve — no manual button required.
-  # Filtered in the job to the promotion PR only.
-  pull_request_review:
-    types: [submitted]
 
 concurrency:
   group: promote-testing-to-main
@@ -41,21 +30,14 @@ permissions:
 
 jobs:
   promote:
-    # For pull_request_review events, only run on the promotion PR itself.
-    # Other PRs' reviews would otherwise trigger a full promote cycle.
-    if: >
-      github.event_name != 'pull_request_review' ||
-      github.event.pull_request.head.ref == 'auto/promote-testing-to-main'
     uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
         [{"image":"bluefin"},{"image":"bluefin-nvidia"}]
       cosign_identity_regexp: >-
         ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
-      run_e2e: true
-      e2e_suites: smoke,common
+      run_e2e: false
       # main uses a merge queue ruleset (17070404): gh pr merge --auto is blocked.
-      # use_merge_queue: true calls enqueuePullRequest GraphQL instead, which
-      # places the PR in the queue and lets it merge once approvals + checks pass.
+      # use_merge_queue: true calls enqueuePullRequest GraphQL instead.
       use_merge_queue: true
     secrets: inherit

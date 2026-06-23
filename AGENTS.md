@@ -117,7 +117,7 @@ PR merges to testing
                  └─ promote-testing-to-main.yml fires (push to testing)
                       └─ reusable-promote-squash.yml opens/updates auto/promote-testing-to-main PR
                            └─ pr-release-gate.yml: cosign verify + smoke,common E2E gate
-                                └─ 2 maintainer approvals → merge queue → squash-merge to main
+                                └─ merge queue → squash-merge to main (0 approvals required)
                                      └─ execute-release.yml: :testing → :stable
                                      └─ sync-main-to-testing.yml: merges main→testing; deletes promotion branch
                                           └─ build on main: post-testing-e2e promote-to-testing job tags :testing
