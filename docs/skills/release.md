@@ -19,9 +19,8 @@
 ```text
 PR merges to testing
   → build-image-testing.yml (Testing Images)
-  → post-testing-e2e.yml (smoke + common suites against :testing)
   → promote-testing-to-main.yml (opens/updates auto/promote-testing-to-main PR)
-  → 2 maintainer approvals + merge queue → push to main
+  → merge queue (0 approvals required) → push to main
   → execute-release.yml fires on push to main
       execute:       reusable-execute-release.yml@v1  (re-tags :testing → :stable)
       release-notes: reusable-release.yml@v1          (SBOM + GitHub Release)
@@ -33,7 +32,7 @@ PR merges to testing
 |---|---|
 | `build-image-testing.yml` | builds testing images; uploads `image-digest-*` artifacts |
 | `post-testing-e2e.yml` | gates promotion on a passing e2e run against the testing digest |
-| `promote-testing-to-main.yml` | opens `auto/promote-testing-to-main` PR; requires 2 approvals |
+| `promote-testing-to-main.yml` | opens `auto/promote-testing-to-main` PR; 0 approvals, daily 04:00 UTC |
 | `execute-release.yml` | fires on push to `main`; promotes images and creates GitHub Release |
 
 ## Execute-release jobs
