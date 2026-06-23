@@ -42,6 +42,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
+      - name: Check for undeclared gitlinks
+        shell: bash
+        env:
+          TARGET_TREEISH: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+
+          mapfile -t gitlinks < <(git ls-tree -r --full-tree "$TARGET_TREEISH" | awk '$1 == "160000" {print $4}')
+          if [[ ${#gitlinks[@]} -eq 0 ]]; then
+            exit 0
+          fi
+
+          declared_paths=()
+          if git cat-file -e "$TARGET_TREEISH:.gitmodules" 2>/dev/null; then
+            mapfile -t declared_paths < <(git config --blob "$TARGET_TREEISH:.gitmodules" --get-regexp '^submodule\..*\.path$' | awk '{print $2}')
+          fi
+
+          dangling=()
+          for path in "${gitlinks[@]}"; do
+            if ! printf '%s\n' "${declared_paths[@]}" | grep -Fxq -- "$path"; then
+              dangling+=("$path")
+            fi
+          done
+
+          if [[ ${#dangling[@]} -gt 0 ]]; then
+            echo "ERROR: gitlink(s) missing .gitmodules entries:"
+            printf ' - %s\n' "${dangling[@]}"
+            exit 1
+          fi
+
       - name: Validate
         uses: projectbluefin/actions/bootc-build/validate-pr@v1
 
