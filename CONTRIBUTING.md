@@ -16,13 +16,11 @@ Install the tools used by the local validation flow before opening a PR:
 bash .github/scripts/install-hooks.sh   # Install pre-push hook (run once after cloning)
 ```
 
-> **⚠️ Git remote trap:** In this repo, `origin` points to `ublue-os/bluefin` — the archived upstream where direct pushes are forbidden. The pre-push hook installed above blocks accidental pushes to `origin`. Always push via: `git push projectbluefin <branch>`. Verify with `git remote -v` before any push.
+> **⚠️ Git remote trap:** A pre-push hook blocks any push to a remote named `origin`. Always push via: `git push projectbluefin <branch>`. Verify with `git remote -v` before any push.
 
 ## Branch and stream workflow
 
-### I want to submit a fix or feature — what do I do?
-
-**PR against `testing`** — that is the default development branch. Never target `main`, `stable`, or `latest` directly.
+**PR against `testing`** — that is the default development branch. Never target `main` directly.
 
 ```bash
 gh pr create --repo projectbluefin/bluefin --base testing
@@ -35,46 +33,36 @@ just check                    # Justfile and script syntax validation
 pre-commit run --all-files    # Lint / format checks
 ```
 
-Both must pass. For local image build requirements and commands, see [docs/build.md](docs/build.md). The PR template has a checklist — fill it out honestly.
+Both must pass. See [docs/build.md](docs/build.md) for local build instructions. The PR template has a checklist — fill it out honestly.
 
 ### Merge method
 
-Squash merge only. Keep your PR branch tidy; the commit message on the squash is what matters.
+Squash merge only.
 
 ## Stream promotion
 
-Every Tuesday at 06:00 UTC the `weekly-testing-promotion` workflow:
-1. Verifies smoke e2e tests have passed on the `testing` HEAD
-2. Runs the full developer + vanilla-gnome e2e suite
-3. Fast-forwards `latest` and `stable` branches to `testing`
-4. Triggers the `stable` and `latest` image builds
+The factory is fully automated. Every PR that merges to `testing` enters the promotion pipeline:
 
-> **Security gate:** Promotion to `:stable` requires **2 distinct human approvals** in the GitHub `production` Environment before any retag happens. No agent or automated system can bypass this gate — every admin bypass is permanently logged in Environment deployment history.
+1. `testing` image is built and tagged `:testing`
+2. `promote-testing-to-main.yml` runs daily at 04:00 UTC — squash-merges `testing` → `main` via merge queue
+3. `execute-release.yml` fires on push to `main` — re-tags `:testing` → `:stable`, generates release notes
 
-Changes land in `testing` → promoted to `stable`/`latest` weekly on CI green.
+No human approvals required. See [docs/skills/ci.md](docs/skills/ci.md) for the full pipeline.
+
+## Stream reference
+
+| | `:testing` | `:stable` |
+|---|---|---|
+| Built from | `testing` + `main` branches | Promoted from `:testing` daily |
+| Published | After daily promotion cycle (push to `main` triggers the tag) | Daily automated promotion |
+| Who should use it | Testers, developers | Regular users |
 
 ## Branching for a new Fedora version
 
 - Wait for the Fedora Beta announcement
-- PR `ublue-os/akmods` for the new version
+- PR `projectbluefin/akmods` for the new version
 - Bump `testing_version` in `Justfile`
 - Handle third-party repo breakage
-
-## Promoting to a new `:stable` / `:latest`
-
-- Wait for the official Fedora release (package freeze lifted)
-- Wait for coreos:stable (~2 weeks post-Fedora) → PR `ublue-os/akmods`
-- Bump workflow and Justfile version references in `testing`
-- Create a new `stable-f$N` branch and update branch protection rules
-
-## Stream reference
-
-| | `:testing` | `:latest` | `:stable` |
-|---|---|---|---|
-| Built from | `testing` branch | `latest` branch | `stable` branch |
-| Kernel | Fedora default | Fedora default, pinned on bad regressions | coreos-stable, pinned on regressions |
-| Published | On every merge to `testing` | Weekly promotion | Weekly promotion + emergency manual |
-| Who should use it | Testers, developers | Enthusiasts | Regular users |
 
 ## Conventional commits
 

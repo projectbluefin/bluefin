@@ -16,7 +16,7 @@ Bluefin is a Containerfile-driven rpm-ostree/bootc image build, not a BuildStrea
 
 - `Containerfile` is the top-level build definition
 - Multi-stage flow: `common` / `brew` inputs → `ctx` → `base-common` → `extension-builder` → `base`
-- `build_files/shared/build.sh` orchestrates the numbered scripts in `build_files/base/`
+- `build_files/shared/build.sh` is an unused orchestrator left over from the pre-Stage-1/2 split — the Containerfile calls scripts directly; do not reference or update it
 - `Justfile` is the operator interface for validation, local builds, tagging, and helper commands
 
 ## Requirements
@@ -38,7 +38,7 @@ Bluefin is a Containerfile-driven rpm-ostree/bootc image build, not a BuildStrea
 | `Containerfile` | Multi-stage image build (`base`) |
 | `Justfile` | Build, validation, tagging, cleanup helpers |
 | `build_files/base/` | Base image scripts, run in numeric order |
-| `build_files/shared/` | Shared helpers such as `build.sh`, `copr-helpers.sh`, and `package-lib.sh` |
+| `build_files/shared/` | Shared helpers such as `copr-helpers.sh` and `package-lib.sh` (`build.sh` is dead code — unused) |
 | `tests/unit/` | Bats unit tests for shared shell libraries (run with `just test-unit` or `bats tests/unit/`) |
 | `system_files/` | Files copied verbatim into the image |
 | `flatpaks/` | Flatpak lists for the image |
@@ -90,7 +90,7 @@ just clean
 |---|---|---|
 | `bluefin` | `testing`, `stable` | `main`, `nvidia` |
 
-`:testing` is built daily from `main`. `:stable` is promoted weekly from `:testing` via `weekly-testing-promotion.yml` after e2e passes.
+`:testing` tag is applied by `post-testing-e2e.yml` only after a successful build on `main`. `:stable` is promoted daily via the automated factory (`promote-testing-to-main.yml` → merge queue → `execute-release.yml`).
 
 ## Package locations
 

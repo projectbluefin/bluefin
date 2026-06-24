@@ -55,8 +55,8 @@ jobs:
       suites: smoke,common
 
   # run-upgrade-test: DISABLED — TODO(#400)
-  # lifecycle suite fails under GNOME 50 AT-SPI changes, marking
-  # post-testing-e2e as 'failure' and blocking weekly-testing-promotion.
+  # lifecycle suite fails under GNOME 50 AT-SPI changes, causing post-testing-e2e
+  # to mark as 'failure' and blocking promotion.
   # Disabled until testsuite lifecycle scenarios are stable on GNOME 50.
   # To restore: uncomment the job below.
   #

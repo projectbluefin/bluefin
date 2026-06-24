@@ -44,6 +44,7 @@ jobs:
           {"image":"bluefin-nvidia","source_tag":"testing","target_tag":"stable"}
         ]
       cosign_identity_regexp: ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
+      fast_forward_sha: ${{ github.event.workflow_run.head_sha || github.sha }}
     secrets: inherit
 
   release-notes:

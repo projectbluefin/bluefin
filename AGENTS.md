@@ -4,6 +4,11 @@ Bluefin is [`projectbluefin/bluefin`](https://github.com/projectbluefin/bluefin)
 
 **Read [`docs/SKILL.md`](docs/SKILL.md) before doing any work.** Load only the docs that match the task.
 
+> **Before using any tool or library: look up its docs via Context7 first. Always.**
+> bootc, cosign, skopeo, buildah, GitHub Actions, rpm-ostree — every tool has live, authoritative docs.
+> Pattern: `resolve-library-id` → `get-library-docs` → implement → cite the section.
+> Guessing, flag-hunting, and trial-and-error are banned. The docs exist. Read them.
+
 ## Docs router
 
 - [`docs/SKILL.md`](docs/SKILL.md) — task router
@@ -51,7 +56,7 @@ All three image repos consume `projectbluefin/actions` reusables:
 | `reusable-build.yml` | bluefin, bluefin-lts, dakota |
 | `reusable-promote-squash.yml` | bluefin, bluefin-lts, dakota |
 | `reusable-sync-branches.yml` | bluefin, bluefin-lts, dakota |
-| `reusable-release-gate.yml` | bluefin, bluefin-lts, dakota |
+| `reusable-release-gate.yml` | bluefin-lts, dakota |
 | `reusable-execute-release.yml` | bluefin, bluefin-lts |
 | `reusable-vulnerability-scan.yml` | bluefin, bluefin-lts, dakota |
 | `reusable-renovate-automerge.yml` | bluefin, bluefin-lts, dakota |
@@ -69,7 +74,7 @@ All three image repos consume `projectbluefin/actions` reusables:
 - Before opening a PR, check for existing ones covering the same work:
   `gh pr list --repo projectbluefin/bluefin --state open --search "<topic>"`
   If one exists, comment on it rather than opening a duplicate.
-- **`main` uses a merge queue (ruleset 17070404).** The automated `auto/promote-testing-to-main` promotion PR targets `main` and therefore enters the merge queue. It requires 2 `projectbluefin/maintainers` approvals plus all gate checks passing before the queue runner merges it. See `docs/skills/ci.md` → "Promotion PR merge queue" for the GraphQL snippet to enqueue.
+- **`main` uses a merge queue (ruleset 17070404).** The automated `auto/promote-testing-to-main` promotion PR enters the merge queue with **0 approvals required** — fully automated. See `docs/skills/ci.md` for the pipeline.
 - **`gh pr merge --auto` is blocked on `main`-targeting PRs.** `--auto` calls `enablePullRequestAutoMerge` which the merge queue ruleset rejects. The `reusable-promote-squash.yml` automation handles enqueue via `enqueuePullRequest` GraphQL when `use_merge_queue: true` is set (bluefin passes this). Do not use `--auto` directly.
 
 ## Data donation
@@ -87,7 +92,7 @@ Bluefin bugs are data donations.
 Non-compliance = rejection.
 
 - Read [`docs/SKILL.md`](docs/SKILL.md) before modifying anything.
-- **After cloning, run `bash .github/scripts/install-hooks.sh` once** to install the pre-push hook that blocks accidental pushes to `origin` (ublue-os/bluefin).
+- **After cloning, run `bash .github/scripts/install-hooks.sh` once** to install the pre-push hook that blocks accidental pushes to `origin` (projectbluefin/bluefin).
 - Run `just check && pre-commit run --all-files` before every commit.
 - Never use `git add -A` or `git add .`. After any script execution, build step, or cross-repo checkout:
   `git status`                        # check for unexpected tracked paths
@@ -116,7 +121,7 @@ PR merges to testing
             └─ e2e smoke + common suites run
                  └─ promote-testing-to-main.yml fires (push to testing)
                       └─ reusable-promote-squash.yml opens/updates auto/promote-testing-to-main PR
-                           └─ pr-release-gate.yml: cosign verify + smoke,common E2E gate
+                           └─ pr-release-gate: cosign verify + smoke,common E2E gate runs inside reusable-promote-squash.yml
                                 └─ merge queue → squash-merge to main (0 approvals required)
                                      └─ execute-release.yml: :testing → :stable
                                      └─ sync-main-to-testing.yml: merges main→testing; deletes promotion branch
@@ -171,7 +176,7 @@ Static system files (udev rules, sysctl, modprobe configs, setup hooks) belong i
 
 - **`build_files/shared/build.sh` is dead code.** It is an unused orchestrator left over from the pre-Stage-1/2 split. The Containerfile calls scripts directly. Do not update, test, or reference it.
 - **`/tmp` does not persist across RUN instructions.** Each `RUN` gets a fresh tmpfs. Sentinel or marker files that must survive Stage 1 → Stage 2 must be written to the committed filesystem (e.g. `/lib/modules/<kver>/`, `/var/cache/`). Note: `clean-stage.sh` removes all of `/var/*` except `cache/`, so `/var/cache/` subdirs are the safest persistent scratch space.
-- **Initramfs marker file:** `04-install-kernel-akmods.sh` runs dracut in Stage 1 and touches `/lib/modules/<kver>/.bluefin-initramfs-done`. `19-initramfs.sh` in Stage 2 skips dracut when the marker is present (Stage 1 cache hit). Set `FORCE_INITRAMFS=1` to regenerate unconditionally (weekly/stable CI does this).
+- **Initramfs marker file:** `04-install-kernel-akmods.sh` runs dracut in Stage 1 and touches `/lib/modules/<kver>/.bluefin-initramfs-done`. `19-initramfs.sh` in Stage 2 skips dracut when the marker is present (Stage 1 cache hit). Set `FORCE_INITRAMFS=1` in the build environment to regenerate unconditionally.
 
 ## BATS unit test conventions
 
