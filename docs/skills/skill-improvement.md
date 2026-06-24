@@ -39,6 +39,7 @@ If all five are checked, you're done. If any are unchecked, finish them first.
 | Convention not obvious from code | "Renovate automerges digest/patch/minor PRs. Only major bumps need agent review." |
 | Trial-and-error discovery | "SHA pinning for internal `projectbluefin/` refs uses a different policy than third-party — read the comment in the workflow file." |
 | **Project-internal fact correction** | "No `:latest` tag exists. The only published tags are `:testing` and `:stable`. Source: `execute-release.yml`." |
+| **Cross-repo pattern discovery** | "Dakota already solved this. Read the same workflow file in all three repos before implementing anything new." |
 
 **Project-internal fact drift is a first-class failure mode.** When an agent writes documentation about image names, tags, workflow outputs, or registry paths and gets it wrong because it used training data instead of reading the source — that is a skill failure. The fix: read the workflow file, update the skill, add verification commands so the next agent can self-check.
 
