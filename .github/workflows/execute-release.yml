@@ -59,7 +59,9 @@ jobs:
     with:
       stream_name: stable
       image: ghcr.io/projectbluefin/bluefin
-      generate_sbom_inline: true
+      build_workflow: build-image-testing.yml
+      build_branch: testing
+      sbom_artifact: sbom-bluefin
       checkout_ref: main
       project_name: Bluefin
       badge_label: Stable
