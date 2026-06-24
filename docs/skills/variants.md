@@ -10,7 +10,7 @@
 
 - Building or validating changes → [build.md](build.md)
 - Release promotion details → [release.md](release.md)
-- Bluefin LTS specifics → [lts.md](lts.md)
+- Bluefin LTS specifics → `projectbluefin/bluefin-lts` repo
 
 ## Current repo matrix
 
@@ -29,12 +29,12 @@
 
 ### Streams in this repo
 
-| Branch | Resulting stream/tag |
-|---|---|
-| `main` | `testing` |
-| `latest` | `latest` |
-| `stable` | `stable` |
-| `testing` | PR target, not published stream |
+| Branch | Build runs? | Published tag |
+|---|---|---|
+| `testing` | Yes | None directly — `:testing` tag applied by `post-testing-e2e.yml` only when triggered by a `main` push |
+| `main` | Yes | `:testing` (via `post-testing-e2e.yml`) + `:stable` (via `execute-release.yml` on promotion commit) |
+| `stable` | No build workflow | Legacy branch; exists in origin but not built |
+| `latest` | No build workflow | Legacy branch; exists in origin but not built |
 
 ## OCI naming examples
 
@@ -61,9 +61,9 @@ ghcr.io/projectbluefin/bluefin:stable-nvidia
 
 ## Non-obvious patterns
 
-- This repo builds two streams: `testing` (daily from `main`) and `stable` (daily automated promotion via factory)
+- This repo builds two streams: `:testing` (daily, promoted from `testing` branch via `main`) and `:stable` (daily automated release via factory)
+- `:testing` is applied by `post-testing-e2e.yml` and only when triggered by a push to `main` — not by pushes to `testing`
 - LTS is a separate repo and workflow model
-- For development, do **not** rely on the VS Code Flatpak; use the Homebrew package instead
 
 ## Lessons learned
 

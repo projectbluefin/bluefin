@@ -11,7 +11,7 @@
 
 - Package-only decisions → [packages.md](packages.md)
 - GitHub Actions failures → [ci.md](ci.md)
-- Bluefin LTS repo work → [lts.md](lts.md)
+- Bluefin LTS repo work → `projectbluefin/bluefin-lts` repo
 - ISO builds/promotions → [iso.md](iso.md)
 
 ## Hard rules

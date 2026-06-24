@@ -56,7 +56,7 @@ All three image repos consume `projectbluefin/actions` reusables:
 | `reusable-build.yml` | bluefin, bluefin-lts, dakota |
 | `reusable-promote-squash.yml` | bluefin, bluefin-lts, dakota |
 | `reusable-sync-branches.yml` | bluefin, bluefin-lts, dakota |
-| `reusable-release-gate.yml` | bluefin, bluefin-lts, dakota |
+| `reusable-release-gate.yml` | bluefin-lts, dakota |
 | `reusable-execute-release.yml` | bluefin, bluefin-lts |
 | `reusable-vulnerability-scan.yml` | bluefin, bluefin-lts, dakota |
 | `reusable-renovate-automerge.yml` | bluefin, bluefin-lts, dakota |
@@ -121,7 +121,7 @@ PR merges to testing
             └─ e2e smoke + common suites run
                  └─ promote-testing-to-main.yml fires (push to testing)
                       └─ reusable-promote-squash.yml opens/updates auto/promote-testing-to-main PR
-                           └─ pr-release-gate.yml: cosign verify + smoke,common E2E gate
+                           └─ pr-release-gate: cosign verify + smoke,common E2E gate runs inside reusable-promote-squash.yml
                                 └─ merge queue → squash-merge to main (0 approvals required)
                                      └─ execute-release.yml: :testing → :stable
                                      └─ sync-main-to-testing.yml: merges main→testing; deletes promotion branch
@@ -176,7 +176,7 @@ Static system files (udev rules, sysctl, modprobe configs, setup hooks) belong i
 
 - **`build_files/shared/build.sh` is dead code.** It is an unused orchestrator left over from the pre-Stage-1/2 split. The Containerfile calls scripts directly. Do not update, test, or reference it.
 - **`/tmp` does not persist across RUN instructions.** Each `RUN` gets a fresh tmpfs. Sentinel or marker files that must survive Stage 1 → Stage 2 must be written to the committed filesystem (e.g. `/lib/modules/<kver>/`, `/var/cache/`). Note: `clean-stage.sh` removes all of `/var/*` except `cache/`, so `/var/cache/` subdirs are the safest persistent scratch space.
-- **Initramfs marker file:** `04-install-kernel-akmods.sh` runs dracut in Stage 1 and touches `/lib/modules/<kver>/.bluefin-initramfs-done`. `19-initramfs.sh` in Stage 2 skips dracut when the marker is present (Stage 1 cache hit). Set `FORCE_INITRAMFS=1` to regenerate unconditionally (weekly/stable CI does this).
+- **Initramfs marker file:** `04-install-kernel-akmods.sh` runs dracut in Stage 1 and touches `/lib/modules/<kver>/.bluefin-initramfs-done`. `19-initramfs.sh` in Stage 2 skips dracut when the marker is present (Stage 1 cache hit). Set `FORCE_INITRAMFS=1` in the build environment to regenerate unconditionally.
 
 ## BATS unit test conventions
 
