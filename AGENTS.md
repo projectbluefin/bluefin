@@ -8,6 +8,10 @@ Bluefin is [`projectbluefin/bluefin`](https://github.com/projectbluefin/bluefin)
 > bootc, cosign, skopeo, buildah, GitHub Actions, rpm-ostree — every tool has live, authoritative docs.
 > Pattern: `resolve-library-id` → `get-library-docs` → implement → cite the section.
 > Guessing, flag-hunting, and trial-and-error are banned. The docs exist. Read them.
+>
+> **Before implementing anything CI-related: check how the other repos in the org do it.**
+> `dakota`, `bluefin-lts`, and `bluefin` share the same `projectbluefin/actions` reusables.
+> If one repo already solved the problem, copy the pattern — do not invent a new one.
 
 ## Docs router
 
