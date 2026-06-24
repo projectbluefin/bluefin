@@ -9,7 +9,7 @@
 ## When NOT to use
 
 - Changing image contents in this repo → [build.md](build.md)
-- LTS variant repo guidance → [lts.md](lts.md)
+- LTS variant repo guidance → `projectbluefin/bluefin-lts` repo
 - General GitHub Actions debugging outside ISO workflows → [ci.md](ci.md)
 
 ## First rule
