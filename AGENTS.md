@@ -132,6 +132,8 @@ PR merges to testing
 - `:testing` tag is applied by `post-testing-e2e.yml → promote-to-testing` and **only** when `head_branch == 'main'` (after a build triggered by a push to `main`, not `testing`)
 - `execute-release.yml` triggers by commit message pattern, not a schedule — no `weekly-testing-promotion.yml` exists
 - `promote-testing-to-main.yml` uses the merge queue (`enqueuePullRequest` GraphQL) — `gh pr merge --auto` is blocked
+- **Merge queue requires `validate=success` on BOTH the PR HEAD and the merge group HEAD** (`gh-readonly-queue/main/pr-NNN-...` SHA). `pr-validation.yml` should post the merge group check via `merge_group` event; if it doesn't fire (e.g. `main`/`testing` workflow files diverged), post manually: `gh api repos/projectbluefin/bluefin/statuses/<merge-group-sha> --method POST -f state=success -f context=validate -f description="..."`
+- **`promote-testing-to-main.yml` fails with `protected branch hook declined`** when trying to update `auto/promote-testing-to-main` while it is locked in the merge queue. Expected transient — wait for queue to finish or time out (15 min), then re-run: `gh workflow run promote-testing-to-main.yml --repo projectbluefin/bluefin --ref testing`
 
 **`reusable-promote-squash.yml` correctly resolves the e2e gate `head_sha` from `inputs.source_branch`** (`testing` for bluefin). The gate queries post-testing-e2e runs by the testing branch HEAD SHA and marks the PR `release/ready` once a passing run is found.
 
