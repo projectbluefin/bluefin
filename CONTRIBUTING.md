@@ -53,8 +53,8 @@ No human approvals required. See [docs/skills/ci.md](docs/skills/ci.md) for the 
 
 | | `:testing` | `:stable` |
 |---|---|---|
-| Built from | `testing` branch | Promoted from `:testing` daily |
-| Published | On every merge to `testing` | Daily automated promotion |
+| Built from | `testing` + `main` branches | Promoted from `:testing` daily |
+| Published | After daily promotion cycle (push to `main` triggers the tag) | Daily automated promotion |
 | Who should use it | Testers, developers | Regular users |
 
 ## Branching for a new Fedora version

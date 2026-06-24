@@ -47,7 +47,7 @@
 
 ## CI / workflow changes
 
-- [ ] Trigger branches are intentional (`testing` for PR validation; `main`/`stable`/`latest` where the current image workflows expect them)
+- [ ] Trigger branches are intentional (`testing` for PR validation; `main` for release and promotion workflows)
 - [ ] Action pins stay intact or are updated deliberately
 - [ ] Artifact names, workflow names, and branch filters stay consistent across dependent workflows
 - [ ] E2E (`testsuite` job) is gated to `merge_group` only — never add E2E to per-push PR jobs
