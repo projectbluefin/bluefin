@@ -27,7 +27,7 @@ Full catalog at [docs.projectbluefin.io/images →](https://docs.projectbluefin.
 Primary Bluefin desktop image for most systems.
 
 ```bash
-# Stable — recommended, weekly promotion
+# Stable — recommended, daily automated promotion
 sudo bootc switch ghcr.io/projectbluefin/bluefin:stable --enforce-container-sigpolicy
 # Stable — NVIDIA
 sudo bootc switch ghcr.io/projectbluefin/bluefin-nvidia:stable --enforce-container-sigpolicy

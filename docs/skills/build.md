@@ -11,7 +11,7 @@
 
 - Package-only decisions → [packages.md](packages.md)
 - GitHub Actions failures → [ci.md](ci.md)
-- Bluefin LTS repo work → [lts.md](lts.md)
+- Bluefin LTS repo work → `projectbluefin/bluefin-lts` repo
 - ISO builds/promotions → [iso.md](iso.md)
 
 ## Hard rules
@@ -116,7 +116,7 @@ curl -s https://raw.githubusercontent.com/ublue-os/aurora/main/Justfile | grep -
 PR validation (just check + pre-commit + shellcheck)
   → testing build (Containerfile → GHCR :testing)
   → e2e smoke test (boot + package assertions)
-  → weekly gated promotion (:testing digest → :stable)
+  → daily automated promotion (:testing digest → :stable)
   → release generation
 ```
 

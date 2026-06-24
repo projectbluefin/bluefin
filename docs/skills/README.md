@@ -14,7 +14,7 @@ Read the matching file before making changes in that area.
 | I need release or stream promotion workflow details | [release.md](release.md) |
 | I need to handle a Renovate PR or config change | [renovate.md](renovate.md) |
 | I need security rules for COPR, cosign, or secureboot | [security.md](security.md) |
-| I need Bluefin LTS guidance | [lts.md](lts.md) |
+| I need Bluefin LTS guidance | See `projectbluefin/bluefin-lts` repo |
 | I need ISO build or promotion guidance | [iso.md](iso.md) |
 
 ## How to extend these files

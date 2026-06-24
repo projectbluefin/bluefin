@@ -23,7 +23,7 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 | Workflow | Trigger | Purpose |
 |---|---|---|
 | `bonedigger.yml` | Issue events, daily | Issue lifecycle automation |
-| `build-image-testing.yml` | Push to `main`+`testing` (paths-filtered), PRs→`main`, `merge_group`, dispatch, `workflow_call` | Testing image builds via `reusable-build.yml@v1`. Sets `publish_stream_tag: false` — does **not** apply `:testing` tag directly |
+| `build-image-testing.yml` | Push to `main`+`testing` (paths-filtered), `merge_group`, dispatch, `workflow_call` | Testing image builds via `reusable-build.yml@v1`. Sets `publish_stream_tag: false` — does **not** apply `:testing` tag directly |
 | `cache-maintenance.yml` | Monday 06:00 UTC, dispatch | Audits and prunes GHA caches (warns ≥80% of 10 GB limit; prunes deleted-branch or 14d-stale caches) |
 | `cherry-pick-to-stable.yml` | `cherry-pick` label applied to a PR | Backports the PR to the `stable` branch via GitHub App token |
 | `consumer-validate-generate-release-notes.yml` | PRs to `testing` touching this file or `docs/skills/ci.md`, dispatch | Contract-tests the shared `generate-release-notes@v1` action from `projectbluefin/actions` |
@@ -34,8 +34,8 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 | `nightly.yml` | 02:00 UTC daily, dispatch | Runs `smoke,common,vanilla-gnome` suites against `:testing`. Diagnostic: smoke=fail+vanilla-gnome=pass → Bluefin-specific regression; both fail → upstream GNOME issue |
 | `pkg-cadence.yml` | After `Execute Release` completes, dispatch | Measures per-package update frequency after each release via `reusable-pkg-cadence.yml@v1` |
 | `post-testing-e2e.yml` | `workflow_run: ["Testing Images"]` (completed, branches: main+testing) | Downloads build digest; runs `smoke,common` E2E; `promote-to-testing` job copies digests to `:testing` tag — **only when `head_branch == 'main'`** |
-| `pr-release-gate.yml` | PRs to `main` (job runs only for `auto/promote-testing-to-main` head) | Cosign signature verification + `smoke,common` E2E via `reusable-release-gate.yml@v1`; must pass for promotion PR to merge |
-| `pr-validation.yml` | PRs to `testing` AND `main`, `merge_group` | `check-base-branch` (fails PRs targeting `main` unless from `auto/promote-testing-to-main`) → `validate` → `unit-tests` → `testsuite` (merge_group only) |
+| `pr-release-gate.yml` | PRs to `main` (job runs only for `auto/promote-testing-to-main` head) | **DELETED** — gate logic now runs inside `reusable-promote-squash.yml`. This file no longer exists. |
+| `pr-validation.yml` | PRs to `testing`, `merge_group` | `check-base-branch` (fails PRs targeting `main` unless from `auto/promote-testing-to-main`) → `validate` → `unit-tests` → `testsuite` (merge_group only) |
 | `promote-testing-to-main.yml` | Push to `testing`, daily 04:00 UTC, dispatch | Opens/updates `auto/promote-testing-to-main` squash PR via `reusable-promote-squash.yml@v1`; uses merge queue (`enqueuePullRequest` GraphQL) — `gh pr merge --auto` is blocked |
 | `release-reminder.yml` | Daily 12:00 UTC, dispatch | Posts overdue-release reminders via `reusable-release-reminder.yml@v1` (warn at 7d, escalate at 14d) |
 | `renovate-automerge.yml` | `workflow_run: ["PR Validation — testsuite"]` (completed) | Auto-merges qualifying Renovate PRs via `reusable-renovate-automerge.yml@v1` |
@@ -78,7 +78,7 @@ PR merges to testing
             └─ smoke + common E2E suites run
                  └─ promote-testing-to-main.yml fires (push to testing)
                       └─ reusable-promote-squash.yml opens/updates auto/promote-testing-to-main PR
-                           └─ pr-release-gate.yml: cosign verify gate
+                           └─ cosign verify + smoke,common E2E gate (runs inside reusable-promote-squash.yml)
                                 └─ merge queue: pr-validation.yml runs validate on merge-group → squash-merge to main
                                      └─ execute-release.yml: :testing → :stable
                                      └─ sync-main-to-testing.yml: merges main→testing; deletes promotion branch
@@ -103,13 +103,14 @@ PR merges to testing
 | Unit tests pass locally, fail in CI | Running single file locally vs. `bats tests/unit/` in CI | Run `bats tests/unit/` locally |
 | `:testing` tag not updated after testing branch build | `promote-to-testing` only runs for `main` branch builds | Normal; tag updates after promotion cycle completes |
 | Promotion PR stuck, no `release/ready` label | `reusable-promote-squash.yml` waiting for post-testing-e2e to pass | Trigger `gh run rerun` on failed post-testing-e2e run |
-| Promotion PR cosign verification fails | Identity regexp mismatch | Check `cosign_identity_regexp` in `pr-release-gate.yml`: must match `projectbluefin/(bluefin\|actions)/` |
 | `promote-testing-to-main.yml` enqueue fails | Merge queue `validate` check missing on squash HEAD; GITHUB_TOKEN pushes do not trigger pr-validation.yml | `reusable-promote-squash.yml@v1` now posts `validate=success` via Statuses API before `enqueuePullRequest`. If failing: re-run promote workflow manually. Ruleset 17070404 must not set `integration_id` on the `validate` check (so Status API posts satisfy it). |
 | `sync-main-to-testing.yml` fails | Merge conflict between `main` and `testing` | Manual merge + force-push to `testing` per `workflow.md` |
 | `track-common.yml` not firing | `repository_dispatch: common-updated` not sent by `common` | Manual: `gh workflow run track-common.yml --repo projectbluefin/bluefin` |
 | Renovate PR not automerging | `PR Validation — testsuite` did not complete successfully | Check `pr-validation.yml`; ensure `validate` job passed |
 | `skill-drift.yml` warning | Workflow/build change without matching `docs/skills/` update | Update the relevant skill file in the same PR |
-| `execute-release.yml` skips | Commit message does not match `^chore: promote testing to main` | `reusable-promote-squash.yml` sets the promotion branch commit title, and the squash merge reuses that title on `main` |
+| `execute-release.yml` `release-notes` job fails (OOM, exit 137) | `syft` scanning full desktop image OOM-kills 7 GB runner | `reusable-release.yml@v1` now uses `--override-default-catalogers rpm-db-cataloger` + `GOMEMLIMIT=3GiB GOGC=25`. All notable packages are RPMs; full filesystem scan is unnecessary. If still failing, `gh run rerun <id> --failed`. |
+| Merge queue dequeues PR immediately after enqueue | GITHUB_TOKEN-created PRs generate `action_required` check suites for any `pull_request`-triggered workflow — HEADGREEN treats these as non-green | Removed `pull_request: branches: main` from `build-image-testing.yml`, `pr-validation.yml`, and deleted `pr-release-gate.yml` (gate runs inside `reusable-promote-squash.yml`). After the fix, only `validate=success` exists on the squash SHA, HEADGREEN fires merge_group. If recurs: check for new workflows with `pull_request: branches: main` trigger. |
+| `promote-testing-to-main.yml` fails: HTTP 403 on Statuses API | `promote` job missing `statuses: write` permission | Fixed in `reusable-promote-squash.yml@v1` (PR#292). If recurs: check job-level permissions block. |
 | Checkout fails with `No url found for submodule path '.workflow-scripts' in .gitmodules` | A gitlink was committed without a matching `.gitmodules` entry | Remove the stray gitlink (`git rm -f .workflow-scripts`), then verify every remaining mode `160000` path is declared in `.gitmodules` |
 
 ## Non-obvious patterns
@@ -119,13 +120,13 @@ PR merges to testing
 - **Merge queue, not auto-merge:** `promote-testing-to-main.yml` uses `use_merge_queue: true` → GraphQL `enqueuePullRequest`. `gh pr merge --auto --squash` is blocked by ruleset 17070404.
 - **`promote-testing-to-main.yml` has 3 triggers:** push to `testing`, daily 04:00 UTC, and `workflow_dispatch`. Fully automated — 0 approvals required.
 - **`validate` check on squash branch:** GITHUB_TOKEN pushes don't trigger workflows. `reusable-promote-squash.yml@v1` posts `validate=success` via the Statuses API after each squash push, before `enqueuePullRequest`. Ruleset 17070404 must have no `integration_id` on `validate` so Status API posts satisfy it. Check run for the merge-group is produced by `pr-validation.yml` on `merge_group` event.
-- **`pr-validation.yml` also fires on PRs to `main`** — only to run `check-base-branch` which blocks the PR with an error. Do not bypass.
+- **`pr-validation.yml` only fires on PRs to `testing`** and on `merge_group`. The `check-base-branch` job blocks human PRs accidentally targeting `main`. The `auto/promote-testing-to-main` PR is exempted from that check. Do not add `main` back to the `pull_request: branches` list — this would create `action_required` check suites that block the HEADGREEN merge queue.
 - **Gitlinks must be declared:** Bluefin has legitimate submodules under `system_files/shared/...`, so the CI guard in `pr-validation.yml` does **not** ban mode `160000` entries outright. It fails only when a gitlink path is missing from `.gitmodules` (for example a stray `.workflow-scripts` entry).
 - **Guard inspects the PR head tree:** the undeclared-gitlink check reads `github.event.pull_request.head.sha` on PRs instead of the synthetic merge ref, so a testing→main promotion PR can pass once the `testing` head no longer carries the stray gitlink even if `main` still does.
 - **E2E (`testsuite` job) only runs on `merge_group`** — per-push PR CI is fast: `validate` + `unit-tests` only (~2 min).
 - **Unit tests run the whole directory:** `bats --formatter tap tests/unit/` — not a specific file.
 - **`consumer-validate-generate-release-notes.yml` intentionally uses `@v1`** (not SHA-pinned) so action fixes propagate without a Renovate bump. Explicit exception to the SHA-pinning rule.
-- **Two GitHub App identities:** `MERGERAPTOR` (used by `track-common.yml`) and `BLUEFINBOT` (used by `sync-main-to-testing.yml`).
+- **Two GitHub App identities:** `MERGERAPTOR` (used by `track-common.yml`) and `BLUEFINBOT` (used historically; `sync-main-to-testing.yml` now uses `github.token` directly).
 - **Artifact names include architecture suffix:** `image-digest-testing-bluefin-main-x86_64` (not `image-digest-testing-bluefin-main`).
 - **`production` environment branch policy:** use `custom_branch_policies: true` with `main` explicitly added. `protected_branches: true` does NOT recognize GitHub rulesets.
 - **`github_token` is a reserved `workflow_call` secret name** — returns HTTP 422. Use `github.token` directly.
@@ -138,7 +139,6 @@ All workflow files are thin callers. Shared logic lives in `projectbluefin/actio
 |---|---|
 | `reusable-build.yml` | `build-image-testing.yml` |
 | `reusable-promote-squash.yml` | `promote-testing-to-main.yml` |
-| `reusable-release-gate.yml` | `pr-release-gate.yml` |
 | `reusable-execute-release.yml` | `execute-release.yml` |
 | `reusable-sync-branches.yml` | `sync-main-to-testing.yml` |
 | `reusable-vulnerability-scan.yml` | `vulnerability-scan.yml` |

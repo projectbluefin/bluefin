@@ -3,6 +3,8 @@ name: Validate Renovate Config
 
 on:
   pull_request:
+    branches-ignore:
+      - main
     paths:
       - ".github/renovate.json5"
       - ".github/workflows/renovate.yml"

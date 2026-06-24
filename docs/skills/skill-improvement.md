@@ -69,7 +69,7 @@ Changed a build script?   → docs/skills/build.md
 Changed a package list?   → docs/skills/packages.md
 Changed a release step?   → docs/skills/release.md
 Changed security/COPR?    → docs/skills/security.md or copr-security.md
-Changed LTS behavior?     → docs/skills/lts.md
+Changed LTS behavior?     → `projectbluefin/bluefin-lts` repo
 New domain entirely?      → create docs/skills/<area>.md
 ```
 
