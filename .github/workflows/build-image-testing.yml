@@ -1,14 +1,5 @@
 name: Testing Images
 on:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - Containerfile
-      - Justfile
-      - image-versions.yml
-      - build_files/**
-      - system_files/**
   merge_group:
   push:
     branches:
