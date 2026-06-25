@@ -26,4 +26,6 @@ jobs:
       image: ghcr.io/projectbluefin/bluefin:stable
       repo: projectbluefin/bluefin
       force_reclassify: ${{ inputs.force_reclassify || false }}
-    secrets: inherit
+    secrets:
+      app_id: ${{ secrets.BLUEFINBOT_APP_ID }}
+      private_key: ${{ secrets.BLUEFINBOT_PRIVATE_KEY }}
