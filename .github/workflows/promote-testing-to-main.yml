@@ -7,9 +7,6 @@ name: Promote testing to main
 # no staleness, no conflict drift, no merge friction.
 
 on:
-  push:
-    branches:
-      - testing
   schedule:
     - cron: '0 4 * * *'
   workflow_dispatch:

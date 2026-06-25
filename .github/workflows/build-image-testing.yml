@@ -23,7 +23,7 @@ permissions: {}
 jobs:
   detect-changes:
     name: Detect changed paths
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -43,7 +43,7 @@ jobs:
     if: |
       always() &&
       (github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || inputs.pr_number != '') &&
-      (github.event_name != 'pull_request' ||
+      (github.event_name != 'pull_request' && github.event_name != 'merge_group' ||
        needs.detect-changes.outputs.should_build == 'true')
     uses: projectbluefin/actions/.github/workflows/reusable-build.yml@v1
     permissions:
@@ -56,7 +56,7 @@ jobs:
     with:
       image_flavors: >-
         ${{
-          github.event_name == 'pull_request'
+          (github.event_name == 'pull_request' || github.event_name == 'merge_group')
           && needs.detect-changes.outputs.image_flavors
           || '["main", "nvidia"]'
         }}

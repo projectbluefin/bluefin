@@ -123,7 +123,7 @@ PR merges to testing
   └─ "Testing Images" build fires (publish_stream_tag: false — no :testing tag yet)
        └─ post-testing-e2e.yml fires (on workflow_run, branches: main+testing)
             └─ e2e smoke + common suites run
-                 └─ promote-testing-to-main.yml fires (push to testing)
+                 └─ promote-testing-to-main.yml fires (daily 04:00 UTC)
                       └─ reusable-promote-squash.yml opens/updates auto/promote-testing-to-main PR
                            └─ pr-release-gate: cosign verify + smoke,common E2E gate runs inside reusable-promote-squash.yml
                                 └─ merge queue → squash-merge to main (0 approvals required)
