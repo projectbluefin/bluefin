@@ -213,6 +213,7 @@ def get_sbom(image: str, digest: str) -> dict:
 
 def parse_sbom_packages(sbom: dict) -> dict[str, str]:
     packages = {}
+    # Handle old Syft JSON format
     for artifact in sbom.get("artifacts", []):
         # Only process RPM packages
         if artifact.get("type") != "rpm":
@@ -223,6 +224,15 @@ def parse_sbom_packages(sbom: dict) -> dict[str, str]:
             # If we see the same package, keep the one with epoch (more specific)
             if name not in packages or (":" in version and ":" not in packages[name]):
                 packages[name] = version
+
+    # Handle new SPDX JSON format
+    for pkg in sbom.get("packages", []):
+        name = pkg.get("name")
+        version = pkg.get("versionInfo")
+        if name and version:
+            if name not in packages or (":" in version and ":" not in packages[name]):
+                packages[name] = version
+
     return packages
 
 
