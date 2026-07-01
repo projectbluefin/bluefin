@@ -131,7 +131,7 @@ PR merges to testing
 - **Two GitHub App identities:** `MERGERAPTOR` (used by `track-common.yml`) and `BLUEFINBOT` (used historically; `sync-main-to-testing.yml` now uses `github.token` directly).
 - **Artifact names include architecture suffix:** `image-digest-testing-bluefin-main-x86_64` (not `image-digest-testing-bluefin-main`).
 - **`production` environment branch policy:** use `custom_branch_policies: true` with `main` explicitly added. `protected_branches: true` does NOT recognize GitHub rulesets.
-- **SBOM is generated at build time, not release time:** `reusable-build` runs Syft while the image layers are already on disk and uploads `sbom-<image>` as a GHA artifact. `execute-release.yml` must reference it via `sbom_artifact` + `build_workflow` + `build_branch`. Never use `generate_sbom_inline: true` — that re-pulls the full image from the registry onto the release runner (8 GB → OOM). Dakota has always done this correctly; bluefin and bluefin-lts were fixed in PR #730 / bluefin-lts #385.
+- **SBOM is generated at build time, not release time:** `reusable-build` runs Syft via `just gen-sbom` while the image layers are already on disk and uploads `sbom-<image>` as a GHA artifact. `Justfile` must use `--catalogers rpm` and output `spdx-json` to avoid runner OOMs and ensure compatibility with the release action. `execute-release.yml` must reference it via `sbom_artifact` + `build_workflow` + `build_branch`. Never use `generate_sbom_inline: true` — that re-pulls the full image from the registry onto the release runner (8 GB → OOM). Dakota has always done this correctly; bluefin and bluefin-lts were fixed in PR #730 / bluefin-lts #385.
 
 
 ## Shared actions architecture (projectbluefin/actions)

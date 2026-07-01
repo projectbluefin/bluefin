@@ -712,7 +712,7 @@ gen-sbom $image="bluefin" $tag="testing" $flavor="main" $syft_cmd="syft":
     # Syft reads layer tarballs sequentially so memory usage stays low.
     ${PODMAN} save --format oci-dir -o "${OCI_DIR}" "${image_name}:${tag}"
 
-    ${syft_cmd} --source-name "${image_name}:${tag}" "oci-dir:${OCI_DIR}" --parallelism 1 -o syft-json="${SBOM}"
+    ${syft_cmd} --source-name "${image_name}:${tag}" "oci-dir:${OCI_DIR}" --catalogers rpm --parallelism 1 -o spdx-json="${SBOM}"
     du -sh "${SBOM}"
 
     rm -rf "${OCI_DIR}"
