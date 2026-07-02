@@ -69,6 +69,11 @@ All three image repos consume `projectbluefin/actions` reusables:
 
 **Before fixing a CI issue here:** check if the broken logic lives in a shared reusable in `projectbluefin/actions`. If so, fix it there first — a single fix propagates to all consumers. See `docs/skills/ci.md` → "CI fix workflow for agents" for the correct PR sequence.
 
+CI/release triage order is mandatory:
+1. Determine whether the failure is in a shared reusable (`projectbluefin/actions`) or a local caller.
+2. If shared reusable logic is wrong, fix it in `projectbluefin/actions` first.
+3. Then align this repo to the proven shared pattern.
+
 ## Repo rules
 
 - All PRs target `testing`. **Never `main`.**
@@ -96,6 +101,7 @@ Bluefin bugs are data donations.
 Non-compliance = rejection.
 
 - Read [`docs/SKILL.md`](docs/SKILL.md) before modifying anything.
+- For CI/release changes, read `docs/skills/ci.md` and `docs/skills/release.md` before editing workflows, and use Context7 docs for tool/workflow semantics instead of guessing.
 - **After cloning, run `bash .github/scripts/install-hooks.sh` once** to install the pre-push hook that blocks accidental pushes to `origin` (projectbluefin/bluefin).
 - Run `just check && pre-commit run --all-files` before every commit.
 - Never use `git add -A` or `git add .`. After any script execution, build step, or cross-repo checkout:
@@ -115,6 +121,7 @@ Non-compliance = rejection.
   > **⚠️ Git remote trap:** A pre-push hook blocks any push to a remote named
   > `origin` regardless of its URL. **Always push explicitly:**
   > `git push projectbluefin <branch>`. Verify with `git remote -v` before any push.
+  > Never push this repo context to non-`projectbluefin/*` remotes.
 
 ## Promotion pipeline — how it works
 
@@ -155,6 +162,8 @@ PR merges to testing
 ## Analysis vs. implementation
 
 When asked an analysis question ("what's the fix?", "how should we handle X?", "is there a better approach?"), **answer the question — do not implement**. Only write or change code when explicitly asked to make the change. Discussing a solution and implementing it are separate steps; wait for the user to cross that line.
+
+When asked to **fix** CI/release breakage, execute concrete repo changes first; do not respond with narration-only restatements of the problem.
 
 ## Self-Improvement
 

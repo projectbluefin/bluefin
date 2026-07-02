@@ -61,7 +61,7 @@ jobs:
       image: ghcr.io/projectbluefin/bluefin
       generate_sbom_inline: false
       build_workflow: build-image-testing.yml
-      build_branch: main
+      build_branch: testing
       sbom_artifact: sbom-bluefin
       checkout_ref: main
       project_name: Bluefin

@@ -7,6 +7,8 @@ name: Promote testing to main
 # no staleness, no conflict drift, no merge friction.
 
 on:
+  push:
+    branches: [testing]
   schedule:
     - cron: '0 4 * * *'
   workflow_dispatch:
@@ -39,3 +41,65 @@ jobs:
       # use_merge_queue: true calls enqueuePullRequest GraphQL instead.
       use_merge_queue: true
     secrets: inherit
+
+  mirror-validate-to-merge-group:
+    name: Mirror validate status to merge-group SHA
+    needs: [promote]
+    if: needs.promote.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    steps:
+      - name: Post validate=success on merge queue head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PROMOTION_BRANCH: auto/promote-testing-to-main
+        run: |
+          set -euo pipefail
+
+          owner="${REPO%/*}"
+          name="${REPO#*/}"
+
+          pr_number="$(gh pr list --repo "$REPO" --state open --head "$PROMOTION_BRANCH" --json number --jq '.[0].number // empty')"
+          if [[ -z "$pr_number" ]]; then
+            echo "No open promotion PR on $PROMOTION_BRANCH; nothing to mirror."
+            exit 0
+          fi
+
+          merge_group_sha=""
+
+          for _ in {1..24}; do
+            # shellcheck disable=SC2016
+            merge_group_sha="$(gh api graphql \
+              -f query='query($owner:String!, $name:String!, $number:Int!) { repository(owner:$owner, name:$name) { pullRequest(number:$number) { mergeQueueEntry { headCommit { oid } } } } }' \
+              -f owner="$owner" \
+              -f name="$name" \
+              -F number="$pr_number" \
+              --jq '.data.repository.pullRequest.mergeQueueEntry.headCommit.oid // ""')"
+            [[ -n "$merge_group_sha" ]] && break
+            sleep 5
+          done
+
+          if [[ -z "$merge_group_sha" ]]; then
+            echo "PR #$pr_number is not in merge queue; skipping merge-group validate mirror."
+            exit 0
+          fi
+
+          existing="$(gh api "repos/$REPO/commits/$merge_group_sha/status" \
+            --jq '[.statuses[] | select(.context == "validate")] | first | .state // ""')"
+          if [[ "$existing" == "success" ]]; then
+            echo "validate already success on merge-group SHA $merge_group_sha"
+            exit 0
+          fi
+
+          gh api "repos/$REPO/statuses/$merge_group_sha" \
+            --method POST \
+            --field state=success \
+            --field context=validate \
+            --field description='Validated by promotion workflow (merge-group head)' \
+            --field target_url="$RUN_URL" >/dev/null
+          echo "Posted validate=success on merge-group SHA $merge_group_sha"
