@@ -29,7 +29,7 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 | `consumer-validate-generate-release-notes.yml` | PRs to `testing` touching this file or `docs/skills/ci.md`, dispatch | Contract-tests the shared `generate-release-notes@v1` action from `projectbluefin/actions` |
 | `copr-health-monitor.yml` | Daily 07:00 UTC | COPR staleness check → opens issue on failure |
 | `e2e-dispatch.yml` | `/e2e` comment (write+ only) | Manual E2E trigger on a PR |
-| `execute-release.yml` | Push to `main`, dispatch | Detects promotion by commit message pattern `^chore: promote testing to main`; delegates to `reusable-execute-release.yml@v1` → copies `:testing`→`:stable` |
+| `execute-release.yml` | Push to `main`, dispatch | Detects promotion by commit message pattern `^chore: promote testing to main`; runs a freshness check on `:testing` vs `:stable` before delegating to `reusable-execute-release.yml@v1` → copies `:testing`→`:stable` |
 | `moderator.yml` | Issues/comments | AI spam detection |
 | `nightly.yml` | 02:00 UTC daily, dispatch | Runs `smoke,common,vanilla-gnome` suites against `:testing`. Diagnostic: smoke=fail+vanilla-gnome=pass → Bluefin-specific regression; both fail → upstream GNOME issue |
 | `pkg-cadence.yml` | After `Execute Release` completes, dispatch | Measures per-package update frequency after each release via `reusable-pkg-cadence.yml@v1` |
@@ -38,6 +38,7 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 | `pr-validation.yml` | PRs to `testing`, `merge_group` | `check-base-branch` (fails PRs targeting `main` unless from `auto/promote-testing-to-main`) → `validate` → `unit-tests` → `testsuite` (merge_group only) |
 | `promote-testing-to-main.yml` | Push to `testing`, daily 04:00 UTC, dispatch | Opens/updates `auto/promote-testing-to-main` squash PR via `reusable-promote-squash.yml@v1`; uses merge queue (`enqueuePullRequest` GraphQL) — `gh pr merge --auto` is blocked |
 | `release-reminder.yml` | Daily 12:00 UTC, dispatch | Posts overdue-release reminders via `reusable-release-reminder.yml@v1` (warn at 7d, escalate at 14d) |
+| `retry-post-testing-e2e.yml` | `workflow_run: ["Post-Testing E2E"]` (completed) | Retries a failed `Post-Testing E2E` run once when logs match known transient VM/bootstrap failures (e.g. `bootc install`, `SSH never became ready`, `bootupd is required`). Keeps the daily build lane automated for infra-only flakes. |
 | `renovate-automerge.yml` | `workflow_run: ["PR Validation — testsuite"]` (completed) | Auto-merges qualifying Renovate PRs via `reusable-renovate-automerge.yml@v1` |
 | `run-testsuite.yml` | Called by all E2E workflows | **Canonical testsuite wrapper** — always use this, never call the testsuite directly |
 | `scorecard.yml` | Push to `main`, weekly | OSSF Scorecard security assessment → Security tab |
@@ -113,6 +114,7 @@ PR merges to testing
 | Merge queue stays AWAITING_CHECKS indefinitely | `validate` status exists on PR/squash SHA but not on merge-group SHA | `promote-testing-to-main.yml` now mirrors `validate=success` to `mergeQueueEntry.headCommit.oid` after enqueue. If still blocked, inspect the mirror step and post manually: `gh api repos/projectbluefin/bluefin/statuses/<merge-group-sha> --method POST -f state=success -f context=validate`. |
 | `promote-testing-to-main.yml` fails: `protected branch hook declined` on `auto/promote-testing-to-main` | PR is in the merge queue; GitHub locks the squash branch against force-pushes while it's being processed | Expected transient failure — do not retry until the merge queue finishes or times out (15 min). After dequeue, re-run: `gh workflow run promote-testing-to-main.yml --repo projectbluefin/bluefin --ref testing`. |
 | `promote-testing-to-main.yml` fails: HTTP 403 on Statuses API | `promote` job missing `statuses: write` permission | Fixed in `reusable-promote-squash.yml@v1` (PR#292). If recurs: check job-level permissions block. |
+| `Post-Testing E2E` fails with VM/bootstrap errors | Transient image install/boot issue (e.g. `bootc install`, `SSH never became ready`, `bootupd is required`) | The `retry-post-testing-e2e.yml` workflow automatically reruns the failed jobs once for known bootstrap failures. If the second attempt still fails, inspect the logs and treat it as a real regression unless the failure pattern matches the known infra signature. |
 | Checkout fails with `No url found for submodule path '.workflow-scripts' in .gitmodules` | A gitlink was committed without a matching `.gitmodules` entry | Remove the stray gitlink (`git rm -f .workflow-scripts`), then verify every remaining mode `160000` path is declared in `.gitmodules` |
 
 ## Non-obvious patterns
