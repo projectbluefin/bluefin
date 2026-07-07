@@ -1,0 +1,23 @@
+name: Install cosign
+
+description: Install the cosign CLI from a GitHub release asset.
+
+inputs:
+  cosign-release:
+    description: cosign release tag to install (for example v3.0.6)
+    required: false
+    default: v3.0.6
+
+runs:
+  using: composite
+  steps:
+    - name: Install cosign
+      shell: bash
+      env:
+        COSIGN_RELEASE: ${{ inputs.cosign-release }}
+      run: |
+        set -euo pipefail
+        tmp_bin="$(mktemp)"
+        curl -fsSL "https://github.com/sigstore/cosign/releases/download/${COSIGN_RELEASE}/cosign-linux-amd64" -o "$tmp_bin"
+        sudo install -m 0755 "$tmp_bin" /usr/local/bin/cosign
+        cosign version

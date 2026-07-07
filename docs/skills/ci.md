@@ -158,6 +158,7 @@ All workflow files are thin callers. Shared logic lives in `projectbluefin/actio
 - `no-sha-pins-for-internal-actions` pre-commit hook **blocks SHA pins** for `projectbluefin/` actions.
 - `no-floating-action-tags` exempts `projectbluefin/` refs so `@v1` is allowed.
 - Renovate does NOT update `projectbluefin/` action refs.
+- Release callers that invoke `projectbluefin/actions/.github/workflows/reusable-execute-release.yml@v1` must provide a caller-local `.github/actions/install-cosign/action.yml`; the reusable workflow expects that action to be present.
 
 ### CI fix workflow for agents
 
