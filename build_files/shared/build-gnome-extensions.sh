@@ -45,6 +45,9 @@ glib-compile-schemas --strict /usr/share/gnome-shell/extensions/custom-command-l
 # Search Light
 glib-compile-schemas --strict /usr/share/gnome-shell/extensions/search-light@icedman.github.com/schemas
 
+# Copy all extension schemas to the system-wide schemas directory so they can be overridden system-wide
+find /usr/share/gnome-shell/extensions/ -name "*.gschema.xml" -exec cp -t /usr/share/glib-2.0/schemas/ {} +
+
 rm -rf /usr/share/gnome-shell/extensions/tmp
 
 echo "::endgroup::"
