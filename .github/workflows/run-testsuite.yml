@@ -21,7 +21,7 @@ jobs:
     permissions:
       contents: read
       packages: write  # testsuite pushes screenshot OCI artifacts to GHCR
-    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@4d7befb2cfb956ffdb99e58869e334ea333a78af # v1
+    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@0fbcae527914323a799cde341a15a9888154f1fa # v1
     with:
       image: ${{ inputs.image }}
       suites: ${{ inputs.suites }}
