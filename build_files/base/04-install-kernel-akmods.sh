@@ -194,7 +194,8 @@ dnf5 copr disable -y ublue-os/akmods
 echo "Generating initramfs for ${KERNEL}"
 export DRACUT_NO_XATTR=1
 /usr/bin/dracut --no-hostonly --kver "${KERNEL}" --reproducible --tmpdir /boot \
-    -v --add ostree -f "/lib/modules/${KERNEL}/initramfs.img"
+    -v --add "ostree dmsquash-live dmsquash-live-autooverlay" \
+    -f "/lib/modules/${KERNEL}/initramfs.img"
 chmod 0600 "/lib/modules/${KERNEL}/initramfs.img"
 touch "/lib/modules/${KERNEL}/.bluefin-initramfs-done"
 
