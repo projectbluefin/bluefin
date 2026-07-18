@@ -32,18 +32,29 @@ test -f /usr/share/flatpak/preinstall.d/bazaar.preinstall
 test -f /usr/lib/systemd/system/flatpak-add-fedora-repos.service && false
 
 IMPORTANT_PACKAGES=(
+    anaconda-live
     distrobox
+    dracut-live
+    firefox
     fish
     flatpak
+    grub2-efi-x64-cdboot
+    isomd5sum
+    libblockdev-btrfs
+    libblockdev-dm
+    libblockdev-lvm
+    livesys-scripts
     mutter
     pipewire
     gnome-shell
     ptyxis
     gdm
     systemd
+    squashfs-tools
     tailscale
     uupd
     wireplumber
+    xorriso
     zsh
 )
 
@@ -73,7 +84,6 @@ UNWANTED_PACKAGES=(
     fedora-flathub-remote
     fedora-logos
     fedora-third-party
-    firefox
     gnome-software
     gnome-software-rpm-ostree
     podman-docker

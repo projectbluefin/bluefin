@@ -1,3 +1,13 @@
+---
+name: build
+description: Build, validate, and test Bluefin image changes. Use when editing Containerfile stages, build scripts, image contents, or local validation.
+metadata:
+  context7-sources:
+    - /osbuild/bootc-image-builder
+    - /rpm-software-management/dnf5
+    - /websites/podman_io_en
+---
+
 # Build, Validate, and PR Workflow
 
 ## When to use
@@ -27,7 +37,7 @@
   Assisted-by: <Model> via <Tool>
   ```
 
-## Default contributor loop
+## Core Process
 
 ```bash
 git checkout -b fix/my-change
@@ -167,8 +177,58 @@ Each `RUN` gets its own mount namespace. Files written to `/tmp` in Stage 1 are 
 
 A `system_files`-only change hits Stage 1 cache and skips the full package install (~20–80 min saved).
 
+### Stable container-native ISO contract
+
+Stable ISO support is embedded in the image by
+`build_files/base/21-container-native-iso.sh`. Keep it in a separate final-stage
+`RUN` without the `/boot` tmpfs: Titanoboa reads the committed
+`/boot/efi/EFI` payload and `/usr/lib/bootc-image-builder/iso.yaml` directly
+from the source image.
+
+Current Titanoboa copies the source root filesystem into the live squashfs but
+does not seed `/var/lib/containers/storage`. Anaconda therefore uses
+`ostreecontainer --transport=registry`; `containers-storage` is only valid if
+the ISO builder explicitly embeds a payload image.
+
+Use `livesys-scripts` extension hooks for live-only mutations. Static service
+disables or GNOME schema overrides in the source image would also affect normal
+installed Bluefin systems.
+
 ## Lessons learned
 
 ### `yelp` is deprecated — do not install it
 
 `yelp` (the GNOME help viewer) is deprecated upstream. Do not add it to the package list as a fix for `help://` URI failures (e.g. the Nautilus Templates tooltip). The correct approach is to override or suppress the `help://` URI handler at the GNOME/desktop level, not to install a deprecated viewer.
+
+## Common Rationalizations
+
+- "A unit test is enough for an image-content change."
+  Run the package transaction or image build when practical; unit tests cannot
+  prove RPM dependency resolution.
+- "The finalization layer can keep the `/boot` tmpfs."
+  Not for container-native ISO assets: Titanoboa must read committed EFI files.
+- "Live-session settings can be written directly into the image."
+  Static settings also affect installed Bluefin; use livesys conditional hooks.
+
+## Red Flags
+
+- Writing persistent ISO assets while `/boot` is mounted as tmpfs.
+- Using `containers-storage` without an explicitly embedded installer payload.
+- Disabling normal Bluefin services in the source image for live-session needs.
+- Updating the unused `build_files/shared/build.sh` orchestrator.
+
+## Verification
+
+- [ ] Focused BATS coverage passed after an observed RED failure.
+- [ ] New RPM names resolve in the target Fedora repositories.
+- [ ] `just check` passed.
+- [ ] `pre-commit run --all-files` passed.
+- [ ] Full image build or package-transaction validation is reported accurately.
+
+## Sources
+
+- Context7 `/osbuild/bootc-image-builder` — ISO configuration reference.
+- Context7 `/rpm-software-management/dnf5` — package installation and repoquery.
+- Context7 `/websites/podman_io_en` — ephemeral container execution.
+- `ublue-os/titanoboa` container-native contract and builder implementation:
+  <https://github.com/ublue-os/titanoboa/tree/5c457c3d0518bd17e754be0fd98a60d29d26abb4>

@@ -119,6 +119,19 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
         /ctx/build_files/base/20-tests.sh \
     '
 
+# Embed the Stable container-native ISO contract after Stage 2. This runs
+# without the /boot tmpfs so Titanoboa can consume the committed EFI payload.
+RUN --mount=type=bind,from=ctx,source=/build_files/base/21-container-native-iso.sh,target=/ctx/build_files/base/21-container-native-iso.sh \
+    --mount=type=bind,from=ctx,source=/build_files/shared/utils/ghcurl,target=/ctx/build_files/shared/utils/ghcurl \
+    --mount=type=secret,id=GITHUB_TOKEN \
+    bash -euo pipefail -c ' \
+        mkdir -p /var/cache/bluefin-iso/helpers && \
+        install -Dm0755 /ctx/build_files/shared/utils/ghcurl /var/cache/bluefin-iso/helpers/ghcurl && \
+        export PATH="/var/cache/bluefin-iso/helpers:$PATH" && \
+        /ctx/build_files/base/21-container-native-iso.sh && \
+        rm -rf /var/cache/bluefin-iso \
+    '
+
 # Makes `/opt` writeable by default
 # Needs to be here to make the main image build strict (no /opt there)
 # This is for downstream images/stuff like k0s
