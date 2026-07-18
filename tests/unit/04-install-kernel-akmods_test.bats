@@ -219,12 +219,12 @@ teardown() {
     [ -f "${TEST_ROOT}/lib/modules/${KERNEL_VER}/.bluefin-initramfs-done" ]
 }
 
-@test "04-kernel-akmods: dracut called with --reproducible and ostree flags" {
+@test "04-kernel-akmods: cached initramfs includes ISO live modules" {
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     [ -f "${DRACUT_LOG}" ]
     grep -q -- "--reproducible" "${DRACUT_LOG}"
-    grep -q -- "--add ostree" "${DRACUT_LOG}"
+    grep -q -- "--add ostree dmsquash-live dmsquash-live-autooverlay" "${DRACUT_LOG}"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

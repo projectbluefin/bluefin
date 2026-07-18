@@ -115,9 +115,9 @@ teardown() {
     [ ! -f "${DRACUT_LOG}" ]
 }
 
-@test "19-initramfs: dracut called with --reproducible and --add ostree flags" {
+@test "19-initramfs: regenerated initramfs includes ISO live modules" {
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     grep -q "\-\-reproducible" "${DRACUT_LOG}"
-    grep -q "\-\-add ostree" "${DRACUT_LOG}"
+    grep -q "\-\-add ostree dmsquash-live dmsquash-live-autooverlay" "${DRACUT_LOG}"
 }
