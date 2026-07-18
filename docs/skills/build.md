@@ -183,12 +183,20 @@ Stable ISO support is embedded in the image by
 `build_files/base/21-container-native-iso.sh`. Keep it in a separate final-stage
 `RUN` without the `/boot` tmpfs: Titanoboa reads the committed
 `/boot/efi/EFI` payload and `/usr/lib/bootc-image-builder/iso.yaml` directly
-from the source image.
+from the source image. The final bootc lint skips only `nonempty-boot`, because
+that content is intentional for the ISO contract; live-session state remains
+packaged under `/usr` and is materialized under `/var` through tmpfiles.
 
 Current Titanoboa copies the source root filesystem into the live squashfs but
 does not seed `/var/lib/containers/storage`. Anaconda therefore uses
 `ostreecontainer --transport=registry`; `containers-storage` is only valid if
-the ISO builder explicitly embeds a payload image.
+the ISO builder explicitly embeds a payload image. The installer always targets
+the promotion-safe `:stable` image reference, even when the source image was
+built as `:testing` before release promotion.
+
+The Stage 1 initramfs includes the live ISO dracut modules and writes
+`.bluefin-initramfs-done`. Stage 2 preserves the existing marker/cache contract;
+the ISO finalization layer must not regenerate dracut unconditionally.
 
 Use `livesys-scripts` extension hooks for live-only mutations. Static service
 disables or GNOME schema overrides in the source image would also affect normal

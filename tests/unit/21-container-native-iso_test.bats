@@ -43,6 +43,7 @@ EOF
     touch \
         "${TEST_ROOT}/usr/lib/modules/6.0.0-test/vmlinuz" \
         "${TEST_ROOT}/usr/lib/modules/6.0.0-test/initramfs.img" \
+        "${TEST_ROOT}/usr/lib/modules/6.0.0-test/.bluefin-initramfs-done" \
         "${TEST_ROOT}/usr/lib/efi/grub2/1/EFI/fedora/gcdx64.efi" \
         "${TEST_ROOT}/usr/lib/efi/shim/1/EFI/fedora/shimx64.efi" \
         "${TEST_ROOT}/usr/lib/efi/shim/1/EFI/fedora/mmx64.efi" \
@@ -117,17 +118,26 @@ teardown() {
         "${TEST_ROOT}/etc/anaconda/profile.d/bluefin.conf"
     [ "$status" -eq 0 ]
     run grep -F \
-        'ostreecontainer --url=ghcr.io/projectbluefin/bluefin:testing --transport=registry' \
+        'ostreecontainer --url=ghcr.io/projectbluefin/bluefin:stable --transport=registry' \
         "${TEST_ROOT}/usr/share/anaconda/interactive-defaults.ks"
     [ "$status" -eq 0 ]
-    run grep -F 'favorite-apps' \
-        "${TEST_ROOT}/var/lib/livesys/livesys-session-extra"
+    run grep -F \
+        'bootc switch --mutate-in-place --enforce-container-sigpolicy --transport registry ghcr.io/projectbluefin/bluefin:stable' \
+        "${TEST_ROOT}/usr/share/anaconda/post-scripts/install-configure-upgrade.ks"
     [ "$status" -eq 0 ]
+    run grep -F 'favorite-apps' \
+        "${TEST_ROOT}/usr/lib/bluefin/livesys-session-extra"
+    [ "$status" -eq 0 ]
+    run grep -Fx \
+        'C /var/lib/livesys/livesys-session-extra 0755 root root - /usr/lib/bluefin/livesys-session-extra' \
+        "${TEST_ROOT}/usr/lib/tmpfiles.d/bluefin-iso.conf"
+    [ "$status" -eq 0 ]
+    [ ! -e "${TEST_ROOT}/var/lib/rpm-state" ]
 
     [ -f "${TEST_ROOT}/boot/efi/EFI/fedora/gcdx64.efi" ]
     [ -f "${TEST_ROOT}/boot/efi/EFI/fedora/shimx64.efi" ]
-    run grep -F 'dmsquash-live dmsquash-live-autooverlay' "${DRACUT_LOG}"
-    [ "$status" -eq 0 ]
+    [ ! -f "${DRACUT_LOG}" ]
+    [ -f "${TEST_ROOT}/usr/lib/modules/6.0.0-test/.bluefin-initramfs-done" ]
     run grep -F 'enable livesys.service livesys-late.service' \
         "${SYSTEMCTL_LOG}"
     [ "$status" -eq 0 ]
@@ -146,7 +156,9 @@ teardown() {
         libblockdev-btrfs \
         libblockdev-dm \
         libblockdev-lvm \
+        libblockdev-mpath \
         livesys-scripts \
+        slitherer \
         squashfs-tools \
         xorriso; do
         [[ "$output" == *"$package"* ]]
@@ -158,12 +170,28 @@ teardown() {
 }
 
 @test "Containerfile runs the ISO contract script after Stage 2 without a boot tmpfs" {
-    run grep -F \
-        'source=/build_files/base/21-container-native-iso.sh,target=/ctx/build_files/base/21-container-native-iso.sh' \
+    run python3 -c '
+from pathlib import Path
+import sys
+
+lines = Path(sys.argv[1]).read_text().splitlines()
+start = next(
+    index for index, line in enumerate(lines)
+    if "source=/build_files/base/21-container-native-iso.sh" in line
+)
+end = next(
+    index for index in range(start + 1, len(lines))
+    if lines[index].strip() == "'\''"
+)
+print("\n".join(lines[start:end + 1]))
+' "${CONTAINERFILE}"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'/ctx/build_files/base/21-container-native-iso.sh'* ]]
+    [[ "$output" != *'tmpfs,dst=/boot'* ]]
+
+    run grep -Fx \
+        'RUN bootc container lint --fatal-warnings --skip nonempty-boot' \
         "${CONTAINERFILE}"
     [ "$status" -eq 0 ]
-
-    run grep -F '/ctx/build_files/base/21-container-native-iso.sh' "${CONTAINERFILE}"
-    [ "$status" -eq 0 ]
-    [[ "$output" != *'tmpfs,dst=/boot'* ]]
+    [[ "$output" != *'var-tmpfiles'* ]]
 }

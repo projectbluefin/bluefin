@@ -9,19 +9,19 @@ IMAGE_INFO="${ROOT}/usr/share/ublue-os/image-info.json"
 ISO_CONFIG="${ROOT}/usr/lib/bootc-image-builder/iso.yaml"
 SBKEY_URL="https://github.com/ublue-os/akmods/raw/main/certs/public_key.der"
 
-IMAGE_TAG="$(jq -r '."image-tag"' "${IMAGE_INFO}")"
 IMAGE_REF="$(jq -r '."image-ref"' "${IMAGE_INFO}")"
 IMAGE_REF="${IMAGE_REF##*://}"
+INSTALL_IMAGE="${IMAGE_REF}:stable"
 
 mkdir -p \
     "${ROOT}/boot/efi/EFI" \
     "${ROOT}/etc/anaconda/profile.d" \
     "${ROOT}/etc/sysconfig" \
+    "${ROOT}/usr/lib/bluefin" \
     "${ROOT}/usr/lib/bootc-image-builder" \
+    "${ROOT}/usr/lib/tmpfiles.d" \
     "${ROOT}/usr/share/anaconda/pixmaps/silverblue" \
-    "${ROOT}/usr/share/anaconda/post-scripts" \
-    "${ROOT}/var/lib/livesys" \
-    "${ROOT}/var/lib/rpm-state"
+    "${ROOT}/usr/share/anaconda/post-scripts"
 
 cat >"${ROOT}/etc/anaconda/profile.d/bluefin.conf" <<'EOF'
 # Anaconda configuration file for Bluefin
@@ -94,7 +94,7 @@ fi
 # Current Titanoboa embeds the source rootfs but does not seed its container
 # storage, so the Anaconda payload must be pulled from the registry.
 cat >>"${ROOT}/usr/share/anaconda/interactive-defaults.ks" <<EOF
-ostreecontainer --url=${IMAGE_REF}:${IMAGE_TAG} --transport=registry --no-signature-verification
+ostreecontainer --url=${INSTALL_IMAGE} --transport=registry --no-signature-verification
 %include /usr/share/anaconda/post-scripts/install-configure-upgrade.ks
 %include /usr/share/anaconda/post-scripts/disable-fedora-flatpak.ks
 %include /usr/share/anaconda/post-scripts/install-flatpaks.ks
@@ -103,7 +103,7 @@ EOF
 
 cat >"${ROOT}/usr/share/anaconda/post-scripts/install-configure-upgrade.ks" <<EOF
 %post --erroronfail
-bootc switch --mutate-in-place --enforce-container-sigpolicy --transport registry ${IMAGE_REF}:${IMAGE_TAG}
+bootc switch --mutate-in-place --enforce-container-sigpolicy --transport registry ${INSTALL_IMAGE}
 %end
 EOF
 
@@ -153,7 +153,7 @@ EOF
 
 # livesys-gnome already disables GNOME Software autostart/search in live boots.
 # Keep only Bluefin-specific live changes in its conditional extension hook.
-cat >"${ROOT}/var/lib/livesys/livesys-session-extra" <<'EOF'
+cat >"${ROOT}/usr/lib/bluefin/livesys-session-extra" <<'EOF'
 cat >/usr/share/glib-2.0/schemas/zz2-org.gnome.shell.gschema.override <<'SCHEMA'
 [org.gnome.shell]
 welcome-dialog-last-shown-version='4294967295'
@@ -192,25 +192,16 @@ for unit in podman-auto-update.timer ublue-user-setup.service; do
     systemctl --global disable "$unit" 2>/dev/null || :
 done
 EOF
-chmod 0755 "${ROOT}/var/lib/livesys/livesys-session-extra"
+chmod 0755 "${ROOT}/usr/lib/bluefin/livesys-session-extra"
+cat >"${ROOT}/usr/lib/tmpfiles.d/bluefin-iso.conf" <<'EOF'
+d /var/lib/livesys 0755 root root -
+C /var/lib/livesys/livesys-session-extra 0755 root root - /usr/lib/bluefin/livesys-session-extra
+EOF
 
 echo 'livesys_session=gnome' >"${ROOT}/etc/sysconfig/livesys"
 systemctl enable livesys.service livesys-late.service
 
 shopt -s nullglob
-kernel_dirs=("${ROOT}"/usr/lib/modules/*)
-if ((${#kernel_dirs[@]} != 1)); then
-    echo "Expected exactly one kernel under /usr/lib/modules, found ${#kernel_dirs[@]}" >&2
-    exit 1
-fi
-kernel_dir="${kernel_dirs[0]}"
-kernel="$(basename "${kernel_dir}")"
-DRACUT_NO_XATTR=1 dracut -v --force --zstd --reproducible --no-hostonly \
-    --add "ostree dmsquash-live dmsquash-live-autooverlay" \
-    "${kernel_dir}/initramfs.img" "${kernel}"
-chmod 0600 "${kernel_dir}/initramfs.img"
-touch "${kernel_dir}/.bluefin-initramfs-done"
-
 efi_dirs=("${ROOT}"/usr/lib/efi/*/*/EFI)
 if ((${#efi_dirs[@]} == 0)); then
     echo "No EFI payload found under /usr/lib/efi" >&2

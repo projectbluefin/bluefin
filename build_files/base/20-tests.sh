@@ -43,6 +43,7 @@ IMPORTANT_PACKAGES=(
     libblockdev-btrfs
     libblockdev-dm
     libblockdev-lvm
+    libblockdev-mpath
     livesys-scripts
     mutter
     pipewire
@@ -50,6 +51,7 @@ IMPORTANT_PACKAGES=(
     ptyxis
     gdm
     systemd
+    slitherer
     squashfs-tools
     tailscale
     uupd
