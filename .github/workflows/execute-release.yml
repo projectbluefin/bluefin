@@ -45,6 +45,8 @@ jobs:
         ]
       cosign_identity_regexp: ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
       fast_forward_sha: ${{ github.event.workflow_run.head_sha || github.sha }}
+      run_release_gate: true
+      gate_suites: smoke,common
     secrets: inherit
 
   release-notes:
