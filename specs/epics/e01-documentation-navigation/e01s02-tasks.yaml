@@ -1,0 +1,13 @@
+story_id: e01s02
+title: Consolidate canonical supporting documentation
+status: todo
+bcps: 5
+tasks:
+  - id: 1
+    description: Create canonical architecture, contribution, QA, release, and workflow documents
+    verify: "for f in docs/architecture.md docs/contributing.md docs/qa.md docs/release.md docs/workflow.md; do test -f \"$f\"; done"
+    status: todo
+  - id: 2
+    description: Rewrite root README, CONTRIBUTING, SECURITY, and PR template as concise entry points
+    verify: "for f in README.md CONTRIBUTING.md SECURITY.md .github/pull_request_template.md; do test -f \"$f\"; done"
+    status: todo

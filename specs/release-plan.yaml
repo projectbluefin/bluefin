@@ -1,0 +1,19 @@
+release:
+  version: "documentation-overhaul"
+  codename: "Agent Documentation"
+  status: planning
+  semantic_release: false
+  bump_hint: patch
+epics:
+  - id: e01
+    title: Documentation navigation and canonical guides
+    wsjf: 9.0
+    capsule_dir: epics/e01-documentation-navigation
+  - id: e02
+    title: Progressive-disclosure skills
+    wsjf: 8.0
+    capsule_dir: epics/e02-progressive-skills
+  - id: e03
+    title: Documentation quality and maintenance
+    wsjf: 6.5
+    capsule_dir: epics/e03-documentation-quality

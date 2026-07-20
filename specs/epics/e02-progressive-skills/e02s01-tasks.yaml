@@ -1,0 +1,17 @@
+story_id: e02s01
+title: Convert existing skills to normalized SKILL.md files
+status: todo
+bcps: 8
+tasks:
+  - id: 1
+    description: Create one lowercase skill directory and SKILL.md per active task domain
+    verify: "test \"$(find docs/skills -mindepth 2 -maxdepth 2 -name SKILL.md | wc -l)\" -gt 0"
+    status: todo
+  - id: 2
+    description: Normalize YAML front matter and use/do-not-use boundaries
+    verify: "python3 - <<'PY'\nfrom pathlib import Path\nfor p in Path('docs/skills').glob('*/SKILL.md'):\n    text = p.read_text()\n    assert text.startswith('---\\n') and '\\nname:' in text and '\\ndescription:' in text\nprint('metadata ok')\nPY"
+    status: todo
+  - id: 3
+    description: Move long workflow and architecture detail into targeted references
+    verify: "find docs/skills -type d -name references -print | grep -q references"
+    status: todo

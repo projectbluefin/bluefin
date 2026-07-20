@@ -1,0 +1,13 @@
+story_id: e01s01
+title: Add compact agent entry point and skill index
+status: todo
+bcps: 3
+tasks:
+  - id: 1
+    description: Rewrite AGENTS.md as a compact generic repository entry point
+    verify: "test -f AGENTS.md && test $(wc -l < AGENTS.md) -le 150"
+    status: todo
+  - id: 2
+    description: Add docs/README.md and docs/skills/index.md with complete routing links
+    verify: "test -f docs/README.md && test -f docs/skills/index.md && grep -q 'docs/skills' docs/README.md"
+    status: todo

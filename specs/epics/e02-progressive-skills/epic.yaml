@@ -1,0 +1,18 @@
+id: e02
+title: Progressive-disclosure skills
+wsjf: 8.0
+total_bcps: 13
+status: todo
+stories:
+  - id: e02s01
+    title: Convert existing skills to normalized SKILL.md files
+    bcps: 8
+    status: todo
+    spec: e02s01-normalized-skills.md
+    tasks: e02s01-tasks.yaml
+  - id: e02s02
+    title: Migrate links and remove duplicate instructions
+    bcps: 5
+    status: todo
+    spec: e02s02-link-migration.md
+    tasks: e02s02-tasks.yaml
