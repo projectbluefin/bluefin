@@ -99,6 +99,9 @@ jobs:
           name: bats-tap-results
           path: results.tap
 
+      - name: Run Python unit tests
+        run: python3 -m unittest discover -s tests -p 'test_*.py'
+
   testsuite:
     name: E2E smoke
     # Only gate actual merges — not every PR push.
