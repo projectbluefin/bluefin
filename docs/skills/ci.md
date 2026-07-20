@@ -80,7 +80,7 @@ PR merges to testing
                       └─ reusable-promote-squash.yml opens/updates auto/promote-testing-to-main PR
                            └─ cosign verify + smoke,common E2E gate (runs inside reusable-promote-squash.yml)
                                 └─ merge queue: pr-validation.yml runs validate on merge-group → squash-merge to main
-                                     └─ execute-release.yml: :testing → :stable
+                                     └─ execute-release.yml: resolve digest → testsuite e2e smoke,common against exact digest → :testing → :stable
                                      └─ sync-main-to-testing.yml: merges main→testing; deletes promotion branch
                                           └─ build-image-testing.yml fires on main push
                                                └─ post-testing-e2e.yml (head_branch == 'main'): tags :testing
@@ -89,6 +89,7 @@ PR merges to testing
 **Key facts:**
 - `:testing` tag is applied by `post-testing-e2e.yml → promote-to-testing` job, and **only** when `head_branch == 'main'` (after a build on `main`, not `testing`)
 - `execute-release.yml` triggers by commit message pattern `^chore: promote testing to main`, not a schedule
+- `execute-release.yml` now runs a final testsuite e2e gate (`smoke,common`) against the exact `:testing` digest before retagging it to `:stable`. The gate lives in `projectbluefin/actions/.github/workflows/reusable-execute-release.yml` and can be disabled per-call with `run_release_gate: false`
 - There is no `weekly-testing-promotion.yml` — that workflow does not exist
 
 ### Testing→main squash history gap
