@@ -129,7 +129,8 @@ podman run --rm docker.io/homebrew/brew:latest bash -c "
 - **Package arrays belong in TOML, not shell.** `build_files/packages/base.toml` is the data; `build_files/base/03-packages.sh` is the logic. Adding a package = editing the TOML. Never add inline bash arrays to the shell script.
 - **`read-packages` helper uses `tomllib` (Python 3.11+ stdlib).** No new dependencies needed in the build container. Called as `python3 /ctx/build_files/shared/read-packages <toml> <section>` and consumed with `readarray`.
 - **COPR packages stay isolated in the shell script.** The TOML only covers Fedora/multimedia repo packages. COPR installs stay in `03-packages.sh` via `copr_install_isolated()` — this is a security boundary, not an oversight.
-- **Wayland GUI QA requires both ponytail RPMs.** Include
-  `gnome-ponytail-daemon` and `python3-gnome-ponytail-daemon` in `[fedora]`;
-  the daemon bridges dogtail coordinates to Wayland and its Python package is
-  required by qecore.
+- **Ponytail RPMs are base Fedora dependencies for Wayland GUI QA.** Include
+  `gnome-ponytail-daemon` and `python3-gnome-ponytail-daemon` in `[fedora]`
+  because qecore/dogtail needs the daemon to bridge dogtail coordinates to
+  Wayland and the Python package to drive it. Package assertions should cover
+  only their presence; do not claim GUI QA test success beyond that contract.
