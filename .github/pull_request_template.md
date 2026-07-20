@@ -13,6 +13,7 @@
 
 - [ ] `just check` passes
 - [ ] `pre-commit run --all-files` passes
+- [ ] Documentation updated when a reusable procedure or source-of-truth fact changed
 - [ ] Build tested locally (optional but appreciated)
 
 ## Checklist

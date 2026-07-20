@@ -1,1 +1,0 @@
-/var/home/jorge/src/bluefin/AGENTS.md
