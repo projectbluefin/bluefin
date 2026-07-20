@@ -2,17 +2,17 @@ id: e01
 title: Documentation navigation and canonical guides
 wsjf: 9.0
 total_bcps: 8
-status: todo
+status: done
 stories:
   - id: e01s01
     title: Add compact agent entry point and skill index
     bcps: 3
-    status: todo
+    status: done
     spec: e01s01-agent-entry-point.md
     tasks: e01s01-tasks.yaml
   - id: e01s02
     title: Consolidate canonical supporting documentation
     bcps: 5
-    status: todo
+    status: done
     spec: e01s02-canonical-guides.md
     tasks: e01s02-tasks.yaml

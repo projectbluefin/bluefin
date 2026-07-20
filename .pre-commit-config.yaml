@@ -24,6 +24,12 @@ repos:
         files: ^(build_files|system_files)/.*\.sh$
   - repo: local
     hooks:
+      - id: validate-docs
+        name: Validate agent documentation
+        language: system
+        entry: python3 .github/scripts/validate-docs.py
+        pass_filenames: false
+        files: '(^AGENTS\.md$|^(README|CONTRIBUTING|SECURITY)\.md$|^docs/.*\.md$|^\.github/scripts/validate-docs\.py$)'
       - id: no-floating-action-tags
         name: Block floating GitHub Action tags (@main, @v*)
         language: pygrep

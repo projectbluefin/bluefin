@@ -14,7 +14,7 @@ remote="$1"
 if [[ "$remote" == "origin" ]]; then
   echo "ERROR: Pushing to 'origin' (ublue-os/bluefin) is not allowed." >&2
   echo "Use: git push projectbluefin <branch>" >&2
-  echo "See docs/build.md for remote setup instructions." >&2
+  echo "See docs/contributing.md for repository setup instructions." >&2
   exit 1
 fi
 EOF

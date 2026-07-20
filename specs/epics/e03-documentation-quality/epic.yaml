@@ -2,17 +2,17 @@ id: e03
 title: Documentation quality and maintenance
 wsjf: 6.5
 total_bcps: 8
-status: todo
+status: done
 stories:
   - id: e03s01
     title: Add metadata, link, and size-budget validation
     bcps: 5
-    status: todo
+    status: done
     spec: e03s01-doc-validation.md
     tasks: e03s01-tasks.yaml
   - id: e03s02
     title: Publish and enforce the skill-improvement procedure
     bcps: 3
-    status: todo
+    status: done
     spec: e03s02-skill-improvement.md
     tasks: e03s02-tasks.yaml
