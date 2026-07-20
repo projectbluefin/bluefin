@@ -1,50 +1,33 @@
-# Security Policy
+# Security policy
 
-## Supported Versions
+## Reporting
 
-| Branch | Supported |
-|---|---|
-| `testing` (main) | ✅ Active development |
-| `stable` | ✅ Security fixes |
-| `latest` | ✅ Security fixes |
-| `gts` | ✅ Security fixes |
-| Older releases | ❌ |
+Report security vulnerabilities through [GitHub Private Vulnerability Reporting](https://github.com/projectbluefin/bluefin/security/advisories/new). Do not disclose an unpatched vulnerability in a public issue.
 
-## Reporting a Vulnerability
+Include:
 
-**Please use [GitHub Private Vulnerability Reporting](https://github.com/projectbluefin/bluefin/security/advisories/new) to report security issues.**
+- vulnerability description and impact
+- reproduction steps or proof of concept
+- affected image, stream, or release
+- suggested mitigation, if available
 
-This ensures your report is handled confidentially before public disclosure.
+## Response
 
-> Do **not** open a public GitHub issue for security vulnerabilities.
-
-### What to include
-
-- Description of the vulnerability and its potential impact
-- Steps to reproduce or proof-of-concept
-- Affected versions/streams
-- Any suggested mitigations (optional)
-
-## Response Timeline
-
-| Stage | Target |
-|---|---|
-| Initial acknowledgment | 48 hours |
-| Assessment complete | 7 days |
-| Fix/mitigation delivered | 30 days (critical), 90 days (high/medium) |
-| Public disclosure | After fix ships to stable/latest |
-
-## Disclosure Policy
-
-We follow coordinated disclosure. Reporters are credited in the release notes unless they request anonymity. We will not take legal action against researchers who follow this policy.
+The maintainers acknowledge reports within 48 hours and aim to assess them
+within 7 days. Fix and disclosure timing depends on severity and coordination
+with affected upstreams.
 
 ## Scope
 
-This policy covers the `projectbluefin/bluefin` OCI image build pipeline, including:
+This policy covers image assembly, build scripts, workflow automation, package
+sources, signing, and image-integrity verification in this repository.
 
-- `Containerfile` and build scripts in `build_files/`
-- GitHub Actions workflows in `.github/workflows/`
-- Supply chain: base image pinning, COPR repos, binary downloads
-- cosign signing and image integrity
+Report vulnerabilities in third-party packages, Flatpaks, or Homebrew inputs to
+their respective upstream projects unless the issue is introduced by this
+repository's integration.
 
-**Out of scope:** Third-party packages bundled in the image (report upstream), Flatpaks (report to Flathub), Homebrew packages (report to upstream tap).
+## Safe handling
+
+Do not commit credentials, private keys, tokens, or exploit payloads. Preserve
+package-source isolation, signature verification, and release gates when
+investigating or fixing a security issue.

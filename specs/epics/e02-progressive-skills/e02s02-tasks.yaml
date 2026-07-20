@@ -1,0 +1,17 @@
+story_id: e02s02
+title: Migrate links and remove duplicate instructions
+status: passing
+bcps: 5
+tasks:
+  - id: 1
+    description: Update all inbound links and compatibility pointers to the new documentation tree
+    verify: "test -z \"$(git grep -nE 'docs/skills/[a-z-]+\\.md|docs/SKILL\\.md' -- ':!specs/**' | grep -v 'docs/skills/index.md' || true)\""
+    status: passing
+  - id: 2
+    description: Remove the client-specific duplicate agent instruction file after migration
+    verify: "test ! -e .github/copilot-instructions.md"
+    status: passing
+  - id: 3
+    description: Verify the final documentation tree has no broken local Markdown links
+    verify: "python3 - <<'PY'\nfrom pathlib import Path\nfor p in Path('.').rglob('*.md'):\n    if any(part in {'.git','.worktrees','.pytest_cache','specs'} for part in p.parts): continue\n    for line in p.read_text(errors='ignore').splitlines():\n        if '](' in line and 'http' not in line:\n            target=line.split('](',1)[1].split(')',1)[0].split('#',1)[0]\n            if target and not target.startswith('<') and not (p.parent / target).exists() and not (Path('.') / target).exists():\n                raise SystemExit(f'broken link: {p}: {target}')\nprint('links ok')\nPY"
+    status: passing
