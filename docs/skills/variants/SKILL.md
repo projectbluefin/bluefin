@@ -26,3 +26,28 @@ name appears in documentation. Update this skill when the matrix changes.
 git grep -n 'image_name\|stream\|flavor' Justfile image-versions.yml .github/workflows
 just check
 ```
+
+## When to Use
+
+Use for Image, stream, flavor, or target selection.
+
+## When NOT to Use
+
+Do not use for Implementation changes unrelated to image targeting.
+
+## Core Process
+
+Read the Justfile and workflow matrix, then use the exact source-derived target.
+
+## Common Rationalizations
+
+- "A shortcut is harmless." Follow the source-of-truth and verification rules instead.
+
+## Red Flags
+
+- Inferring published tags from prose.
+
+## Verification
+
+- [ ] The selected source and focused command were checked.
+- [ ] The repository default gate passes.

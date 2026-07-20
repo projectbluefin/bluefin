@@ -56,3 +56,28 @@ just clean
 
 A build task is complete only when the relevant focused checks pass and any
 required image validation is reported honestly.
+
+## When to Use
+
+Use for Build or image changes.
+
+## When NOT to Use
+
+Do not use for Pure workflow, package-placement, or security-policy work.
+
+## Core Process
+
+Read the source, run focused checks, then run the default gate.
+
+## Common Rationalizations
+
+- "A shortcut is harmless." Follow the source-of-truth and verification rules instead.
+
+## Red Flags
+
+- Full builds for documentation-only changes; editing dead orchestration code.
+
+## Verification
+
+- [ ] The selected source and focused command were checked.
+- [ ] The repository default gate passes.

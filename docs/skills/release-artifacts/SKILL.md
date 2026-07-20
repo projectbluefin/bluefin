@@ -30,3 +30,28 @@ gh run watch RUN_ID --repo projectbluefin/bluefin --exit-status
 - Assuming a tag is updated before its promotion workflow completes.
 - Re-triggering an existing release without checking idempotency.
 - Describing release behavior without reading the current workflow.
+
+## When to Use
+
+Use for Release, promotion, digest, SBOM, or artifact work.
+
+## When NOT to Use
+
+Do not use for Local build-only changes.
+
+## Core Process
+
+Read the workflow, verify the exact digest and artifact, then inspect the run.
+
+## Common Rationalizations
+
+- "A shortcut is harmless." Follow the source-of-truth and verification rules instead.
+
+## Red Flags
+
+- Guessing tags or bypassing a failed release gate.
+
+## Verification
+
+- [ ] The selected source and focused command were checked.
+- [ ] The repository default gate passes.

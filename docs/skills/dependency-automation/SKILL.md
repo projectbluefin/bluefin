@@ -25,3 +25,28 @@ pre-commit run --all-files
 ```
 
 Do not document an automation rule until it is present in source configuration.
+
+## When to Use
+
+Use for Renovate or dependency-automation behavior.
+
+## When NOT to Use
+
+Do not use for Manual package changes that automation does not own.
+
+## Core Process
+
+Read configuration, validate it, and preserve the configured auth model.
+
+## Common Rationalizations
+
+- "A shortcut is harmless." Follow the source-of-truth and verification rules instead.
+
+## Red Flags
+
+- Adding tokens or documenting rules absent from source.
+
+## Verification
+
+- [ ] The selected source and focused command were checked.
+- [ ] The repository default gate passes.

@@ -41,3 +41,28 @@ non-obvious invariant, source correction, or durable project convention.
 python3 .github/scripts/validate-docs.py
 pre-commit run --all-files
 ```
+
+## When to Use
+
+Use for Adding or refactoring a reusable agent skill.
+
+## When NOT to Use
+
+Do not use for Ephemeral session notes or unrelated implementation.
+
+## Core Process
+
+Source-check the fact, update the closest skill, add verification, run documentation gates.
+
+## Common Rationalizations
+
+- "A shortcut is harmless." Follow the source-of-truth and verification rules instead.
+
+## Red Flags
+
+- Creating duplicate skills or recording transient incident state.
+
+## Verification
+
+- [ ] The selected source and focused command were checked.
+- [ ] The repository default gate passes.

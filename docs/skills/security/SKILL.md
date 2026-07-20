@@ -35,3 +35,28 @@ do not invent a replacement key or trust path.
 
 - [COPR isolation invariant](references/copr-isolation.md)
 - [signing and verification](references/signing.md)
+
+## When to Use
+
+Use for Supply-chain, signing, package-source, or secure-boot review.
+
+## When NOT to Use
+
+Do not use for Routine package or build work without a trust-boundary change.
+
+## Core Process
+
+Read the policy and source, preserve isolation and verification, run focused checks.
+
+## Common Rationalizations
+
+- "A shortcut is harmless." Follow the source-of-truth and verification rules instead.
+
+## Red Flags
+
+- Disabling verification or treating isolation as optional cleanup.
+
+## Verification
+
+- [ ] The selected source and focused command were checked.
+- [ ] The repository default gate passes.

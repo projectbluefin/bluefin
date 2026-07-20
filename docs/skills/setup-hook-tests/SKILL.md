@@ -30,3 +30,28 @@ pre-commit run --all-files
 - A real `/usr` helper or absolute binary is still called.
 - A test asserts only that the script exits zero.
 - A second test file is created for an existing hook.
+
+## When to Use
+
+Use for Bats coverage for setup hooks.
+
+## When NOT to Use
+
+Do not use for Non-hook build scripts or full image validation.
+
+## Core Process
+
+Sandbox the hook, patch absolute paths, assert concrete side effects.
+
+## Common Rationalizations
+
+- "A shortcut is harmless." Follow the source-of-truth and verification rules instead.
+
+## Red Flags
+
+- Testing against the host filesystem or asserting only exit zero.
+
+## Verification
+
+- [ ] The selected source and focused command were checked.
+- [ ] The repository default gate passes.

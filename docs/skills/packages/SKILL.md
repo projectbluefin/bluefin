@@ -45,3 +45,28 @@ shellcheck build_files/**/*.sh
 
 COPR installs must preserve the helper's enable → disable → explicit install
 sequence. See [COPR isolation](../security/references/copr-isolation.md).
+
+## When to Use
+
+Use for RPM, Flatpak, COPR, or Homebrew input changes.
+
+## When NOT to Use
+
+Do not use for Generic build validation or release debugging.
+
+## Core Process
+
+Classify the input, edit its source manifest, validate resolution and policy.
+
+## Common Rationalizations
+
+- "A shortcut is harmless." Follow the source-of-truth and verification rules instead.
+
+## Red Flags
+
+- Putting package data in the wrong layer or mixing trusted and third-party sources.
+
+## Verification
+
+- [ ] The selected source and focused command were checked.
+- [ ] The repository default gate passes.

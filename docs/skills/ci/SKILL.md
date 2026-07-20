@@ -58,3 +58,23 @@ gh run watch RUN_ID --repo projectbluefin/bluefin --exit-status
 
 - [workflow reference](references/workflow-map.md)
 - [failure modes](references/failure-modes.md)
+
+## When to Use
+
+Use for Workflow failures, triggers, permissions, or promotion checks.
+
+## When NOT to Use
+
+Do not use for Pure local build or package decisions.
+
+## Core Process
+
+Read the affected YAML, identify the owning reusable workflow, validate locally.
+
+## Common Rationalizations
+
+- "A shortcut is harmless." Follow the source-of-truth and verification rules instead.
+
+## Red Flags
+
+- Changing a caller when the behavior belongs in shared workflow logic.

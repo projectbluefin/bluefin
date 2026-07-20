@@ -19,3 +19,28 @@ metadata:
 
 Do not duplicate labels or check-run state in comments. Treat the automation
 widget and current issue state as authoritative.
+
+## When to Use
+
+Use for Issue queue state and lifecycle operations.
+
+## When NOT to Use
+
+Do not use for Code implementation or CI debugging.
+
+## Core Process
+
+Read current automation state, perform only the next valid transition.
+
+## Common Rationalizations
+
+- "A shortcut is harmless." Follow the source-of-truth and verification rules instead.
+
+## Red Flags
+
+- Duplicating UI state or claiming work that is not active.
+
+## Verification
+
+- [ ] The selected source and focused command were checked.
+- [ ] The repository default gate passes.
