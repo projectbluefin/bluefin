@@ -44,9 +44,9 @@ Visit **[projectbluefin.io](https://projectbluefin.io/#scene-picker)** to downlo
 
 ### Developer Setup
 
-If you want to contribute to Bluefin, start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch workflow, validation steps, and commit conventions.
+If you want to contribute, start with [CONTRIBUTING.md](CONTRIBUTING.md) for branch workflow, validation steps, and commit conventions.
 
-For local image build prerequisites and commands, see [docs/build.md](docs/build.md).
+For local image architecture and build commands, see [docs/architecture.md](docs/architecture.md).
 
 ### Secure Boot
 
@@ -74,7 +74,7 @@ sudo mokutil --import public_key.der
 
 ## Contributing
 
-See the **[Contributing Guide](https://docs.projectbluefin.io/contributing/)** for how to get involved. All participants are expected to follow the [Universal Blue Community Guidelines](https://docs.projectbluefin.io/contributing#community-guidelines).
+See the **[Contributing Guide](CONTRIBUTING.md)** for how to get involved.
 
 Report security vulnerabilities via [SECURITY.md](SECURITY.md).
 

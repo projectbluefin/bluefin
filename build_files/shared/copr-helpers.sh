@@ -13,7 +13,7 @@ set -euo pipefail
 # subsequent dnf5 install calls (repo priority poisoning attack).
 #
 # Simplifying this to "copr enable && dnf5 install" breaks the security model.
-# See docs/skills/copr-security.md for details.
+# See docs/skills/security/references/copr-isolation.md for details.
 copr_install_isolated() {
     local copr_name="$1"
     shift

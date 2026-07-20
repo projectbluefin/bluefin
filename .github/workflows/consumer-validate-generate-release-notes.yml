@@ -6,7 +6,7 @@ on:
       - testing
     paths:
       - .github/workflows/consumer-validate-generate-release-notes.yml
-      - docs/skills/ci.md
+      - docs/skills/ci/**
   workflow_dispatch:
 
 permissions: {}

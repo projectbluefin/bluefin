@@ -1,0 +1,124 @@
+core_value: >-
+  Make repository documentation predictable, source-linked, and progressively
+  loadable so coding agents can select the right guidance with minimal context.
+summary: >-
+  This initiative replaces duplicated and uneven repository documentation with
+  one compact agent entry point, a small skill manifest, focused skill files,
+  canonical supporting documents, and validated cross-references. The result
+  must serve agents, contributors, maintainers, evaluators, and end users from
+  one coherent documentation set.
+
+  Existing documentation will be audited, classified, migrated, and cleaned
+  up without leaving broken links or conflicting instructions. Skill metadata,
+  file-size budgets, source-of-truth references, and freshness checks will make
+  future documentation changes reviewable and maintainable.
+in_scope:
+  - id: DOC-001
+    title: Establish the root agent navigation contract
+    outcome: >-
+      A concise AAIF-compatible AGENTS.md directs agents to the smallest
+      relevant documentation set and records repository-wide boundaries.
+  - id: DOC-002
+    title: Create canonical documentation navigation
+    outcome: >-
+      docs/README.md and docs/skills/index.md provide high-signal indexes with
+      no duplicated procedures.
+  - id: DOC-003
+    title: Consolidate supporting repository documentation
+    outcome: >-
+      Architecture, contribution, QA, release, and workflow guidance each have
+      one canonical home.
+  - id: DOC-004
+    title: Convert skills to progressive-disclosure structure
+    outcome: >-
+      Each task skill has a focused SKILL.md with normalized metadata and
+      optional references loaded only when needed.
+  - id: DOC-005
+    title: Migrate and remove duplicate or stale documentation
+    outcome: >-
+      Existing paths are mapped, inbound links are updated, compatibility
+      pointers are handled deliberately, and client-specific duplicate agent
+      instructions are removed.
+  - id: DOC-006
+    title: Add documentation quality and freshness controls
+    outcome: >-
+      CI validates links, skill metadata, index completeness, naming, and
+      documented size budgets; source-sensitive documentation has explicit
+      ownership and review triggers.
+  - id: DOC-007
+    title: Maintain the skill-improvement meta-skill
+    outcome: >-
+      Contributors have a documented process for adding, refactoring, and
+      source-validating skills without creating duplicate or session-specific
+      documentation.
+out_of_scope:
+  - item: >-
+      Rewriting product, installation, or end-user documentation hosted outside
+      this repository.
+    reason: deferred
+  - item: >-
+      Changing image build, CI, release, security, or package behavior.
+    reason: not valuable for a documentation-only initiative
+  - item: >-
+      Adding MCP server code, tools, prompts, or a proprietary documentation
+      service.
+    reason: not required; repository Markdown remains the portable interface
+  - item: >-
+      Creating client-specific or vendor-specific instruction files alongside
+      the generic AGENTS.md contract.
+    reason: violates the portability constraint
+  - item: >-
+      Inventing an unstandardized MCP skill protocol or claiming local policies
+      are AAIF or MCP requirements.
+    reason: too risky; standards and repository policy must remain distinct
+  - item: >-
+      Automatically generating all documentation content from workflows without
+      human review.
+    reason: deferred until source extraction requirements are proven
+constraints:
+  standards:
+    - AAIF AGENTS.md
+    - CommonMark/GFM Markdown
+    - YAML front matter only where the repository skill convention requires it
+  design:
+    - One canonical source per mutable fact
+    - Load the index before an individual skill
+    - Keep primary skills short and move detailed references to subdirectories
+    - Avoid client-specific framing and proprietary extensions
+  compatibility:
+    - Preserve root README.md, CONTRIBUTING.md, and SECURITY.md discoverability
+    - Migrate inbound links before deleting old documentation paths
+  validation:
+    - Run repository checks appropriate to documentation-only changes
+    - Validate links, metadata, index completeness, and size budgets
+success_criteria:
+  - >-
+    AGENTS.md is no more than 150 lines and routes agents to docs/skills/index.md
+    without duplicating the full repository policy set.
+  - >-
+    docs/skills/index.md is under 80 lines, links every active skill, and lets an
+    agent select a skill from a single task table.
+  - >-
+    Every active skill has one normalized SKILL.md with name and description
+    metadata, a clear use/do-not-use boundary, source-of-truth pointers, and
+    verification guidance.
+  - >-
+    No tracked documentation contains unresolved links or references to deleted
+    documentation paths after migration.
+  - >-
+    Contradictory stream, workflow, release, and command facts are reconciled
+    against repository source files.
+  - >-
+    The client-specific duplicate instruction file is removed after its generic
+    content is migrated.
+  - >-
+    Documentation checks pass and the final tree has one canonical home for
+    architecture, contribution, QA, release, workflow, and each skill domain.
+references:
+  - /var/home/jorge/src/bluefin/AGENTS.md
+  - /var/home/jorge/src/bluefin/docs/SKILL.md
+  - /var/home/jorge/src/bluefin/docs/skills/README.md
+  - https://agents.md/
+  - https://modelcontextprotocol.io/specification/2025-11-25/schema
+  - https://github.com/vercel-labs/skills
+  - https://github.com/oldwinter/skills
