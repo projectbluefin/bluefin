@@ -2,8 +2,9 @@
 
 ## Before editing
 
-Read [`../AGENTS.md`](../AGENTS.md), then load the matching skill from
-[`skills/index.md`](skills/index.md). Start from the remote `testing` branch, not an unrelated local commit.
+Read [`../AGENTS.md`](../AGENTS.md), then select one matching skill from
+[`skills/index.md`](skills/index.md). Read the affected source before changing
+its documentation.
 
 ## Required local checks
 
@@ -18,21 +19,26 @@ For shell-library or setup-hook changes:
 bats tests/unit/
 ```
 
-Run a full image build only when the change affects image assembly.
+For workflow changes:
+
+```bash
+actionlint .github/workflows/*.yml
+```
+
+Run a full image build only when image assembly or image contents changed.
 
 ## Pull requests
 
-- Target `testing`; do not target `main` for normal feature work.
+- Target `testing` for normal feature pull requests; do not target `main`.
 - Use squash merging.
 - Use Conventional Commits for titles and commits.
 - Keep one logical change per pull request.
 - Do not include secrets or generated artifacts.
 - Describe exactly what was tested.
-- Update the closest skill when the change reveals a reusable procedure.
-
-AI-assisted commits must include the repository's required attribution trailer.
+- Update the closest skill when a change reveals a reusable procedure.
 
 ## Scope discipline
 
-Read the affected source before changing documentation. Shared behavior belongs
-in its shared source; do not duplicate implementation in a caller or a skill.
+Shared behavior belongs in its source of truth. Do not duplicate implementation
+or mutable policy in a caller, guide, or skill. Documentation-only changes use
+the normal review path but should not trigger expensive image builds.

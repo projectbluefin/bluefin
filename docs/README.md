@@ -1,6 +1,7 @@
 # Repository documentation
 
-This directory contains the canonical technical and agent-facing documentation.
+This directory contains canonical technical guides and task-specific agent
+skills. Load only the document needed for the current task.
 
 ## Start here
 
@@ -10,10 +11,13 @@ This directory contains the canonical technical and agent-facing documentation.
 - Architecture: [`architecture.md`](architecture.md)
 - Validation: [`qa.md`](qa.md)
 - Releases: [`release.md`](release.md)
-- Issue lifecycle: [`workflow.md`](workflow.md)
+- Workflow: [`workflow.md`](workflow.md)
 
 ## Documentation policy
 
-Source files and workflows are authoritative. Documentation summarizes stable
-procedures and links to source for mutable facts. Load only the document needed
-for the current task; detailed references live below individual skills.
+Source files and workflows are authoritative. Documentation records stable
+procedures, points to mutable sources, and avoids duplicating facts.
+
+Skills use directory-local `SKILL.md` files. Load a skill only after selecting
+it from the index; load its `references/` files only when the skill requires
+the additional detail.

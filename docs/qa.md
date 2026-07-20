@@ -11,11 +11,11 @@ pre-commit run --all-files
 
 | Changed area | Minimum focused validation |
 |---|---|
-| Markdown or agent instructions | link and metadata checks, then pre-commit |
+| Markdown or agent instructions | `python3 .github/scripts/validate-docs.py`, then pre-commit |
 | `build_files/` shell | `bash -n`, ShellCheck, relevant Bats tests |
 | `tests/unit/` | `bats tests/unit/` |
 | `Containerfile` or image inputs | default gate plus an image build when practical |
-| GitHub Actions | workflow lint and the affected local command |
+| GitHub Actions | `actionlint .github/workflows/*.yml` and the affected local command |
 | Release or signing logic | focused workflow review and source-derived verification |
 
 Do not run a cold full image build for documentation-only changes.

@@ -10,35 +10,38 @@ metadata:
 
 # CI
 
-## Use when
+## When to Use
 
 - A workflow failed, did not start, or ran the wrong checks.
 - A trigger, permission, path filter, or reusable workflow call changes.
 
-## Do not use when
+## When NOT to Use
 
 - The issue is purely local validation: use [build](../build/SKILL.md).
 - The change is package placement: use [packages](../packages/SKILL.md).
 - The change is release procedure: use [release-artifacts](../release-artifacts/SKILL.md).
 
-## First checks
+## Core Process
+
+1. Read the actual workflow before describing or changing its behavior.
+2. Inspect recent runs when debugging:
+
+   ```bash
+   gh run list --repo projectbluefin/bluefin --limit 20
+   gh run view RUN_ID --repo projectbluefin/bluefin --log-failed
+   gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
+   ```
+
+3. Identify the owning reusable workflow; callers should stay thin.
+4. Verify the pull request base branch when debugging missing checks.
+5. Preserve action pinning, permissions, and configured events.
+6. Do not add PAT-based authentication.
+
+For a completed run:
 
 ```bash
-gh run list --repo projectbluefin/bluefin --limit 20
-gh run view RUN_ID --repo projectbluefin/bluefin --log-failed
-gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
+gh run watch RUN_ID --repo projectbluefin/bluefin --exit-status
 ```
-
-Read the actual workflow before describing or changing its behavior. Shared
-logic belongs in the reusable workflow that owns it; callers should stay thin.
-
-## Hard rules
-
-- Verify the pull request base branch before debugging missing checks.
-- Preserve action pinning and workflow permissions.
-- Do not add PAT-based authentication.
-- Keep end-to-end suites on their configured event.
-- Update this skill when workflow behavior changes.
 
 ## Verification
 
@@ -48,33 +51,19 @@ just check
 pre-commit run --all-files
 ```
 
-For a completed run:
-
-```bash
-gh run watch RUN_ID --repo projectbluefin/bluefin --exit-status
-```
+- [ ] The affected YAML and owning workflow were read.
+- [ ] The skill was updated when workflow behavior changed.
 
 ## References
 
 - [workflow reference](references/workflow-map.md)
 - [failure modes](references/failure-modes.md)
 
-## When to Use
-
-Use for Workflow failures, triggers, permissions, or promotion checks.
-
-## When NOT to Use
-
-Do not use for Pure local build or package decisions.
-
-## Core Process
-
-Read the affected YAML, identify the owning reusable workflow, validate locally.
-
 ## Common Rationalizations
 
-- "A shortcut is harmless." Follow the source-of-truth and verification rules instead.
+- “A shortcut is harmless.” Preserve the configured workflow boundary.
 
 ## Red Flags
 
-- Changing a caller when the behavior belongs in shared workflow logic.
+- Changing a caller when behavior belongs in reusable workflow logic.
+- Rerunning or weakening a check without understanding its trigger.

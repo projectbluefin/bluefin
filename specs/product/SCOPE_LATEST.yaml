@@ -93,7 +93,7 @@ constraints:
     - Validate links, metadata, index completeness, and size budgets
 success_criteria:
   - >-
-    AGENTS.md is no more than 150 lines and routes agents to docs/skills/index.md
+    AGENTS.md is no more than 120 lines and routes agents to docs/skills/index.md
     without duplicating the full repository policy set.
   - >-
     docs/skills/index.md is under 80 lines, links every active skill, and lets an
@@ -116,8 +116,7 @@ success_criteria:
     architecture, contribution, QA, release, workflow, and each skill domain.
 references:
   - /var/home/jorge/src/bluefin/AGENTS.md
-  - /var/home/jorge/src/bluefin/docs/SKILL.md
-  - /var/home/jorge/src/bluefin/docs/skills/README.md
+  - /var/home/jorge/src/bluefin/docs/skills/index.md
   - https://agents.md/
   - https://modelcontextprotocol.io/specification/2025-11-25/schema
   - https://github.com/vercel-labs/skills
