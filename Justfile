@@ -8,6 +8,7 @@ images := '(
 flavors := '(
     [main]=main
     [nvidia]=nvidia
+    [asahi]=asahi
 )'
 tags := '(
     [testing]=testing

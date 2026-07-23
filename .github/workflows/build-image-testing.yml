@@ -72,3 +72,28 @@ jobs:
       stream_name: testing
       publish_stream_tag: "false"
       pr_number: ${{ inputs.pr_number }}
+
+  build-image-testing-asahi:
+    name: Build Testing Images (Asahi)
+    needs: [detect-changes]
+    # Apple Silicon flavor: aarch64 only (the build script hard-guards),
+    # separate call so the main x86_64 matrix never sees the asahi flavor.
+    if: |
+      always() &&
+      (github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || inputs.pr_number != '') &&
+      (github.event_name != 'pull_request' ||
+       needs.detect-changes.outputs.should_build == 'true')
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@v1
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+      security-events: write
+      issues: write
+    with:
+      image_flavors: '["asahi"]'
+      architecture: '["aarch64"]'
+      stream_name: testing
+      publish_stream_tag: "false"
+      pr_number: ${{ inputs.pr_number }}
