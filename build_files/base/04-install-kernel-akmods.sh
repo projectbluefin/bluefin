@@ -14,6 +14,57 @@ for pkg in kernel kernel-core kernel-modules kernel-modules-core kernel-modules-
     rpm --erase $pkg --nodeps
 done
 
+# ── Apple Silicon (Asahi) flavor ─────────────────────────────────────────────
+# The asahi flavor swaps the ublue/CoreOS kernel machinery for the Fedora
+# Asahi Remix stack: 16K-page asahi kernel + platform userspace from the
+# @asahi COPRs (same package set as fedora-asahi-remix-atomic-desktops).
+# aarch64 only; akmods (nvidia/zfs) do not apply on Apple Silicon.
+if [[ "${IMAGE_NAME}" =~ asahi ]]; then
+    if [[ "$(uname -m)" != "aarch64" ]]; then
+        echo "ERROR: the asahi flavor only builds on aarch64" >&2
+        exit 1
+    fi
+    # Branding COPR carries the GPG keys; asahi-repos lays down the full set.
+    dnf5 -y copr enable @asahi/fedora-remix-branding
+    dnf5 -y install asahi-repos
+    dnf5 -y install kernel-16k kernel-16k-modules-extra \
+        asahi-platform-metapackage \
+        alsa-ucm-asahi tiny-dfr \
+        grub2-efi-aa64-modules uboot-images-armv8 \
+        asahi-fwupdate dracut-asahi update-m1n1
+    dnf5 versionlock add kernel-16k kernel-16k-modules-extra || true
+
+    KVER=$(find /usr/lib/modules -maxdepth 1 -mindepth 1 -type d | sort -V | tail -1 | xargs basename)
+    case "$KVER" in
+    *asahi* | *16k*) ;;
+    *)
+        echo "ERROR: newest kernel '${KVER}' is not an asahi/16k build" >&2
+        exit 1
+        ;;
+    esac
+    ls "/usr/lib/modules/${KVER}/dtb/apple/" >/dev/null 2>&1 || {
+        echo "ERROR: no Apple DTBs in /usr/lib/modules/${KVER}/dtb" >&2
+        exit 1
+    }
+
+    # boot.bin lifecycle on bootc: package scriptlets never run on deploys,
+    # so update-m1n1 must be re-driven by this Apple-DT-gated oneshot
+    # (no-op off Apple hardware). Pinned from tuna-os/bootc-installer-asahi.
+    BOOTBIN_SYNC_REF=b263b74083d8000736aef7fbb2bf20e610ebbca0
+    BOOTBIN_URL="https://raw.githubusercontent.com/tuna-os/bootc-installer-asahi/${BOOTBIN_SYNC_REF}/components/asahi-bootbin-sync"
+    install -d /usr/libexec /usr/lib/systemd/system /usr/lib/systemd/system-preset
+    ghcurl "${BOOTBIN_URL}/asahi-bootbin-sync.sh" --retry 3 -Lo /usr/libexec/asahi-bootbin-sync
+    chmod 0755 /usr/libexec/asahi-bootbin-sync
+    ghcurl "${BOOTBIN_URL}/asahi-bootbin-sync.service" --retry 3 -Lo /usr/lib/systemd/system/asahi-bootbin-sync.service
+    grep -q "ExecStart=/usr/libexec/asahi-bootbin-sync" /usr/lib/systemd/system/asahi-bootbin-sync.service
+    printf 'enable asahi-bootbin-sync.service\n' >/usr/lib/systemd/system-preset/90-asahi-bootbin-sync.preset
+    install -d /usr/lib/systemd/system/multi-user.target.wants
+    ln -sf ../asahi-bootbin-sync.service /usr/lib/systemd/system/multi-user.target.wants/asahi-bootbin-sync.service
+
+    echo "::endgroup::"
+    exit 0
+fi
+
 # Fetch Common AKMODS & Kernel RPMS
 # Pull large OCI artifacts in parallel before any RPM installs.
 declare -A PULL_PIDS
