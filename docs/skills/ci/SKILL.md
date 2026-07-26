@@ -6,6 +6,8 @@ metadata:
     - .github/workflows/
     - .github/workflows/pr-validation.yml
     - .github/workflows/build-image-testing.yml
+  context7-sources:
+    - /websites/github_en_actions
 ---
 
 # CI
