@@ -6,6 +6,8 @@ metadata:
     - .github/workflows/
     - .github/workflows/pr-validation.yml
     - .github/workflows/build-image-testing.yml
+  context7-sources:
+    - /websites/github_en_actions
 ---
 
 # CI
@@ -31,6 +33,14 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 
 Read the actual workflow before describing or changing its behavior. Shared
 logic belongs in the reusable workflow that owns it; callers should stay thin.
+
+Every open Bluefin PR is discovered by the lab's five-minute PR poller. The lab
+runs smoke QA against `bluefin:testing` and sends bounded
+`repository_dispatch` lifecycle events to `.github/workflows/lab-check.yml`.
+That workflow must exist on the default branch and uses a short-lived
+MergeRaptor installation token to update one `testing-lab / bluefin` Check Run
+for the exact PR head SHA. Do not duplicate the result in a PR comment or commit
+status.
 
 ## Hard rules
 
@@ -78,3 +88,4 @@ Read the affected YAML, identify the owning reusable workflow, validate locally.
 ## Red Flags
 
 - Changing a caller when the behavior belongs in shared workflow logic.
+- Posting a lab result as a PR comment instead of updating the MergeRaptor Check Run.
