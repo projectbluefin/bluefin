@@ -1,0 +1,22 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "local>projectbluefin/renovate-config"
+  ],
+  "baseBranchPatterns": ["testing"],
+  "packageRules": [
+    {
+      "description": "Automerge chore dep updates (digest, pin, patch, minor) when CI passes",
+      "matchUpdateTypes": ["digest", "pin", "patch", "minor"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash"
+    },
+    {
+      "description": "Do not SHA-pin projectbluefin/actions refs — they use @v1 managed tags enforced by no-sha-pins-for-internal-actions pre-commit hook",
+      "matchManagers": ["github-actions"],
+      "matchPackagePatterns": ["^projectbluefin/actions"],
+      "enabled": false
+    }
+  ]
+}

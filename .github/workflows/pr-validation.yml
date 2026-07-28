@@ -1,0 +1,116 @@
+name: PR Validation — testsuite
+
+on:
+  pull_request:
+    branches:
+      - testing
+  merge_group:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check-base-branch:
+    name: Check PR base branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Require testing as base branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [[ "$BASE_REF" == "main" && "$HEAD_REF" != "testing" && "$HEAD_REF" != "auto/promote-testing-to-main" ]]; then
+            echo "ERROR: PRs must target 'testing', not 'main'."
+            echo "The testing→main promotion is handled automatically by promote-testing-to-main.yml."
+            echo "Re-open this PR with base 'testing'."
+            exit 1
+          fi
+
+  validate:
+    needs: [check-base-branch]
+    if: always() && (needs.check-base-branch.result == 'success' || needs.check-base-branch.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Repo-local constraint only; keep the shared validate-pr logic in projectbluefin/actions.
+      PIP_CONSTRAINT: ${{ github.workspace }}/.github/requirements-ci.txt
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Check for undeclared gitlinks
+        shell: bash
+        env:
+          TARGET_TREEISH: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+
+          mapfile -t gitlinks < <(git ls-tree -r --full-tree "$TARGET_TREEISH" | awk '$1 == "160000" {print $4}')
+          if [[ ${#gitlinks[@]} -eq 0 ]]; then
+            exit 0
+          fi
+
+          declared_paths=()
+          if git cat-file -e "$TARGET_TREEISH:.gitmodules" 2>/dev/null; then
+            mapfile -t declared_paths < <(git config --blob "$TARGET_TREEISH:.gitmodules" --get-regexp '^submodule\..*\.path$' | awk '{print $2}')
+          fi
+
+          dangling=()
+          for path in "${gitlinks[@]}"; do
+            if ! printf '%s\n' "${declared_paths[@]}" | grep -Fxq -- "$path"; then
+              dangling+=("$path")
+            fi
+          done
+
+          if [[ ${#dangling[@]} -gt 0 ]]; then
+            echo "ERROR: gitlink(s) missing .gitmodules entries:"
+            printf ' - %s\n' "${dangling[@]}"
+            exit 1
+          fi
+
+      - name: Validate
+        uses: projectbluefin/actions/bootc-build/validate-pr@v1
+
+  unit-tests:
+    name: Unit tests
+    needs: [check-base-branch]
+    if: always() && (needs.check-base-branch.result == 'success' || needs.check-base-branch.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install bats
+        run: sudo apt-get install -y bats
+
+      - name: Run unit tests
+        run: bats --formatter tap tests/unit/ | tee results.tap
+
+      - name: Upload TAP results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bats-tap-results
+          path: results.tap
+
+      - name: Run Python unit tests
+        run: python3 -m unittest discover -s tests -p 'test_*.py'
+
+  testsuite:
+    name: E2E smoke
+    # Only gate actual merges — not every PR push.
+    if: github.event_name == 'merge_group'
+    permissions:
+      contents: read
+      packages: write  # testsuite pushes screenshot OCI artifacts to GHCR
+    # Keep the testsuite SHA centralized in run-testsuite.yml.
+    uses: ./.github/workflows/run-testsuite.yml
+    with:
+      image: ghcr.io/projectbluefin/bluefin:testing
+      suites: smoke

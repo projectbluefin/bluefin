@@ -1,0 +1,17 @@
+story_id: e03s01
+title: Add metadata, link, and size-budget validation
+status: passing
+bcps: 5
+tasks:
+  - id: 1
+    description: Add a validator for skill front matter, names, index coverage, and duplicate names
+    verify: "test -x .github/scripts/validate-docs.py || test -f .github/scripts/validate-docs.py"
+    status: passing
+  - id: 2
+    description: Add Markdown link validation and configured document size budgets
+    verify: "grep -RIn 'validate-docs\\|markdown.*link\\|size.*budget' .github/workflows .pre-commit-config.yaml"
+    status: passing
+  - id: 3
+    description: Update skill drift checks to map source changes to documentation domains
+    verify: "grep -RIn 'skill-drift' .github/workflows && grep -RIn 'docs/skills' .github/workflows/skill-drift.yml"
+    status: passing

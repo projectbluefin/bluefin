@@ -1,0 +1,63 @@
+#!/usr/bin/bash
+
+set -eoux pipefail
+
+echo "::group:: Copy Files"
+
+# Speeds up local builds
+dnf5 config-manager setopt keepcache=1
+
+# Skip weak dependencies for a smaller, faster image
+dnf5 config-manager setopt install_weak_deps=0
+
+# Keep *-logos in RPM DB for downstream package installations
+# We are not allowed to ship an empty fedora-logos package
+dnf5 -y swap fedora-logos generic-logos
+rpm --erase --nodeps --nodb generic-logos
+
+# Copy Files to Container
+rsync -rvK /ctx/system_files/shared/ /
+
+mkdir -p /tmp/scripts/helpers
+install -Dm0755 /ctx/build_files/shared/utils/ghcurl /tmp/scripts/helpers/ghcurl
+export PATH="/tmp/scripts/helpers:$PATH"
+
+echo "::endgroup::"
+
+# Generate image-info.json
+/ctx/build_files/base/00-image-info.sh
+
+# Install Additional Packages
+/ctx/build_files/base/03-packages.sh
+
+# Install Kernel and Akmods
+/ctx/build_files/base/04-install-kernel-akmods.sh
+
+# Install Overrides and Fetch Install
+/ctx/build_files/base/05-override-install.sh
+
+# Build GNOME Extensions from Git Submodules
+/ctx/build_files/shared/build-gnome-extensions.sh
+
+## late stage changes
+
+# Systemd and Remove Items
+/ctx/build_files/base/17-cleanup.sh
+
+# Run workarounds for upgrades (bling migration, orphan kernel modules)
+/ctx/build_files/base/18-workarounds.sh
+
+# Regenerate initramfs
+/ctx/build_files/base/19-initramfs.sh
+
+# Validate all repos are disabled before committing
+/ctx/build_files/shared/validate-repos.sh
+
+# Clean Up
+echo "::group:: Cleanup"
+/ctx/build_files/shared/clean-stage.sh
+
+echo "::endgroup::"
+
+# Simple Tests
+/ctx/build_files/base/20-tests.sh

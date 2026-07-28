@@ -1,0 +1,135 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+  ],
+  "baseBranchPatterns": ["testing"],
+
+  "git-submodules": {
+    "enabled": true
+  },
+
+  // Do not rebase when the default branch is updated
+  "rebaseWhen": "never",
+    customManagers: [
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^Justfile$/',
+      ],
+      matchStrings: [
+        '(?<justName>.+?)\\s:=\\s"(?<packageName>\\S+):(?<currentValue>\\S+)@(?<currentDigest>sha256:[a-f0-9]+?)"',
+      ],
+      datasourceTemplate: 'docker',
+    },
+    // Track pinned binary download versions in image-versions.yml.
+    // Each pinned entry is preceded by a:
+    //   # renovate: datasource=github-releases depName=owner/repo
+    // comment so Renovate can discover and update the version string.
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^image-versions\\.yml$/',
+      ],
+      matchStrings: [
+        '# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)\\s+\\w+: "(?<currentValue>[^"]+)"',
+      ],
+    },
+    {
+      // Discover container image digests from the images: block in image-versions.yml.
+      // Matches each  image: / tag: / digest:  entry so Renovate tracks all pinned
+      // digests directly from the YAML source of truth rather than Containerfile ARGs.
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^image-versions\\.yml$/',
+      ],
+      matchStrings: [
+        'image: (?<packageName>[^\\s]+)\\n\\s+tag: (?<currentValue>[^\\s]+)\\n\\s+digest: (?<currentDigest>sha256:[a-f0-9]+)',
+      ],
+      datasourceTemplate: 'docker',
+      versioningTemplate: 'docker',
+    },
+    // Track GNOME extension submodules that pin to a release tag via the
+    // `branch =` field in .gitmodules. Renovate's git-submodules manager
+    // alone can't see new tags because tags don't move; this rewrites the
+    // `branch =` line and the git-submodules manager then advances the SHA.
+    // Uses github-tags (not github-releases) because some upstreams ship
+    // git tags without publishing GitHub Releases (e.g. caffeine).
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^\\.gitmodules$/',
+      ],
+      matchStringsStrategy: 'recursive',
+      matchStrings: [
+        '\\[submodule "[^"]+"\\][^\\[]*?url\\s*=\\s*https?://github\\.com/(?<depName>[^/\\s]+/[^/\\s]+?)(?:\\.git)?\\s[^\\[]*?branch\\s*=\\s*(?<currentValue>\\S*v\\d+\\S*)',
+      ],
+      datasourceTemplate: 'github-tags',
+      versioningTemplate: 'loose',
+      depTypeTemplate: 'gnome-extension',
+    },
+    ],
+
+  "packageRules": [
+    {
+      "automerge": true,
+      "matchUpdateTypes": ["pin", "pinDigest"]
+    },
+    {
+      "automerge": true,
+      "matchManagers": ["dockerfile"],
+      "matchUpdateTypes": ["digest"]
+    },
+    {
+      "matchUpdateTypes": ["pin", "digest", "pinDigest"],
+      "matchPackageNames": ["quay.io/coreos/chunkah"],
+      "automerge": false
+    },
+    {
+      // common is a first-party trusted image; automerge digest updates immediately.
+      // No schedule — critical fixes must land without the default weekly delay.
+      "matchUpdateTypes": ["pin", "digest", "pinDigest"],
+      "matchDepNames": ["ghcr.io/projectbluefin/common"],
+      "automerge": true,
+      "schedule": ["at any time"]
+    },
+    {
+      "automerge": true,
+      "matchUpdateTypes": ["digest"],
+      "matchDepNames": [
+        "quay.io/fedora-ostree-desktops/silverblue"
+      ]
+    },
+    {
+      "matchDepNames": ["quay.io/fedora-ostree-desktops/silverblue"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "matchDepTypes": ["gnome-extension"],
+      "matchPackageNames": ["micheleg/dash-to-dock"],
+      "versioning": "regex:^extensions\\.gnome\\.org-v(?<major>\\d+)$"
+    },
+    {
+      "matchDepTypes": ["gnome-extension"],
+      "groupName": "GNOME extensions"
+    },
+    // Risk-tier labels for automerge gating (issue #73):
+    // low-risk: action SHA pins, non-build deps — lint validation sufficient
+    // high-risk: base image, COPR, build_files deps — require pr-smoke build+test
+    {
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["pinDigest", "digest"],
+      "addLabels": ["renovate/low-risk"]
+    },
+    {
+      "matchDepNames": [
+        "quay.io/fedora-ostree-desktops/silverblue",
+        "ghcr.io/projectbluefin/common",
+        "ghcr.io/ublue-os/brew",
+        "quay.io/coreos/chunkah"
+      ],
+      "addLabels": ["renovate/high-risk"]
+    }
+  ]
+}

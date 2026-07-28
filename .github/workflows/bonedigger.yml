@@ -1,0 +1,28 @@
+name: issue and PR lifecycle
+
+on:
+  issues:
+    types: [opened, labeled, closed]
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [opened]
+    branches-ignore:
+      - main
+  schedule:
+    - cron: '0 9 * * *'
+
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
+jobs:
+  lifecycle:
+    # TODO: restore pull_request: opened trigger once bonedigger lifecycle handles PRs
+    # (tracked in projectbluefin/bluefin#TBD)
+    uses: projectbluefin/bonedigger/.github/workflows/lifecycle.yml@d53076732c23203efd7856eaee7c502742897603 # v1
+    with:
+      brand_name: "Bluefin"
+      brand_emoji: "🦖"
+    secrets: inherit

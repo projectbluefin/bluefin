@@ -1,0 +1,24 @@
+name: Validate Renovate Config
+# Thin caller — logic lives in projectbluefin/actions/reusable-validate-renovate.yml
+
+on:
+  pull_request:
+    branches-ignore:
+      - main
+    paths:
+      - ".github/renovate.json5"
+      - ".github/workflows/renovate.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/renovate.json5"
+      - ".github/workflows/renovate.yml"
+
+permissions: {}
+
+jobs:
+  validate:
+    permissions:
+      contents: read
+    uses: projectbluefin/actions/.github/workflows/reusable-validate-renovate.yml@v1

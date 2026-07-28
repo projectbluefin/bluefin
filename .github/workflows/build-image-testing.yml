@@ -1,0 +1,65 @@
+name: Testing Images
+on:
+  merge_group:
+  push:
+    branches:
+      - main
+      - testing
+    paths-ignore:
+      - ".github/workflows/*validate*.yml"
+      - "**.md"
+      - "system_files/shared/etc/bazaar/**"
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number (set by e2e-dispatch to scope image tags to the PR)"
+        required: false
+        default: ""
+        type: string
+
+permissions: {}
+
+jobs:
+  detect-changes:
+    name: Detect changed paths
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      image_flavors: ${{ steps.detect.outputs.image_flavors }}
+      should_build: ${{ steps.detect.outputs.should_build }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: projectbluefin/actions/bootc-build/detect-changes@v1
+        id: detect
+
+  build-image-testing:
+    name: Build Testing Images
+    needs: [detect-changes]
+    # Thin caller only: shared build orchestration belongs in projectbluefin/actions.
+    # Keep repo-local edits here limited to triggers, permissions, and reusable-build inputs.
+    if: |
+      always() &&
+      (github.event_name != 'workflow_dispatch' || github.ref_name == 'main' || inputs.pr_number != '') &&
+      (github.event_name != 'pull_request' ||
+       needs.detect-changes.outputs.should_build == 'true')
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@v1
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+      security-events: write
+      issues: write
+    with:
+      image_flavors: >-
+        ${{
+          github.event_name == 'pull_request'
+          && needs.detect-changes.outputs.image_flavors
+          || '["main", "nvidia"]'
+        }}
+      stream_name: testing
+      publish_stream_tag: "false"
+      pr_number: ${{ inputs.pr_number }}

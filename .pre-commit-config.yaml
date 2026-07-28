@@ -1,0 +1,44 @@
+# .pre-commit-config.yaml
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+        - id: check-json
+          exclude: \.devcontainer\.json
+        - id: check-toml
+        - id: check-yaml
+        - id: end-of-file-fixer
+        - id: trailing-whitespace
+        - id: check-merge-conflict
+        - id: detect-private-key
+        - id: check-added-large-files
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+        files: ^(build_files|system_files)/.*\.sh$
+  - repo: local
+    hooks:
+      - id: validate-docs
+        name: Validate agent documentation
+        language: system
+        entry: python3 .github/scripts/validate-docs.py
+        pass_filenames: false
+        files: '(^AGENTS\.md$|^(README|CONTRIBUTING|SECURITY)\.md$|^docs/.*\.md$|^\.github/scripts/validate-docs\.py$)'
+      - id: no-floating-action-tags
+        name: Block floating GitHub Action tags (@main, @v*)
+        language: pygrep
+        entry: 'uses:(?!.*projectbluefin/(actions|bonedigger|testsuite)/).*@(main|master|latest|v[0-9])'
+        types: [yaml]
+        files: '\.github/workflows/'
+      - id: no-sha-pins-for-internal-actions
+        name: Block SHA pins for projectbluefin/actions refs (use @v1)
+        language: pygrep
+        entry: 'uses:.*projectbluefin/actions.*@[0-9a-f]{40}'
+        types: [yaml]
+        files: '(^\.github/workflows/.*\.yml$|action\.yml$)'

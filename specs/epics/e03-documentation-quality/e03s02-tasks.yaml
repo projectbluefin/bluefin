@@ -1,0 +1,13 @@
+story_id: e03s02
+title: Publish and enforce the skill-improvement procedure
+status: passing
+bcps: 3
+tasks:
+  - id: 1
+    description: Rewrite the skill-improvement meta-skill for the normalized skill layout
+    verify: "test -f docs/skills/skill-improvement/SKILL.md && grep -q 'source-of-truth' docs/skills/skill-improvement/SKILL.md"
+    status: passing
+  - id: 2
+    description: Document ownership, review triggers, canonical-fact rules, and same-change updates
+    verify: "grep -q 'review' docs/skills/skill-improvement/SKILL.md && grep -q 'canonical' docs/skills/skill-improvement/SKILL.md"
+    status: passing
