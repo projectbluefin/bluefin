@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  checks: write
 
 jobs:
   report:
@@ -15,18 +16,9 @@ jobs:
       github.event.client_payload.sha != ''
     runs-on: ubuntu-24.04
     steps:
-      - name: Get MergeRaptor token
-        id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
-        with:
-          app-id: ${{ secrets.MERGERAPTOR_APP_ID }}
-          private-key: ${{ secrets.MERGERAPTOR_PRIVATE_KEY }}
-          permission-checks: write
-          permission-contents: read
-
       - name: Create or update lab check
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.event.client_payload.sha }}
           CHECK_JSON: ${{ toJSON(github.event.client_payload.check) }}
         run: |
@@ -34,7 +26,6 @@ jobs:
 
           PRODUCT="${GITHUB_REPOSITORY#*/}"
           CHECK_NAME="testing-lab / ${PRODUCT}"
-          APP_SLUG="mergeraptor"
 
           if [[ ! "${SHA}" =~ ^[0-9a-f]{40}$ ]]; then
             echo "Invalid commit SHA: ${SHA}" >&2
@@ -71,30 +62,15 @@ jobs:
           COMPLETED_AT=$(jq -r '.completed_at // empty' <<<"${CHECK_JSON}")
 
           CHECK_ID=$(
-            gh api --method GET \
-              "repos/${GITHUB_REPOSITORY}/commits/${SHA}/check-runs" \
-              -f per_page=100 \
-              --jq '.check_runs
-                | map(select(.name == "'"${CHECK_NAME}"'" and .app.slug == "'"${APP_SLUG}"'"))
+            gh api --method GET               "repos/${GITHUB_REPOSITORY}/commits/${SHA}/check-runs"               -f per_page=100               --jq '.check_runs
+                | map(select(.name == "'"${CHECK_NAME}"'"))
                 | sort_by(.id)
                 | last
                 | .id // empty'
           )
 
           BODY=$(
-            jq -n \
-              --arg name "${CHECK_NAME}" \
-              --arg head_sha "${SHA}" \
-              --arg details_url "${DETAILS_URL}" \
-              --arg external_id "${EXTERNAL_ID}" \
-              --arg status "${STATE}" \
-              --arg conclusion "${CONCLUSION}" \
-              --arg started_at "${STARTED_AT}" \
-              --arg completed_at "${COMPLETED_AT}" \
-              --arg title "${TITLE}" \
-              --arg summary "${SUMMARY}" \
-              --arg text "${TEXT}" \
-              '{
+            jq -n               --arg name "${CHECK_NAME}"               --arg head_sha "${SHA}"               --arg details_url "${DETAILS_URL}"               --arg external_id "${EXTERNAL_ID}"               --arg status "${STATE}"               --arg conclusion "${CONCLUSION}"               --arg started_at "${STARTED_AT}"               --arg completed_at "${COMPLETED_AT}"               --arg title "${TITLE}"               --arg summary "${SUMMARY}"               --arg text "${TEXT}"               '{
                 name: $name,
                 head_sha: $head_sha,
                 status: $status,
@@ -109,11 +85,7 @@ jobs:
 
           if [[ -n "${CHECK_ID}" ]]; then
             jq 'del(.head_sha)' <<<"${BODY}" |
-              gh api --method PATCH \
-                "repos/${GITHUB_REPOSITORY}/check-runs/${CHECK_ID}" \
-                --input - >/dev/null
+              gh api --method PATCH                 "repos/${GITHUB_REPOSITORY}/check-runs/${CHECK_ID}"                 --input - >/dev/null
           else
-            gh api --method POST \
-              "repos/${GITHUB_REPOSITORY}/check-runs" \
-              --input - <<<"${BODY}" >/dev/null
+            gh api --method POST               "repos/${GITHUB_REPOSITORY}/check-runs"               --input - <<<"${BODY}" >/dev/null
           fi
