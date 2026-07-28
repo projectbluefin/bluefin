@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  checks: write
 
 jobs:
   report:
@@ -15,18 +16,9 @@ jobs:
       github.event.client_payload.sha != ''
     runs-on: ubuntu-24.04
     steps:
-      - name: Get MergeRaptor token
-        id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
-        with:
-          app-id: ${{ secrets.MERGERAPTOR_APP_ID }}
-          private-key: ${{ secrets.MERGERAPTOR_PRIVATE_KEY }}
-          permission-checks: write
-          permission-contents: read
-
       - name: Create or update lab check
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.event.client_payload.sha }}
           CHECK_JSON: ${{ toJSON(github.event.client_payload.check) }}
         run: |
@@ -34,7 +26,6 @@ jobs:
 
           PRODUCT="${GITHUB_REPOSITORY#*/}"
           CHECK_NAME="testing-lab / ${PRODUCT}"
-          APP_SLUG="mergeraptor"
 
           if [[ ! "${SHA}" =~ ^[0-9a-f]{40}$ ]]; then
             echo "Invalid commit SHA: ${SHA}" >&2
@@ -75,7 +66,7 @@ jobs:
               "repos/${GITHUB_REPOSITORY}/commits/${SHA}/check-runs" \
               -f per_page=100 \
               --jq '.check_runs
-                | map(select(.name == "'"${CHECK_NAME}"'" and .app.slug == "'"${APP_SLUG}"'"))
+                | map(select(.name == "'"${CHECK_NAME}"'"))
                 | sort_by(.id)
                 | last
                 | .id // empty'
