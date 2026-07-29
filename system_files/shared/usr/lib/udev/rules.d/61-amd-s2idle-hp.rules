@@ -1,0 +1,20 @@
+# AMD s2idle deep-sleep supplement — HP ZBook Ultra G1a 14 (board 8D01)
+#
+# common already disables the PS/2 keyboard (serio/atkbd) via
+# 60-amd-s2idle-fixes.rules.  Field reports show that is not always
+# sufficient: the PS/2 mouse controller (serio/psmouse) can also block
+# the AMD SoC from entering PC10/S0i3, producing ~1.5 W sleep drain
+# instead of the expected 0.1–0.5 W.
+#
+# This rule disables psmouse wakeup to complete the fix begun in common.
+# Both rules together are the userspace equivalent of the single-device
+# quirk_s2idle_spurious_8042 kernel entry for this board.
+#
+# Remove this file once the upstream kernel fix for board 8D01 lands in a
+# shipped Fedora kernel (tracking: projectbluefin/bluefin#383).
+
+# HP ZBook Ultra G1a 14 — disable PS/2 mouse (serio1 / psmouse) wakeup
+ACTION=="add", SUBSYSTEM=="serio", DRIVERS=="psmouse", \
+  PROGRAM=="/bin/cat /sys/class/dmi/id/board_name", \
+  RESULT=="8D01", \
+  ATTR{power/wakeup}="disabled"
