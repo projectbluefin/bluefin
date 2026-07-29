@@ -1,9 +1,9 @@
 #!/usr/bin/env bats
-# Unit tests for build_files/base/04-install-kernel-akmods.sh.
+# Unit tests for build_files/base/04-install-kernel-akmods.py.
 # Run with: bats tests/unit/04-install-kernel-akmods_test.bats
 
 SCRIPT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
-SCRIPT="${SCRIPT_DIR}/../../build_files/base/04-install-kernel-akmods.sh"
+SCRIPT="${SCRIPT_DIR}/../../build_files/base/04-install-kernel-akmods.py"
 
 KERNEL_VER="6.12.0-200.fc42.x86_64"
 
@@ -175,15 +175,13 @@ EOF
     chmod +x "${STUB_BIN}/ln"
 
     # ── Patch the script ─────────────────────────────────────────────────────
-    # Redirect absolute system paths into the sandbox; replace /usr/bin/dracut
-    # with the PATH-based stub.
+    # Redirect absolute system paths into the sandbox.
     PATCHED_SCRIPT="${TEST_ROOT}/04-patched.sh"
     sed \
         -e "s|/tmp/|${TEST_ROOT}/tmp/|g" \
         -e "s|/etc/yum.repos.d/|${TEST_ROOT}/etc/yum.repos.d/|g" \
         -e "s|/etc/pki/akmods/|${TEST_ROOT}/etc/pki/akmods/|g" \
         -e "s|/lib/modules/|${TEST_ROOT}/lib/modules/|g" \
-        -e "s|/usr/bin/dracut|dracut|g" \
         -e "s|/usr/lib/bootc/kargs.d/|${TEST_ROOT}/usr/lib/bootc/kargs.d/|g" \
         -e "s|/usr/lib/modules-load.d/|${TEST_ROOT}/usr/lib/modules-load.d/|g" \
         -e "s|/usr/share/vulkan/icd.d/|${TEST_ROOT}/usr/share/vulkan/icd.d/|g" \
@@ -209,18 +207,18 @@ teardown() {
 # ─────────────────────────────────────────────────────────────────────────────
 
 @test "04-kernel-akmods: exits 0 for non-nvidia, non-coreos, stable build" {
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
 }
 
 @test "04-kernel-akmods: initramfs marker file written after successful run" {
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     [ -f "${TEST_ROOT}/lib/modules/${KERNEL_VER}/.bluefin-initramfs-done" ]
 }
 
 @test "04-kernel-akmods: cached initramfs includes ISO live modules" {
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     [ -f "${DRACUT_LOG}" ]
     grep -q -- "--reproducible" "${DRACUT_LOG}"
@@ -232,14 +230,14 @@ teardown() {
 # ─────────────────────────────────────────────────────────────────────────────
 
 @test "04-kernel-akmods: rpmfusion-free repo created then removed" {
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     # repo file must NOT persist after the script finishes (rm -f cleans it up)
     [ ! -f "${TEST_ROOT}/etc/yum.repos.d/rpmfusion-free-build.repo" ]
 }
 
 @test "04-kernel-akmods: rpmfusion-nonfree repo created then removed" {
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     [ ! -f "${TEST_ROOT}/etc/yum.repos.d/rpmfusion-nonfree-build.repo" ]
 }
@@ -250,7 +248,7 @@ teardown() {
 
 @test "04-kernel-akmods: beta flag enables updates-testing repo" {
     export UBLUE_IMAGE_TAG="beta"
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     [ -f "${DNF_LOG}" ]
     grep -q "updates-testing.enabled=1" "${DNF_LOG}"
@@ -258,7 +256,7 @@ teardown() {
 
 @test "04-kernel-akmods: stable build does NOT enable updates-testing repo" {
     export UBLUE_IMAGE_TAG="stable"
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     # Log may not exist at all; if it does, must not contain updates-testing.enabled=1
     if [ -f "${DNF_LOG}" ]; then
@@ -271,7 +269,7 @@ teardown() {
 # ─────────────────────────────────────────────────────────────────────────────
 
 @test "04-kernel-akmods: akmods pull always fires" {
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     [ -f "${SKOPEO_LOG}" ]
     grep -q "akmods:" "${SKOPEO_LOG}"
@@ -279,7 +277,7 @@ teardown() {
 
 @test "04-kernel-akmods: nvidia pull fires only when IMAGE_NAME contains nvidia" {
     export IMAGE_NAME="bluefin"
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     # no nvidia pull for a non-nvidia image
     if [ -f "${SKOPEO_LOG}" ]; then
@@ -289,7 +287,7 @@ teardown() {
 
 @test "04-kernel-akmods: nvidia pull fires when IMAGE_NAME contains nvidia" {
     export IMAGE_NAME="bluefin-nvidia"
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     [ -f "${SKOPEO_LOG}" ]
     grep -q "akmods-nvidia-open" "${SKOPEO_LOG}"
@@ -297,7 +295,7 @@ teardown() {
 
 @test "04-kernel-akmods: zfs pull fires only when AKMODS_FLAVOR contains coreos" {
     export AKMODS_FLAVOR="main"
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     if [ -f "${SKOPEO_LOG}" ]; then
         ! grep -q "akmods-zfs" "${SKOPEO_LOG}"
@@ -306,7 +304,7 @@ teardown() {
 
 @test "04-kernel-akmods: zfs pull fires when AKMODS_FLAVOR contains coreos" {
     export AKMODS_FLAVOR="coreos-stable"
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     [ -f "${SKOPEO_LOG}" ]
     grep -q "akmods-zfs" "${SKOPEO_LOG}"
@@ -324,7 +322,7 @@ echo "skopeo $*" >> "${SKOPEO_LOG}"
 exit 1
 FAILEOF
     chmod +x "${STUB_BIN}/skopeo"
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -ne 0 ]
 }
 
@@ -334,7 +332,7 @@ FAILEOF
 
 @test "04-kernel-akmods: zfs autoload config written for coreos flavor" {
     export AKMODS_FLAVOR="coreos-stable"
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     [ -f "${TEST_ROOT}/usr/lib/modules-load.d/zfs.conf" ]
     grep -q "zfs" "${TEST_ROOT}/usr/lib/modules-load.d/zfs.conf"
@@ -342,7 +340,7 @@ FAILEOF
 
 @test "04-kernel-akmods: zfs autoload config NOT written for non-coreos flavor" {
     export AKMODS_FLAVOR="main"
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     [ ! -f "${TEST_ROOT}/usr/lib/modules-load.d/zfs.conf" ]
 }
@@ -353,7 +351,7 @@ FAILEOF
 
 @test "04-kernel-akmods: nvidia kargs.d written for nvidia image" {
     export IMAGE_NAME="bluefin-nvidia"
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     [ -f "${TEST_ROOT}/usr/lib/bootc/kargs.d/00-nvidia.toml" ]
     grep -q "rd.driver.blacklist=nouveau" \
@@ -362,7 +360,7 @@ FAILEOF
 
 @test "04-kernel-akmods: nvidia kargs.d NOT written for non-nvidia image" {
     export IMAGE_NAME="bluefin"
-    run bash "${PATCHED_SCRIPT}"
+    run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     [ ! -f "${TEST_ROOT}/usr/lib/bootc/kargs.d/00-nvidia.toml" ]
 }

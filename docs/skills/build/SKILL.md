@@ -48,6 +48,8 @@ just clean
 ## Hard rules
 
 - Do not update the unused `build_files/shared/build.sh`.
+- Keep `build_files/base/04-install-kernel-akmods.sh` as an entrypoint wrapper;
+  the orchestration logic lives in `04-install-kernel-akmods.py`.
 - `/tmp` does not persist between container `RUN` instructions.
 - Preserve Containerfile cache boundaries.
 - Report expensive builds accurately.
