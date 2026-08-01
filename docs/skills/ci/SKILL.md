@@ -48,6 +48,9 @@ status.
 - Preserve action pinning and workflow permissions.
 - Do not add PAT-based authentication.
 - Keep end-to-end suites on their configured event.
+- Reference `projectbluefin/testsuite`'s reusable E2E workflow through its
+  managed `@v1` tag, never an immutable digest; testsuite advances `v1` after
+  each successful main-branch merge.
 - Update this skill when workflow behavior changes.
 
 ## Verification
