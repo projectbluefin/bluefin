@@ -5,8 +5,8 @@ set -eoux pipefail
 echo "::group:: ===$(basename "$0")==="
 
 # Build Extensions
-# Default enablement is supplied by common's GNOME schema override; CI must
-# preserve it when adding its unsafe-mode test extension.
+# Default enablement is supplied by common's GNOME schema override. It must
+# include each extension built below that Bluefin smoke verifies; CI preserves it.
 
 # AppIndicator Support
 glib-compile-schemas --strict /usr/share/gnome-shell/extensions/appindicatorsupport@rgcjonas.gmail.com/schemas
