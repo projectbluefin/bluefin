@@ -13,6 +13,7 @@ systemctl enable dconf-update.service
 systemctl enable flatpak-nuke-fedora.service
 systemctl enable input-remapper.service
 systemctl enable rpm-ostree-countme.service
+# Smoke E2E verifies that the delivered image starts the Tailscale daemon.
 systemctl enable tailscaled.service
 systemctl enable ublue-system-setup.service
 
