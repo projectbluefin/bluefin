@@ -8,6 +8,7 @@ metadata:
     - .github/workflows/build-image-testing.yml
   context7-sources:
     - /websites/github_en_actions
+    - /podman-container-tools/buildah
 ---
 
 # CI
@@ -33,6 +34,9 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 
 Read the actual workflow before describing or changing its behavior. Shared
 logic belongs in the reusable workflow that owns it; callers should stay thin.
+
+Containerfile stages that consume source through bind mounts need an explicit
+content-hash build argument when their cache must change with those inputs.
 
 Every open Bluefin PR is discovered by the lab's five-minute PR poller. The lab
 runs smoke QA against `bluefin:testing` and sends bounded
