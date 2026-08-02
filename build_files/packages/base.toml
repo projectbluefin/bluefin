@@ -36,6 +36,7 @@ packages = [
     "alsa-tools-firmware",
     "anaconda-live",
     "bootc",
+    "bootupd",
     "containerd",
     "ddcutil",
     "distrobox",

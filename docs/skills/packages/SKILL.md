@@ -27,7 +27,9 @@ metadata:
 1. Search the repository and shared inputs before adding a new source.
 2. Put base package data in the package manifest, not an inline shell array.
 3. Keep Fedora and COPR package transactions separate.
-4. Run:
+4. For images installed with `bootc install`, include `bootupd` explicitly;
+   do not rely on the base image to provide it transitively.
+5. Run:
 
 ```bash
 just check
