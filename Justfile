@@ -62,9 +62,6 @@ clean:
     set -eoux pipefail
     touch _build
     find *_build* -exec rm -rf {} \;
-    rm -f previous.manifest.json
-    rm -f changelog.md
-    rm -f output.env
 
 # Check if valid combo
 [group('Utility')]
@@ -461,13 +458,6 @@ run $image="bluefin" $tag="testing" $flavor="main":
 
     # Run Container
     ${PODMAN} run -it --rm localhost/"${image_name}":"${tag}" bash
-
-# Test Changelogs
-[group('Changelogs')]
-changelogs branch="stable" handwritten="":
-    #!/usr/bin/bash
-    set -eou pipefail
-    python3 ./.github/changelogs.py "{{ branch }}" ./output.env ./changelog.md --workdir . --handwritten "{{ handwritten }}"
 
 # Verify Container with Cosign
 [group('Utility')]
