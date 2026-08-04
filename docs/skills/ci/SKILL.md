@@ -49,6 +49,8 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 
 Read the actual workflow before describing or changing its behavior. Shared
 logic belongs in the reusable workflow that owns it; callers should stay thin.
+The `unit-tests` job in `pr-validation.yml` runs BATS with kcov and publishes
+`bats-tap-results` plus `bats-kcov-report` artifacts for shell-test visibility.
 
 Containerfile stages that consume source through bind mounts inherit the mounted
 stage's image ID as part of their cache key. Give the package stage its own
