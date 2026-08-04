@@ -51,6 +51,11 @@ Read the actual workflow before describing or changing its behavior. Shared
 logic belongs in the reusable workflow that owns it; callers should stay thin.
 The `unit-tests` job in `pr-validation.yml` runs BATS with kcov and publishes
 `bats-tap-results` plus `bats-kcov-report` artifacts for shell-test visibility.
+Coverage runs route child `bash <script>` calls through
+`tests/coverage/bin/bash`, because wrapping only the top-level BATS process
+does not trace those child shells. The wrapper records each sandbox copy's
+original source path, and `merge_kcov.py` combines those hits with kcov's
+pre-parsed source inventory. A zero-line report is an instrumentation failure.
 
 Containerfile stages that consume source through bind mounts inherit the mounted
 stage's image ID as part of their cache key. Give the package stage its own

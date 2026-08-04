@@ -1,0 +1,43 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+real_bash="/usr/bin/bash"
+
+if [[ "${KCOV_ACTIVE:-}" == "1" || -z "${KCOV_RAW_DIR:-}" ||
+    -z "${KCOV_REPO_ROOT:-}" || $# -eq 0 || "$1" == -* || ! -f "$1" ]]; then
+    exec "${real_bash}" "$@"
+fi
+
+script="$(realpath "$1")"
+source_path=""
+
+case "${script}" in
+    "${KCOV_REPO_ROOT}"/build_files/* | "${KCOV_REPO_ROOT}"/system_files/*)
+        source_path="${script}"
+        ;;
+    "${KCOV_REPO_ROOT}"/tests/unit/.bats-sandbox/*)
+        source_name="$(basename "${script}")"
+        source_name="${source_name/-patched/}"
+        mapfile -t source_matches < <(
+            find "${KCOV_REPO_ROOT}/build_files" "${KCOV_REPO_ROOT}/system_files" \
+                -type f -name "${source_name}" -print
+        )
+        if [[ ${#source_matches[@]} -eq 1 ]]; then
+            source_path="$(realpath "${source_matches[0]}")"
+        fi
+        ;;
+esac
+
+if [[ -z "${source_path}" ]]; then
+    exec "${real_bash}" "$@"
+fi
+
+run_dir="$(mktemp -d "${KCOV_RAW_DIR}/run.XXXXXX")"
+printf '%s\n' "${source_path}" > "${run_dir}/source-path"
+shift
+exec env KCOV_ACTIVE=1 kcov \
+    --bash-method=DEBUG \
+    --include-path="$(dirname "${script}"),${KCOV_REPO_ROOT}/build_files,${KCOV_REPO_ROOT}/system_files" \
+    --exclude-path="${KCOV_REPO_ROOT}/.github" \
+    "${run_dir}" \
+    "${script}" "$@"

@@ -87,7 +87,42 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install unit test tools
-        run: sudo apt-get install -y bats kcov
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bats \
+            binutils-dev \
+            build-essential \
+            cmake \
+            libcurl4-openssl-dev \
+            libdw-dev \
+            libelf-dev \
+            libiberty-dev \
+            libssl-dev \
+            zlib1g-dev
+
+      - name: Install kcov
+        env:
+          KCOV_SOURCE_SHA: a39874f938ce13f7a65f253120d1ec946b349ffe # v43
+          KCOV_ARCHIVE_SHA256: dac01569171979477b500924be264d2a1bc649dae6010536228cbb319344d516
+        run: |
+          set -euo pipefail
+          archive="${RUNNER_TEMP}/kcov.tar.gz"
+          source_dir="${RUNNER_TEMP}/kcov-source"
+          build_dir="${RUNNER_TEMP}/kcov-build"
+
+          curl --proto '=https' --tlsv1.2 --fail --silent --show-error --location \
+            "https://github.com/SimonKagstrom/kcov/archive/${KCOV_SOURCE_SHA}.tar.gz" \
+            --output "${archive}"
+          echo "${KCOV_ARCHIVE_SHA256}  ${archive}" | sha256sum --check
+
+          mkdir -p "${source_dir}"
+          tar --extract --gzip --file "${archive}" \
+            --directory "${source_dir}" --strip-components=1
+          cmake -S "${source_dir}" -B "${build_dir}" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "${build_dir}" --parallel 2
+          sudo cmake --install "${build_dir}"
+          kcov --version
 
       - name: Run unit tests
         run: bats --formatter tap tests/unit/ | tee results.tap
@@ -97,13 +132,25 @@ jobs:
           INCLUDE_PATHS: ${{ github.workspace }}/build_files,${{ github.workspace }}/system_files
           EXCLUDE_PATHS: ${{ github.workspace }}/tests,${{ github.workspace }}/.github
         run: |
-          mkdir -p coverage/kcov
+          set -euo pipefail
+          export KCOV_REPO_ROOT="${GITHUB_WORKSPACE}"
+          export KCOV_RAW_DIR="${GITHUB_WORKSPACE}/coverage/kcov-raw"
+          export PATH="${GITHUB_WORKSPACE}/tests/coverage/bin:${PATH}"
+          mkdir -p "${KCOV_RAW_DIR}"
+
           kcov \
             --bash-method=DEBUG \
+            --bash-parse-files-in-dirs="${INCLUDE_PATHS}" \
             --include-path="${INCLUDE_PATHS}" \
             --exclude-path="${EXCLUDE_PATHS}" \
-            coverage/kcov \
+            "${KCOV_RAW_DIR}/top" \
             bats tests/unit/
+          python3 tests/coverage/merge_kcov.py \
+            --raw-dir "${KCOV_RAW_DIR}" \
+            --output-dir coverage/kcov \
+            --repo-root "${GITHUB_WORKSPACE}"
+          cat coverage/kcov/summary.md >> "${GITHUB_STEP_SUMMARY}"
+          rm -rf "${KCOV_RAW_DIR}"
 
       - name: Upload TAP results
         if: always()
