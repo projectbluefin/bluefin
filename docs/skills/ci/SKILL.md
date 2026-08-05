@@ -33,6 +33,8 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 
 Read the actual workflow before describing or changing its behavior. Shared
 logic belongs in the reusable workflow that owns it; callers should stay thin.
+The `unit-tests` job in `pr-validation.yml` runs BATS with kcov and publishes
+`bats-tap-results` plus `bats-kcov-report` artifacts for shell-test visibility.
 
 Every open Bluefin PR is discovered by the lab's five-minute PR poller. The lab
 runs smoke QA against `bluefin:testing` and sends bounded

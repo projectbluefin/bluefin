@@ -79,18 +79,31 @@ jobs:
     needs: [check-base-branch]
     if: always() && (needs.check-base-branch.result == 'success' || needs.check-base-branch.result == 'skipped')
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Install bats
-        run: sudo apt-get install -y bats
+      - name: Install unit test tools
+        run: sudo apt-get install -y bats kcov
 
       - name: Run unit tests
         run: bats --formatter tap tests/unit/ | tee results.tap
+
+      - name: Generate BATS coverage report
+        env:
+          INCLUDE_PATHS: ${{ github.workspace }}/build_files,${{ github.workspace }}/system_files
+          EXCLUDE_PATHS: ${{ github.workspace }}/tests,${{ github.workspace }}/.github
+        run: |
+          mkdir -p coverage/kcov
+          kcov \
+            --bash-method=DEBUG \
+            --include-path="${INCLUDE_PATHS}" \
+            --exclude-path="${EXCLUDE_PATHS}" \
+            coverage/kcov \
+            bats tests/unit/
 
       - name: Upload TAP results
         if: always()
@@ -98,6 +111,13 @@ jobs:
         with:
           name: bats-tap-results
           path: results.tap
+
+      - name: Upload BATS coverage report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bats-kcov-report
+          path: coverage/kcov
 
       - name: Run Python unit tests
         run: python3 -m unittest discover -s tests -p 'test_*.py'
