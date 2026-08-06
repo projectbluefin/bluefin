@@ -763,3 +763,5 @@ retag-nvidia-on-ghcr working_tag="" stream="" dry_run="1":
     for image in bluefin-nvidia; do
       $skopeo copy docker://ghcr.io/projectbluefin/${image}:{{ working_tag }} docker://ghcr.io/projectbluefin/${image}:{{ stream }}
     done
+
+# consumer-validation: $/ self-repository composition in projectbluefin/actions PR #392
