@@ -1,5 +1,9 @@
 name: Renovate Auto-merge
 
+# Delegates to projectbluefin/actions. The reusable workflow qualifies the PR
+# (Renovate/MergeRaptor author, not draft, not conflicting) and waits for the
+# full check rollup to go green before squash-merging, so triggering from this
+# single CI workflow is safe even when sibling checks finish later.
 on:
   workflow_run:
     workflows: ["PR Validation — testsuite"]
