@@ -1,7 +1,22 @@
 ---
 name: release-artifacts
-description: Prepare, verify, or troubleshoot image release and promotion artifacts.
+version: "1.0"
+last_updated: 2026-08-06
+id: release-artifacts
+one_line_purpose: Prepare, verify, and troubleshoot image release and promotion.
+entry_point: docs/skills/release-artifacts/SKILL.md
+category: ci-ops
+mcp_compliance_level: partial
+optimization_status: draft
+status: active
+dependencies: []
+tags: [release, promotion, signing, verification]
+description: >-
+  Covers the release and testing-to-main promotion workflows, digest and tag
+  verification, and signing gates. Use when running a release or diagnosing
+  a failed promotion.
 metadata:
+  type: runbook
   source-of-truth:
     - .github/workflows/execute-release.yml
     - .github/workflows/promote-testing-to-main.yml

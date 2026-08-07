@@ -1,7 +1,22 @@
 ---
 name: ci
-description: Debug and change repository CI workflows. Use for triggers, checks, promotion, release, or workflow failures.
+version: "1.0"
+last_updated: 2026-08-06
+id: ci
+one_line_purpose: Debug and change repository GitHub Actions workflows.
+entry_point: docs/skills/ci/SKILL.md
+category: ci-ops
+mcp_compliance_level: partial
+optimization_status: draft
+status: active
+dependencies: []
+tags: [ci, workflows, github-actions, triggers, debugging]
+description: >-
+  Explains workflow triggers, path filters, reusable workflow calls, and how
+  to read failing runs in this repository. Use when a workflow failed, did
+  not start, or ran the wrong checks.
 metadata:
+  type: runbook
   source-of-truth:
     - .github/workflows/
     - .github/workflows/pr-validation.yml

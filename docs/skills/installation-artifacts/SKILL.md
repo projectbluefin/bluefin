@@ -1,7 +1,22 @@
 ---
 name: installation-artifacts
-description: Build or promote installation artifacts that consume the image.
+version: "1.0"
+last_updated: 2026-08-06
+id: installation-artifacts
+one_line_purpose: Build and promote installation artifacts that consume the image.
+entry_point: docs/skills/installation-artifacts/SKILL.md
+category: ci-ops
+mcp_compliance_level: partial
+optimization_status: draft
+status: active
+dependencies: []
+tags: [artifacts, iso, promotion, release]
+description: >-
+  Covers dispatching artifact workflows, confirming the source image digest,
+  and promoting a verified artifact. Use when building or promoting an ISO
+  or other installation artifact derived from a published image.
 metadata:
+  type: runbook
   source-of-truth:
     - .github/workflows/
     - docs/release.md

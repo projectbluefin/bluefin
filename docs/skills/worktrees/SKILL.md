@@ -1,7 +1,22 @@
 ---
 name: worktrees
-description: Keep the main checkout clean by doing all feature work in isolated git worktrees. Use before starting any change, or when the tree is dirty.
+version: "1.0"
+last_updated: 2026-08-06
+id: worktrees
+one_line_purpose: Do all feature work in isolated git worktrees.
+entry_point: docs/skills/worktrees/SKILL.md
+category: meta
+mcp_compliance_level: partial
+optimization_status: draft
+status: active
+dependencies: []
+tags: [git, worktrees, workflow, agents]
+description: >-
+  Covers the worktree helper script, branch naming, and cleanup so the main
+  checkout stays clean. Use before starting any change, or when the main
+  checkout is dirty or on a stale branch.
 metadata:
+  type: procedure
   source-of-truth:
     - .github/scripts/worktree.sh
     - .github/scripts/install-hooks.sh

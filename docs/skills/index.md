@@ -17,6 +17,7 @@ the selected skill directs you to do so.
 | Understand issue state | [issue-lifecycle](issue-lifecycle/SKILL.md) |
 | Work on installation artifacts | [installation-artifacts](installation-artifacts/SKILL.md) |
 | Improve or add a skill | [skill-improvement](skill-improvement/SKILL.md) |
+| Author a new skill directory | [write-a-skill](write-a-skill/SKILL.md) |
 
 ## Rules
 

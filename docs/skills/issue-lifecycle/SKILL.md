@@ -1,7 +1,22 @@
 ---
 name: issue-lifecycle
-description: Understand and operate the repository issue lifecycle and work queue.
+version: "1.0"
+last_updated: 2026-08-06
+id: issue-lifecycle
+one_line_purpose: Operate the repository issue lifecycle and work queue correctly.
+entry_point: docs/skills/issue-lifecycle/SKILL.md
+category: meta
+mcp_compliance_level: partial
+optimization_status: draft
+status: active
+dependencies: []
+tags: [issues, workflow, queue, labels]
+description: >-
+  Explains issue assignment, project state, label semantics, and the branch-
+  to-pull-request path used in this repository. Use when picking up,
+  updating, or closing an issue.
 metadata:
+  type: procedure
   source-of-truth:
     - docs/workflow.md
     - .github/workflows/
