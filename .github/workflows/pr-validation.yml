@@ -44,7 +44,10 @@ jobs:
       - name: Check for undeclared gitlinks
         shell: bash
         env:
-          TARGET_TREEISH: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          # Use github.sha (the checked-out PR merge / merge-group commit).
+          # pull_request.head.sha is not fetched by a depth-1 checkout of
+          # refs/pull/N/merge, so ls-tree on it fails with "not a tree object".
+          TARGET_TREEISH: ${{ github.sha }}
         run: |
           set -euo pipefail
 
