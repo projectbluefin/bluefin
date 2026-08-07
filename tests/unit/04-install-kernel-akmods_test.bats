@@ -102,6 +102,12 @@ if [[ -n "${target}" ]]; then
     chmod +x "${target}/rpms/ublue-os/nvidia-install.sh"
     mkdir -p "${target}/rpms/kmods/zfs"
     touch "${target}/rpms/kmods/zfs/kmod-zfs-${KERNEL}-1.rpm"
+    touch "${target}/rpms/kmods/zfs/libnvpair1-1.rpm"
+    touch "${target}/rpms/kmods/zfs/libuutil1-1.rpm"
+    touch "${target}/rpms/kmods/zfs/libzfs1-1.rpm"
+    touch "${target}/rpms/kmods/zfs/libzpool1-1.rpm"
+    touch "${target}/rpms/kmods/zfs/python3-pyzfs-1.rpm"
+    touch "${target}/rpms/kmods/zfs/zfs-1.rpm"
 fi
 exit 0
 STUBEOF
@@ -178,6 +184,7 @@ EOF
     # Redirect absolute system paths into the sandbox.
     PATCHED_SCRIPT="${TEST_ROOT}/04-patched.sh"
     sed \
+        -e "s|\"/tmp\"|\"${TEST_ROOT}/tmp\"|g" \
         -e "s|/tmp/|${TEST_ROOT}/tmp/|g" \
         -e "s|/etc/yum.repos.d/|${TEST_ROOT}/etc/yum.repos.d/|g" \
         -e "s|/etc/pki/akmods/|${TEST_ROOT}/etc/pki/akmods/|g" \
