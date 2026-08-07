@@ -49,6 +49,21 @@ then file an issue in `projectbluefin/common` describing the propagation. Do not
 self-apply a queue label. Never write to `ublue-os/*`. The canonical mandate is
 [`common/docs/skills/skill-improvement.md`](https://github.com/projectbluefin/common/blob/main/docs/skills/skill-improvement.md).
 
+## Every-loop repair contract
+
+Run this on every task, including tasks that succeed:
+
+1. Verify the repository, branch, and loaded skills against source.
+2. Name stale guidance explicitly instead of silently working around it.
+3. Repair the nearest authoritative skill when the correction is source-backed
+   and in scope.
+4. Validate with the checks that already exist; do not invent a new gate.
+5. Record the learning and any unresolved gap.
+6. Escalate a human gate rather than turning uncertainty into policy.
+
+A successful task still checks for reusable learning and documentation drift
+before completion.
+
 ## Verify
 
 ```bash

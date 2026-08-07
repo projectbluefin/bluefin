@@ -34,6 +34,10 @@ Run a full image build only when the change affects image assembly.
 - Describe exactly what was tested.
 - Update the closest skill when the change reveals a reusable procedure.
 - Do not self-approve or self-merge.
+- Ask a human before opening a pull request autonomously; opening one is not an
+  implied part of a task.
+
+After pushing, verify CI: `gh run list --repo projectbluefin/bluefin --limit 5`.
 
 AI-assisted commits must include both attribution trailers:
 
