@@ -1,7 +1,22 @@
 ---
 name: dependency-automation
-description: Review dependency automation, Renovate configuration, and automated updates.
+version: "1.0"
+last_updated: 2026-08-06
+id: dependency-automation
+one_line_purpose: Review Renovate configuration and automated dependency updates.
+entry_point: docs/skills/dependency-automation/SKILL.md
+category: ci-ops
+mcp_compliance_level: partial
+optimization_status: draft
+status: active
+dependencies: []
+tags: [renovate, dependencies, automation, automerge]
+description: >-
+  Describes the Renovate configuration, automerge workflow, and
+  authentication model for automated updates. Use when changing dependency
+  automation config or triaging an automated update pull request.
 metadata:
+  type: procedure
   source-of-truth:
     - renovate.json
     - .github/renovate.json5

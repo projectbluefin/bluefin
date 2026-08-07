@@ -1,7 +1,22 @@
 ---
 name: security
-description: Review image supply-chain, signing, COPR, and secure-boot changes.
+version: "1.0"
+last_updated: 2026-08-06
+id: security
+one_line_purpose: Review supply-chain, signing, COPR, and secure-boot changes.
+entry_point: docs/skills/security/SKILL.md
+category: ci-ops
+mcp_compliance_level: partial
+optimization_status: draft
+status: active
+dependencies: []
+tags: [security, supply-chain, signing, secure-boot, copr]
+description: >-
+  States the package-source trust boundaries, signing requirements, and
+  secure-boot constraints for this image. Use when adding a package source
+  or changing verification or trust behavior.
 metadata:
+  type: policy
   source-of-truth:
     - SECURITY.md
     - build_files/shared/copr-helpers.sh

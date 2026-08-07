@@ -1,7 +1,22 @@
 ---
 name: variants
-description: Determine the correct image, stream, flavor, branch, and workflow target.
+version: "1.0"
+last_updated: 2026-08-06
+id: variants
+one_line_purpose: Determine the correct image, stream, flavor, branch, and target.
+entry_point: docs/skills/variants/SKILL.md
+category: ci-ops
+mcp_compliance_level: partial
+optimization_status: draft
+status: active
+dependencies: []
+tags: [variants, images, streams, tags]
+description: >-
+  Maps image names, streams, flavors, and branches to their published tags
+  and build workflows. Use when choosing an image reference for a command,
+  report, or workflow dispatch.
 metadata:
+  type: reference
   source-of-truth:
     - Justfile
     - image-versions.yml
