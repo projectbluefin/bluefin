@@ -153,14 +153,20 @@ jobs:
           export PATH="${GITHUB_WORKSPACE}/tests/coverage/bin:${PATH}"
           mkdir -p "${KCOV_RAW_DIR}"
 
+          # The instrumented rerun exists to collect coverage; the "Run unit
+          # tests" step above owns pass/fail, so a failing test must not mask
+          # the coverage report.
+          coverage_status=0
           kcov \
             --bash-method=DEBUG \
             --bash-parse-files-in-dir="${INCLUDE_PATHS}" \
             --include-path="${INCLUDE_PATHS}" \
             --exclude-path="${EXCLUDE_PATHS}" \
             "${KCOV_RAW_DIR}/top" \
-            bash -c 'exec bats --formatter tap tests/unit/ > coverage/bats-coverage-run.tap 2>&1'
-          tail -n 20 coverage/bats-coverage-run.tap
+            bash -c 'exec bats --formatter tap tests/unit/ > coverage/bats-coverage-run.tap 2>&1' \
+            || coverage_status=$?
+          echo "instrumented bats exit status: ${coverage_status}"
+          grep -c '^ok' coverage/bats-coverage-run.tap
           python3 tests/coverage/merge_kcov.py \
             --raw-dir "${KCOV_RAW_DIR}" \
             --output-dir coverage/kcov \

@@ -60,6 +60,8 @@ kcov is not packaged for Ubuntu 24.04, so the job builds v43 from a pinned,
 SHA-256-verified source archive and caches the result. The coverage run must
 redirect BATS output to a file: kcov captures child stdout through a pipe it
 stops draining, so streaming the full TAP log through it deadlocks the job.
+The instrumented rerun does not gate the job — `Run unit tests` owns pass/fail
+— but `merge_kcov.py` fails when no source lines were executed.
 Tests that `source` a library into the BATS process itself are not traced.
 
 Containerfile stages that consume source through bind mounts inherit the mounted
