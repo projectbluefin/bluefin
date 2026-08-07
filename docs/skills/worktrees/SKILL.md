@@ -106,6 +106,7 @@ whether a branch is finished. `worktree.sh` asks the forge via `gh` instead.
 | Untracked `.worktrees/` in `git status` | Hook and ignore rules predate this setup | Confirm `.worktrees/` is in `.gitignore` |
 | Uncommitted work blocks `done` | Real changes in the worktree | Commit them, or `git worktree remove <path> --force` to discard |
 | A repo script reports zero files | It filters `.worktrees` out by path and is running inside one | Run it from the main checkout, or fix the filter to be checkout-relative |
+| `gh pr merge --delete-branch` fails locally after merging | The branch is still checked out in a worktree | The remote merge succeeded; finish with `worktree.sh done <branch>` |
 
 Tooling that excludes `.worktrees/` by absolute path components silently matches
 *everything* when it runs from inside a worktree. A validator that passes with a
