@@ -15,7 +15,13 @@
     {
       "description": "Do not SHA-pin projectbluefin/actions refs — they use @v1 managed tags enforced by no-sha-pins-for-internal-actions pre-commit hook",
       "matchManagers": ["github-actions"],
-      "matchPackagePatterns": ["^projectbluefin/actions"],
+      "matchPackageNames": ["/^projectbluefin/actions/"],
+      "enabled": false
+    },
+    {
+      "description": "Do not SHA-pin projectbluefin/testsuite refs — run-testsuite.yml uses the @v1 managed tag so E2E picks up testsuite fixes immediately; a digest pin here delays every fix by a Renovate cycle (see #989)",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["/^projectbluefin/testsuite/"],
       "enabled": false
     }
   ]

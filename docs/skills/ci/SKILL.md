@@ -121,6 +121,18 @@ a test command is piped.
 - Reference `projectbluefin/testsuite`'s reusable E2E workflow through its
   managed `@v1` tag, never an immutable digest; testsuite advances `v1` after
   each successful main-branch merge.
+- Renovate's `config:best-practices` preset (extended by `.github/renovate.json5`)
+  pins all `github-actions` refs to a digest by default, including managed `@v1`
+  tags. Renovate reads the root `renovate.json` first and ignores
+  `.github/renovate.json5` when both exist, so an exemption added only to the
+  `.github` copy has no effect. The working exemption for a `matchManagers:
+  ["github-actions"]` rule must live in the root `renovate.json`'s
+  `packageRules`, disabling the manager for that dependency's package name
+  (see the `projectbluefin/actions` and `projectbluefin/testsuite` rules
+  there). This silently re-pinned `run-testsuite.yml` to a stale digest for
+  ~46 days and froze `:testing` promotion (#989) — check the effective
+  Renovate config, not just the intended one, when a managed `@v1` ref keeps
+  reverting to a digest.
 - Update this skill when workflow behavior changes.
 
 ## Verification
