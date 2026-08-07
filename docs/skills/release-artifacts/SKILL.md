@@ -1,7 +1,7 @@
 ---
 name: release-artifacts
 version: "1.0"
-last_updated: 2026-08-06
+last_updated: 2026-08-07
 id: release-artifacts
 one_line_purpose: Prepare, verify, and troubleshoot image release and promotion.
 entry_point: docs/skills/release-artifacts/SKILL.md
@@ -50,6 +50,21 @@ skopeo inspect docker://ghcr.io/projectbluefin/bluefin:testing --format '{{.Dige
 gh run list --repo projectbluefin/bluefin --workflow post-testing-e2e.yml --limit 20
 ```
 
+Without `skopeo`, the GHCR package API resolves the same mapping and also shows
+which tags share one package version — co-located version and stream tags mean
+the build pushed the stream tag, not a promotion:
+
+```bash
+gh api "/orgs/projectbluefin/packages/container/bluefin/versions?per_page=100" \
+  --jq '.[] | select(.metadata.container.tags | index("testing"))
+        | [.name, .created_at, (.metadata.container.tags | join(","))] | @tsv'
+```
+
+Then confirm the gate actually passed for that digest: a `post-testing-e2e` run
+whose `promote-to-testing` job is `skipped` did **not** promote, whatever the
+tag now points at. See
+[ci failure modes](../ci/references/failure-modes.md) for reading those runs.
+
 A promotion job reported as `skipped` while the stream tag still advanced means
 something outside the gate is publishing it. Build-time tag computation is the
 usual source: the bare stream tag can sit in the tag list that the push step
@@ -64,6 +79,15 @@ digest behind that tag rather than re-running end-to-end validation. The gate
 on `:testing` is therefore the only functional gate, and anything it admits
 propagates to `:stable` unchallenged. A gate step that reports `skipped` must
 never be accepted as a pass — treat only an explicit success as a pass.
+
+Only `:stable` is a promotion target. `git grep -n target_tag .github/workflows`
+returns `execute-release.yml` alone, so `:latest` has no writer in this
+repository — it is a stale pointer, not a tag that release moves. Do not treat
+it as a release output.
+
+While the `:testing` gate is red, `:testing` is expected to stop advancing.
+A frozen stream tag is the gate working; re-pointing or deleting it to unfreeze
+users is a human decision, not an agent action.
 
 ## Red flags
 
