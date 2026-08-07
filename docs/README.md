@@ -17,3 +17,10 @@ This directory contains the canonical technical and agent-facing documentation.
 Source files and workflows are authoritative. Documentation summarizes stable
 procedures and links to source for mutable facts. Load only the document needed
 for the current task; detailed references live below individual skills.
+
+Cross-repo factory procedure is canonical in
+[`projectbluefin/common`](https://github.com/projectbluefin/common/blob/main/docs/factory/agentic-model.md).
+Link to it rather than restating it here.
+
+`SKILL.md`, `build.md`, `ci.md`, and `pr-checklist.md` in this directory are
+compatibility pointers for older inbound links; they only redirect.

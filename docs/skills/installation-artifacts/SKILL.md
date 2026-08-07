@@ -1,60 +1,101 @@
 ---
 name: installation-artifacts
-version: "1.0"
-last_updated: 2026-08-06
+version: "2.0"
+last_updated: 2026-08-07
 id: installation-artifacts
-one_line_purpose: Build and promote installation artifacts that consume the image.
+one_line_purpose: Locate the installation media that consumes a published image.
 entry_point: docs/skills/installation-artifacts/SKILL.md
 category: ci-ops
 mcp_compliance_level: partial
 optimization_status: draft
 status: active
 dependencies: []
-tags: [artifacts, iso, promotion, release]
+tags: [iso, anaconda, titanoboa, installer, dakota]
 description: >-
-  Covers dispatching artifact workflows, confirming the source image digest,
-  and promoting a verified artifact. Use when building or promoting an ISO
-  or other installation artifact derived from a published image.
+  Explains that this repository embeds the container-native ISO contract but
+  builds no installation media, and where the media is actually produced. Use
+  when changing Anaconda, kickstart, or live-session behavior, or chasing an ISO.
 metadata:
-  type: runbook
+  type: reference
   source-of-truth:
-    - .github/workflows/
-    - docs/release.md
+    - build_files/base/21-container-native-iso.sh
+    - Containerfile
+    - tests/unit/21-container-native-iso_test.bats
 ---
 
 # Installation artifacts
 
-## Procedure
-
-1. Confirm the source image digest and published tag.
-2. Read the artifact workflow before dispatching it.
-3. Use the workflow's explicit safe variant and promotion inputs.
-4. Verify the artifact exists before promoting it.
-5. Report failed upstream image publication separately from artifact failure.
-
-Never overwrite a known-good artifact to force a broken rebuild through.
-
 ## When to Use
 
-Use for Installation media or downstream image artifacts.
+- Changing Anaconda branding, partitioning defaults, kickstart post-scripts,
+  Secure Boot key enrollment, or live-session tweaks.
+- Someone asks you to "build the ISO" from this repository.
 
-## When NOT to Use
+## Do not use when
 
-Do not use for Normal image build or release metadata only.
+- Promoting or verifying the image itself: use
+  [release-artifacts](../release-artifacts/SKILL.md).
 
-## Core Process
+## This repository builds no ISO
 
-Verify source digest, read artifact workflow, use explicit safe inputs.
+There is no ISO workflow in `.github/workflows/` and no ISO recipe in the
+`Justfile`. What this repository owns is the *contract* the ISO builder
+consumes, written into the image by `build_files/base/21-container-native-iso.sh`
+in a dedicated `RUN` layer of the `Containerfile` (after Stage 2, deliberately
+without the `/boot` tmpfs so Titanoboa can read the committed EFI payload).
 
-## Common Rationalizations
+That script writes, inside the image:
 
-- "A shortcut is harmless." Follow the source-of-truth and verification rules instead.
+| Path | Purpose |
+|---|---|
+| `/etc/anaconda/profile.d/bluefin.conf` | Anaconda profile, BTRFS scheme, hidden spokes |
+| `/usr/share/anaconda/interactive-defaults.ks` | `ostreecontainer` payload + `%include`s |
+| `/usr/share/anaconda/post-scripts/*.ks` | upgrade switch, flatpaks, Secure Boot enrollment |
+| `/usr/lib/bootc-image-builder/iso.yaml` | Titanoboa GRUB entries, label `titanoboa_boot` |
+| `/usr/lib/bluefin/livesys-session-extra` | live-only GNOME and unit overrides |
+| `/boot/efi/EFI/` | EFI payload copied from `/usr/lib/efi/*/*/EFI` |
+
+Media assembly happens downstream. `projectbluefin/dakota` is the BuildStream
+buildstream for Bluefin and owns `build.yml` / `publish.yml`; consult that
+repository, not this one, for media build and publish behavior.
+
+## The `:stable` pin
+
+`21-container-native-iso.sh` reads `image-ref` from
+`/usr/share/ublue-os/image-info.json` and then hardcodes
+`INSTALL_IMAGE="${IMAGE_REF}:stable"`. Every ISO built from any stream therefore
+installs and `bootc switch`es to `:stable`. This is intentional, not a bug — do
+not "fix" it to follow the build stream without a human decision.
+
+## Procedure
+
+1. Change the script, not the generated files; they exist only inside the image.
+2. Extend `tests/unit/21-container-native-iso_test.bats` in the same change.
+   The script honours `FAKE_ROOT` and `BRANDING_DIR` so it is testable without
+   a container.
+3. Run the unit suite and the repository gates.
+4. To verify end to end, build the image and inspect the written paths rather
+   than trusting the script text.
+
+```bash
+bats tests/unit/21-container-native-iso_test.bats
+just check && pre-commit run --all-files
+```
+
+Never overwrite a known-good published artifact to force a broken rebuild
+through.
 
 ## Red Flags
 
-- Promoting an artifact without verifying its source image.
+- Looking for an ISO workflow or `just iso` recipe in this repository.
+- Editing a generated Anaconda or kickstart file instead of the script.
+- Changing the `:stable` install pin without a human decision.
+- Promoting media without first verifying the source image digest.
 
 ## Verification
 
-- [ ] The selected source and focused command were checked.
-- [ ] The repository default gate passes.
+- [ ] `grep -rniE '\biso\b' .github/workflows/ Justfile` returns nothing —
+      this repository still builds no media.
+- [ ] `grep -n '21-container-native-iso' Containerfile` shows the script is
+      still invoked.
+- [ ] `bats tests/unit/21-container-native-iso_test.bats` passes.

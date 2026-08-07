@@ -19,5 +19,12 @@ For shell-library or setup-hook changes:
 bats tests/unit/
 ```
 
-Use the repository's configured development branch, keep changes focused, use
-Conventional Commits, and report exactly what you tested.
+Do the work in an isolated worktree cut from `testing`:
+
+```bash
+bash .github/scripts/worktree.sh new <branch>
+```
+
+Open pull requests against `testing`, never against `main`. Check for an
+existing pull request first, keep one logical change per pull request, use
+Conventional Commits, squash merge, and report exactly what you tested.

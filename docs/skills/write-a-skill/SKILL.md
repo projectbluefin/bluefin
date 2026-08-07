@@ -1,7 +1,7 @@
 ---
 name: write-a-skill
-version: "1.0"
-last_updated: 2026-08-06
+version: "1.1"
+last_updated: 2026-08-07
 id: write-a-skill
 one_line_purpose: Author a new skill directory that satisfies this repository's front-matter contract.
 entry_point: docs/skills/write-a-skill/SKILL.md
@@ -25,7 +25,7 @@ metadata:
 
 # Write a skill
 
-## Use when
+## When to Use
 
 - Adding a new `docs/skills/<name>/SKILL.md`.
 - Repairing front matter that `validate-docs.py` rejects.
@@ -78,10 +78,14 @@ matter. `metadata` accepts additional keys (`audience`, `context7-sources`).
 
 ## Body sections
 
-1. `## Use when` — concrete triggers.
+1. `## When to Use` — concrete triggers.
 2. `## Do not use when` — pointers to the neighbouring skills.
 3. `## Procedure` or `## Decision tree` — the agent workflow.
-4. `## Verify` — commands that re-derive project-internal facts.
+4. `## Red Flags` — the failure signatures a reader should recognise.
+5. `## Verification` — exact commands that re-derive project-internal facts.
+
+`validate-docs.py` does not check headings, so this ordering is a convention;
+keep it consistent so agents can skim any skill the same way.
 
 ## Local variances from projectbluefin/common
 
@@ -102,14 +106,15 @@ This repository intentionally diverges from `projectbluefin/common`:
   packages. Keep new front-matter constructs simple: top-level scalars, inline
   `[a, b]` lists, folded `>-` blocks, and one nested `metadata` mapping.
 
-## Red flags
+## Red Flags
 
 - `id`, `name`, or `entry_point` disagreeing with the directory name.
 - A `description` over 256 characters or missing its `Use when` sentence.
 - A new skill absent from `index.md`.
 - Duplicating a fact that a `source-of-truth` file already owns.
+- Templated filler such as a generic "a shortcut is harmless" rationalization.
 
-## Verify
+## Verification
 
 ```bash
 python3 .github/scripts/validate-docs.py

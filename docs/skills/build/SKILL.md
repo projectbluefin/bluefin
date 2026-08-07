@@ -1,7 +1,7 @@
 ---
 name: build
-version: "1.0"
-last_updated: 2026-08-06
+version: "1.1"
+last_updated: "2026-08-07"
 id: build
 one_line_purpose: Build, validate, and test image changes locally before pushing.
 entry_point: docs/skills/build/SKILL.md
@@ -26,75 +26,93 @@ metadata:
 
 # Build
 
-## Use when
+## When to Use
 
 - Editing `Containerfile`, `build_files/`, `system_files/`, or image inputs.
 - Running local validation or deciding whether a full build is necessary.
 
-## Do not use when
+## When Not to Use
 
 - Debugging a workflow: use [ci](../ci/SKILL.md).
 - Changing package placement: use [packages](../packages/SKILL.md).
 - Reviewing trust boundaries: use [security](../security/SKILL.md).
+- Choosing an image/tag/flavor target: use [variants](../variants/SKILL.md).
 
-## Procedure
+## Core Process
 
 1. Read the affected source and [`../../architecture.md`](../../architecture.md).
-2. Run the lightest checks first:
+2. Run the lightest checks first. `just check` only verifies `Justfile`
+   formatting; `pre-commit` runs shellcheck, actionlint, and this repo's
+   documentation validator (`.pre-commit-config.yaml`).
 
 ```bash
 just check
 pre-commit run --all-files
 ```
 
-3. For shell or hook changes, run:
+3. For shell or hook changes, run the Bats suite (`just test-unit` wraps this
+   and fails early when `bats` is missing):
 
 ```bash
 bats tests/unit/
+python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
-4. Build only when image assembly changed:
+4. Build only when image assembly changed. The recipe signature is
+   `build $image $tag $flavor` — the second argument is a **tag**, not a
+   stream name, and `just validate` rejects anything outside the `Justfile`
+   maps (see [variants](../variants/SKILL.md)):
 
 ```bash
-just build <image> <stream> <flavor>
+just build bluefin testing main
 just clean
 ```
 
-## Hard rules
+A local build resolves and cosign-verifies the `silverblue` base digest before
+building. `SKIP_BASE_VERIFY=1` is honoured only when `CI` is not `true`.
 
-- Do not update the unused `build_files/shared/build.sh`.
-- Keep `build_files/base/04-install-kernel-akmods.sh` as an entrypoint wrapper;
-  the orchestration logic lives in `04-install-kernel-akmods.py`.
-- `/tmp` does not persist between container `RUN` instructions.
-- Preserve Containerfile cache boundaries.
-- Report expensive builds accurately.
+## Containerfile layering
 
-## Verify
+`Containerfile` splits the build so unrelated edits do not invalidate the
+expensive package layer:
 
-A build task is complete only when the relevant focused checks pass and any
-required image validation is reported honestly.
+| Stage | Purpose |
+|---|---|
+| `ctx-build` | `scratch` context holding only `build_files/` + `image-versions.yml` |
+| `ctx` | `scratch` context with `system_files/`, `build_files/`, and the `common` and `brew` overlays |
+| `base-common` | Stage 1 — `03-packages.sh`, `04-install-kernel-akmods.sh`, `05-override-install.sh`, mounted from `ctx-build` |
+| `extension-builder` | Builds GNOME Shell extensions |
+| `base` | Stage 2 — `system_files` overlay, `00-image-info.sh`, cleanup, initramfs, repo validation, `20-tests.sh`, then the container-native ISO layer |
 
-## When to Use
-
-Use for Build or image changes.
-
-## When NOT to Use
-
-Do not use for Pure workflow, package-placement, or security-policy work.
-
-## Core Process
-
-Read the source, run focused checks, then run the default gate.
-
-## Common Rationalizations
-
-- "A shortcut is harmless." Follow the source-of-truth and verification rules instead.
+Buildah folds the mounted stage's image ID into the `RUN` cache key, which is
+why the package stage mounts `ctx-build` and not `ctx`. `BUILD_FILES_SHA` is a
+second, explicit cache key over `build_files/`.
 
 ## Red Flags
 
-- Full builds for documentation-only changes; editing dead orchestration code.
+- Running a full image build for a documentation-only change.
+- Editing `build_files/shared/build.sh` — nothing references it.
+- Adding orchestration to `build_files/base/04-install-kernel-akmods.sh`; it is
+  a wrapper that `exec`s `04-install-kernel-akmods.py`.
+- Widening the Stage 1 bind mount to `ctx`, which destroys the cache split.
+- Assuming `/tmp` persists between container `RUN` instructions.
+- Reporting a build as verified when only `just check` was run.
 
 ## Verification
 
-- [ ] The selected source and focused command were checked.
-- [ ] The repository default gate passes.
+```bash
+# Recipe signature and argument names
+grep -n '^build \$image' Justfile
+
+# Confirm build_files/shared/build.sh is unreferenced
+git grep -n 'shared/build.sh' -- . ':!docs'
+
+# Confirm the akmods wrapper only execs the Python orchestrator
+cat build_files/base/04-install-kernel-akmods.sh
+
+# Confirm the Stage 1 / Stage 2 mount split
+grep -n 'from=ctx-build\|from=ctx,' Containerfile
+
+# Default gate
+just check && pre-commit run --all-files
+```

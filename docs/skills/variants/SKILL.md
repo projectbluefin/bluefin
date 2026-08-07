@@ -1,7 +1,7 @@
 ---
 name: variants
-version: "1.0"
-last_updated: 2026-08-06
+version: "1.1"
+last_updated: "2026-08-07"
 id: variants
 one_line_purpose: Determine the correct image, stream, flavor, branch, and target.
 entry_point: docs/skills/variants/SKILL.md
@@ -20,49 +20,94 @@ metadata:
   source-of-truth:
     - Justfile
     - image-versions.yml
-    - .github/workflows/
+    - .github/workflows/build-image-testing.yml
+    - .github/workflows/promote-testing-to-main.yml
 ---
 
 # Variants
 
-## Procedure
-
-1. Read the image mapping in `Justfile`.
-2. Read the relevant build workflow matrix.
-3. Confirm the published tag from the workflow, not memory.
-4. Use the exact image reference in commands and reports.
-
-Do not infer that a branch, stream, or flavor is published merely because a
-name appears in documentation. Update this skill when the matrix changes.
-
-## Verify
-
-```bash
-git grep -n 'image_name\|stream\|flavor' Justfile image-versions.yml .github/workflows
-just check
-```
-
 ## When to Use
 
-Use for Image, stream, flavor, or target selection.
+- Choosing an image, tag, or flavor for a `just` command, report, or dispatch.
+- Deciding which branch a change or a published tag belongs to.
 
-## When NOT to Use
+## When Not to Use
 
-Do not use for Implementation changes unrelated to image targeting.
+- Implementation work unrelated to image targeting.
+- Registry-wide questions across the factory: see
+  [common image-registry](https://github.com/projectbluefin/common/blob/main/docs/skills/image-registry.md).
 
-## Core Process
+## Local build matrix
 
-Read the Justfile and workflow matrix, then use the exact source-derived target.
+`Justfile` defines three maps, and `just validate` rejects any combination
+outside them:
 
-## Common Rationalizations
+| Map | Accepted values |
+|---|---|
+| `images` | `bluefin` |
+| `tags` | `testing` |
+| `flavors` | `main`, `nvidia` |
 
-- "A shortcut is harmless." Follow the source-of-truth and verification rules instead.
+`just image_name <image> <tag> <flavor>` resolves the published name: a flavor
+matching `main` yields `bluefin`, any other flavor yields `<image>-<flavor>`
+(so `nvidia` → `bluefin-nvidia`).
+
+The recipe signature is `build $image $tag $flavor` — the second positional is
+a **tag**, not a stream name:
+
+```bash
+just build bluefin testing main
+just build bluefin testing nvidia
+```
+
+## CI matrix
+
+- `build-image-testing.yml` calls `reusable-build.yml@v1` with
+  `image_flavors: ["main", "nvidia"]` (narrowed by `detect-changes` on pull
+  requests), `stream_name: testing`, and `publish_stream_tag: "false"`.
+- `:testing` is moved separately by `post-testing-e2e.yml`'s
+  `promote-to-testing` job via `skopeo copy` on the verified digest, and only
+  when `workflow_run.head_branch == 'main'`.
+- `promote-testing-to-main.yml` promotes the variants
+  `[{"image":"bluefin"},{"image":"bluefin-nvidia"}]`.
+- `vulnerability-scan.yml` scans `bluefin` and `bluefin-nvidia` at
+  `default_tag: testing`.
+
+## Pinned upstream images
+
+`image-versions.yml` is the single source of truth for the layers this image
+consumes — `ghcr.io/projectbluefin/common` and `ghcr.io/ublue-os/brew`, each
+with an explicit digest. `just build` reads it with `yq`; `Containerfile`
+consumes them as `${IMAGE}@${IMAGE_SHA}`.
 
 ## Red Flags
 
-- Inferring published tags from prose.
+- Inferring a published tag from prose instead of the workflow.
+- Passing a stream name where the `Justfile` expects a tag.
+- Assuming `stable`, `lts`, `beta`, or `gts` are buildable here — `tags` only
+  contains `testing`.
+- Editing `image-versions.yml` digests by hand instead of letting
+  `track-common.yml` update them.
 
 ## Verification
 
-- [ ] The selected source and focused command were checked.
-- [ ] The repository default gate passes.
+```bash
+# Local image / tag / flavor maps
+sed -n '1,20p' Justfile
+
+# How a flavor becomes a published image name
+sed -n '/^image_name /,/echo "\${image_name}"/p' Justfile
+
+# CI flavor matrix and stream
+grep -n 'image_flavors\|stream_name\|publish_stream_tag' .github/workflows/build-image-testing.yml
+
+# Promotion and scan variants
+grep -n 'variants:' -A2 .github/workflows/promote-testing-to-main.yml
+grep -n 'image_matrix' .github/workflows/vulnerability-scan.yml
+
+# Pinned upstream layers
+cat image-versions.yml
+
+# What is actually published
+skopeo list-tags docker://ghcr.io/projectbluefin/bluefin
+```
