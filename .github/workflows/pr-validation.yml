@@ -140,7 +140,9 @@ jobs:
           kcov --version
 
       - name: Run unit tests
-        run: bats --formatter tap tests/unit/ | tee results.tap
+        run: |
+          set -o pipefail
+          bats --formatter tap tests/unit/ | tee results.tap
 
       - name: Generate BATS coverage report
         env:

@@ -110,7 +110,9 @@ two look the same in the UI and have different fixes.
 
 `cmd | tee results.tap` reports the exit status of `tee`, not of `cmd`, so a
 failing test run passes the step. Set `pipefail` or check `PIPESTATUS` whenever
-a test command is piped.
+a test command is piped. The authoritative BATS run in `pr-validation.yml`
+enables `pipefail` before teeing `results.tap`; the separate instrumented rerun
+collects coverage but does not own pass/fail.
 
 ## Hard rules
 
