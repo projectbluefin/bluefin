@@ -30,10 +30,24 @@ non-obvious invariant, source correction, or durable project convention.
 ## Rules
 
 - Use one canonical source per mutable fact.
+- Cross-repo procedure is canonical in `projectbluefin/common`; link it rather
+  than copying it into this repository.
 - Do not write session notes, personal machine details, or incident diaries.
 - Do not claim repository policy is an AAIF or MCP requirement.
 - Do not add client-specific or tool-specific instruction duplicates.
 - Do not document behavior that was not checked against source.
+- Do not add a bespoke per-convention CI gate to enforce skill discipline. The
+  factory retired `skill-drift` for that reason; see
+  [`common/docs/skills/skill-drift.md`](https://github.com/projectbluefin/common/blob/main/docs/skills/skill-drift.md).
+  The mandate is enforced at developer time by `pre-commit` and at review.
+
+## Where a learning goes
+
+Working in this repository, write to the closest `docs/skills/<name>/SKILL.md`.
+When the learning affects two or more factory repositories, apply it locally,
+then file an issue in `projectbluefin/common` describing the propagation. Do not
+self-apply a queue label. Never write to `ublue-os/*`. The canonical mandate is
+[`common/docs/skills/skill-improvement.md`](https://github.com/projectbluefin/common/blob/main/docs/skills/skill-improvement.md).
 
 ## Verify
 
