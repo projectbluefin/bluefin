@@ -72,6 +72,13 @@ Install the repository hook once after cloning:
 bash .github/scripts/install-hooks.sh
 ```
 
+Do feature work in an isolated worktree, never in the main checkout. The
+`pre-push` hook enforces this. See [worktrees](docs/skills/worktrees/SKILL.md).
+
+```bash
+bash .github/scripts/worktree.sh new fix/my-thing
+```
+
 ## Source-of-truth rules
 
 - `Justfile` defines local commands.
