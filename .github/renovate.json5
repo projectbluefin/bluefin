@@ -128,6 +128,15 @@
       "enabled": false
     },
     {
+      // The reusable E2E workflow must stay on the managed `v1` tag so testsuite
+      // fixes reach this repo's gate immediately. `config:best-practices` pins
+      // action refs to digests by default, which freezes the gate on a stale
+      // test tree. See docs/skills/ci/SKILL.md.
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["projectbluefin/testsuite"],
+      "enabled": false
+    },
+    {
       "matchDepNames": [
         "quay.io/fedora-ostree-desktops/silverblue",
         "ghcr.io/projectbluefin/common",
