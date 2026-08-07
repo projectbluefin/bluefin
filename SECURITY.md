@@ -28,8 +28,6 @@ repository's integration.
 
 ## Safe handling
 
-Do not commit credentials, private keys, tokens, or exploit payloads. Adding a
-new secret, token, or credential is a human decision — see the factory
-[secrets policy](https://github.com/projectbluefin/common/blob/main/docs/skills/secrets-policy.md).
-Preserve package-source isolation, signature verification, and release gates
-when investigating or fixing a security issue.
+Do not commit credentials, private keys, tokens, or exploit payloads. Preserve
+package-source isolation, signature verification, and release gates when
+investigating or fixing a security issue.

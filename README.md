@@ -32,7 +32,7 @@ sudo bootc switch ghcr.io/projectbluefin/bluefin:stable --enforce-container-sigp
 # Stable — NVIDIA
 sudo bootc switch ghcr.io/projectbluefin/bluefin-nvidia:stable --enforce-container-sigpolicy
 
-# Testing — tracks Fedora latest, rebuilt on every change to the testing branch
+# Testing — tracks Fedora latest, daily rebuilds
 sudo bootc switch ghcr.io/projectbluefin/bluefin:testing --enforce-container-sigpolicy
 # Testing — NVIDIA
 sudo bootc switch ghcr.io/projectbluefin/bluefin-nvidia:testing --enforce-container-sigpolicy
@@ -61,7 +61,6 @@ ujust enroll-secure-boot-key
 The public key is available in the [akmods repository](https://github.com/ublue-os/akmods/raw/main/certs/public_key.der). To enroll prior to installation or rebase:
 
 ```bash
-curl -LO https://github.com/ublue-os/akmods/raw/main/certs/public_key.der
 sudo mokutil --timeout -1
 sudo mokutil --import public_key.der
 ```

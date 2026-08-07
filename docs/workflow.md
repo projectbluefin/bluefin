@@ -4,12 +4,20 @@
 
 **Trust the Machines: workflows own state; humans provide intent.**
 
-The factory uses exactly seven canonical workflow labels: `1-triage`,
-`2-discussing`, `3-human-queue`, `3-clanker-queue`, `4-review`, `blocked`, and
-`hold`. Their meanings, ownership, and the full lifecycle are canonical in
-[`common/docs/skills/label-workflow.md`](https://github.com/projectbluefin/common/blob/main/docs/skills/label-workflow.md).
-The names are listed here only so they are searchable; if anything here
-disagrees with `common`, `common` wins and this file is the bug.
+The factory uses exactly seven canonical labels. The contract is canonical in
+[`common/docs/skills/label-workflow.md`](https://github.com/projectbluefin/common/blob/main/docs/skills/label-workflow.md);
+this list exists only so the names are searchable here. If it ever disagrees
+with `common`, `common` wins and this table is the bug.
+
+| Label | Meaning |
+|---|---|
+| `1-triage` | New work awaiting triage |
+| `2-discussing` | Discussion or design clarification |
+| `3-human-queue` | Admitted to the human-maintained queue |
+| `3-clanker-queue` | Admitted to the agent-maintained queue |
+| `4-review` | Pull request awaiting review |
+| `blocked` | Waiting on human input or an external dependency |
+| `hold` | Intentionally paused |
 
 Automation applies and repairs these labels. Agents do not claim work with slash
 commands, do not add or remove workflow labels, and do not manufacture queue
@@ -18,10 +26,7 @@ branch; read the current assignment, project state, branch, and pull request.
 
 Repository-local labels (`kind/`, `area/`, `priority/`, `release/`) are
 descriptive metadata, not workflow states. Confirm counts from `ujust report`
-are evidence for a human priority call, not a label transition. `cherry-pick` is
-an action trigger consumed by
-[`cherry-pick-to-stable.yml`](../.github/workflows/cherry-pick-to-stable.yml),
-not a state either.
+are evidence for a human priority call, not a label transition.
 
 ## Finding work
 
@@ -41,12 +46,10 @@ issue and stop.
 4. Run the relevant validation.
 5. Update the matching documentation when a reusable fact changes.
 6. Open a pull request targeting `testing` containing `Closes #NNN`; normal
-   feature work must not target `main`. `pr-validation.yml` fails a pull request
-   based on `main`.
+   feature work must not target `main`.
 
 Do not self-approve or self-merge. Automation applies `4-review`; a human
-reviews. Promotion of `testing` to `main` is automated — see
-[`release.md`](release.md).
+reviews.
 
 ## Comment policy
 
@@ -58,9 +61,8 @@ reviews. Promotion of `testing` to `main` is automated — see
 
 ## Documentation changes
 
-Documentation-only changes still use the normal review path.
-[`build-image-testing.yml`](../.github/workflows/build-image-testing.yml)
-ignores `**.md`, so Markdown-only changes do not trigger an image build.
+Documentation-only changes still use the normal review path. They should not
+trigger expensive image builds unless a workflow path filter says otherwise.
 
 ## Boundaries
 

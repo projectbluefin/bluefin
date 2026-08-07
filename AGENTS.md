@@ -37,8 +37,6 @@ canonical in `projectbluefin/common`; do not restate it here, link it.
 | Topic | Canonical source |
 |---|---|
 | Cross-repo agent hard rules | [`common/docs/factory/agentic-model.md`](https://github.com/projectbluefin/common/blob/main/docs/factory/agentic-model.md) |
-| Agent onboarding sequence | [`common/docs/skills/factory-onboarding.md`](https://github.com/projectbluefin/common/blob/main/docs/skills/factory-onboarding.md) |
-| Secrets and token policy | [`common/docs/skills/secrets-policy.md`](https://github.com/projectbluefin/common/blob/main/docs/skills/secrets-policy.md) |
 | Issue lifecycle and labels | [`common/docs/skills/label-workflow.md`](https://github.com/projectbluefin/common/blob/main/docs/skills/label-workflow.md) |
 | Human decision gates | [`common/docs/skills/human-gates.md`](https://github.com/projectbluefin/common/blob/main/docs/skills/human-gates.md) |
 | Skill improvement mandate | [`common/docs/skills/skill-improvement.md`](https://github.com/projectbluefin/common/blob/main/docs/skills/skill-improvement.md) |
@@ -64,7 +62,7 @@ bats tests/unit/
 Run a full image build only when image assembly or container behavior changed:
 
 ```bash
-just build <image> <tag> <flavor>
+just build <image> <stream> <flavor>
 just clean
 ```
 
@@ -93,12 +91,8 @@ bash .github/scripts/install-hooks.sh
 - Push to the `projectbluefin` remote explicitly. The `pre-push` hook rejects
   remotes outside the `projectbluefin` org and feature branches pushed from the
   main checkout.
-- All pull requests target `testing`. Never open a content PR against `main`;
-  `main` only receives squash promotion commits from the
-  `auto/promote-testing-to-main` branch.
+- All pull requests target `testing`. Never open a content PR against `main`.
 - One logical change per pull request; squash merge only.
-- Do not open a pull request autonomously. Present the plan and diff, then wait
-  for explicit human approval.
 - Check for an existing pull request before opening a new one:
   `gh pr list --repo projectbluefin/bluefin --state open --search "<topic>"`.
 - Every AI-authored commit carries both attribution trailers:
@@ -121,10 +115,6 @@ bash .github/scripts/install-hooks.sh
   `git diff --cached --name-only` before committing.
 - Never perform any write action against `ublue-os/*` or any repository outside
   the `projectbluefin` org. Read-only inspection is permitted.
-- Report a factory gap by filing an issue in `projectbluefin/common`; do not
-  self-apply queue labels and do not record backlogs in documentation.
-- Enforce process conventions through `pre-commit` at developer time. CI gates
-  protect the image artifact; do not add a bespoke per-convention CI job.
 - Keep documentation generic, source-linked, and reusable.
 - Do not create client-specific agent instructions or tool-specific duplicates.
 
