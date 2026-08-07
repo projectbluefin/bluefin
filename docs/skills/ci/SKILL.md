@@ -124,7 +124,10 @@ collects coverage but does not own pass/fail.
 - Keep end-to-end suites on their configured event.
 - Reference `projectbluefin/testsuite`'s reusable E2E workflow through its
   managed `@v1` tag, never an immutable digest; testsuite advances `v1` after
-  each successful main-branch merge.
+  each successful main-branch merge. `config:best-practices` pins action refs
+  to digests, so `projectbluefin/testsuite` is disabled for the
+  `github-actions` manager in `.github/renovate.json5`; without that rule
+  Renovate re-pins the ref and freezes the gate on a stale test tree.
 - Update this skill when workflow behavior changes.
 
 ## Verification
