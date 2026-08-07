@@ -29,12 +29,17 @@ COPY /build_files/base/21-container-native-iso.sh /build_files/base/21-container
 COPY /build_files/shared/utils/ghcurl /build_files/shared/utils/ghcurl
 
 # Overlay context for extension-builder and Stage 2. Carries system_files plus
-# only the build_files that run after Stage 1; the package-install scripts
-# (03/04/05) are deliberately absent so editing them cannot invalidate Stage 2.
+# only the build_files that run after Stage 1; package-install scripts and
+# shared package helpers are absent so editing them cannot invalidate Stage 2.
 # A script added to Stage 2 must be added here too, or the build fails loudly.
 FROM scratch AS ctx
 COPY /system_files /system_files
-COPY /build_files/shared /build_files/shared
+COPY /build_files/shared/build-gnome-extensions.sh /build_files/shared/build-gnome-extensions.sh
+COPY /build_files/shared/clean-stage.sh /build_files/shared/clean-stage.sh
+COPY /build_files/shared/disable-repos.sh /build_files/shared/disable-repos.sh
+COPY /build_files/shared/finalize-gnome-extensions.sh /build_files/shared/finalize-gnome-extensions.sh
+COPY /build_files/shared/utils/ghcurl /build_files/shared/utils/ghcurl
+COPY /build_files/shared/validate-repos.sh /build_files/shared/validate-repos.sh
 COPY /build_files/base/00-image-info.sh /build_files/base/00-image-info.sh
 COPY /build_files/base/17-cleanup.sh /build_files/base/17-cleanup.sh
 COPY /build_files/base/19-initramfs.sh /build_files/base/19-initramfs.sh
@@ -123,7 +128,7 @@ COPY --from=extension-builder /usr/share/glib-2.0/schemas /usr/share/glib-2.0/sc
 # Stage 2: overlay system_files, finalize extensions, clean up, and finalize the image.
 # Mounts from `ctx`, which excludes the package-install scripts, so an edit to
 # 03/04/05-*.sh cannot invalidate this stage. Editing any file this stage does
-# read — system_files/, build_files/shared/, or one of the four base scripts
+# read — system_files/, a copied shared helper, or one of the four base scripts
 # below — still rebuilds it, which is correct.
 RUN --mount=type=cache,dst=/var/cache/libdnf5 \
     --mount=type=bind,from=ctx,source=/system_files,target=/ctx/system_files \
