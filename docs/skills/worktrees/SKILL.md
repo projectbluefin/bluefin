@@ -1,7 +1,7 @@
 ---
 name: worktrees
-version: "1.1"
-last_updated: 2026-08-07
+version: "1.0"
+last_updated: 2026-08-06
 id: worktrees
 one_line_purpose: Do all feature work in isolated git worktrees.
 entry_point: docs/skills/worktrees/SKILL.md
@@ -25,7 +25,7 @@ metadata:
 
 # Worktrees
 
-## When to Use
+## Use when
 
 - Starting any change that is not a one-line fix on `testing`.
 - The main checkout is dirty, on a stale feature branch, or holds another
@@ -51,14 +51,9 @@ Two mechanisms enforce this:
 
 - `.worktrees/` is gitignored. A nested `.git` directory stages as a gitlink
   and silently corrupts history, so it must never be tracked.
-- The `pre-push` hook installed by `.github/scripts/install-hooks.sh` carries
-  two guards. Guard 1 rejects any push whose **remote URL** does not contain
-  `projectbluefin/` — it matches on URL, not remote name, so a direct clone
-  whose `origin` is `projectbluefin/bluefin` still passes. Guard 2 rejects a
-  feature branch pushed from the main checkout (`testing` and `main` are
-  allowed). Bypass one-offs with `SKIP_REMOTE_GUARD=1` or
-  `SKIP_WORKTREE_GUARD=1`. Install once after cloning:
-  `bash .github/scripts/install-hooks.sh`.
+- The `pre-push` hook refuses to push a feature branch from the main checkout,
+  and refuses any remote outside the `projectbluefin` org.
+  Install it once after cloning with `bash .github/scripts/install-hooks.sh`.
 
 ## Procedure
 
@@ -128,11 +123,6 @@ Never use `git add -A` or `git add .`. Stage explicit paths, then verify with
 
 ## Verification
 
-- [ ] `bash .github/scripts/worktree.sh list` shows the expected worktrees and
-      their PR state.
-- [ ] `git rev-parse --git-dir` differs from `git rev-parse --git-common-dir`,
-      proving you are inside a linked worktree.
-- [ ] `git -C "$(dirname "$(git rev-parse --git-common-dir)")" status --porcelain`
-      is empty and that checkout is on `testing` or `main`.
-- [ ] `python3 .github/scripts/validate-docs.py` reports a non-zero skill and
-      Markdown file count, not just a zero exit code.
+- [ ] `bash .github/scripts/worktree.sh list` shows the expected worktrees.
+- [ ] Repository checks were run and reported a non-zero file count.
+- [ ] The main checkout is clean and on `testing` or `main`.
