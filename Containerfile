@@ -20,9 +20,25 @@ FROM scratch AS ctx-build
 COPY /build_files /build_files
 COPY /image-versions.yml /image-versions.yml
 
+# ISO context. Same reasoning as `ctx-build`: the ISO RUN reads exactly two
+# files, so giving it its own scratch stage keeps an edit to
+# 21-container-native-iso.sh from invalidating Stage 2, and keeps an edit to
+# any other build_files script from invalidating the ISO layer.
+FROM scratch AS ctx-iso
+COPY /build_files/base/21-container-native-iso.sh /build_files/base/21-container-native-iso.sh
+COPY /build_files/shared/utils/ghcurl /build_files/shared/utils/ghcurl
+
+# Overlay context for extension-builder and Stage 2. Carries system_files plus
+# only the build_files that run after Stage 1; the package-install scripts
+# (03/04/05) are deliberately absent so editing them cannot invalidate Stage 2.
+# A script added to Stage 2 must be added here too, or the build fails loudly.
 FROM scratch AS ctx
 COPY /system_files /system_files
-COPY /build_files /build_files
+COPY /build_files/shared /build_files/shared
+COPY /build_files/base/00-image-info.sh /build_files/base/00-image-info.sh
+COPY /build_files/base/17-cleanup.sh /build_files/base/17-cleanup.sh
+COPY /build_files/base/19-initramfs.sh /build_files/base/19-initramfs.sh
+COPY /build_files/base/20-tests.sh /build_files/base/20-tests.sh
 COPY --from=common /system_files/shared /system_files/shared
 COPY --from=common /system_files/bluefin /system_files/shared
 COPY --from=brew /system_files /system_files/shared
@@ -105,8 +121,10 @@ COPY --from=extension-builder /usr/share/gnome-shell/extensions /usr/share/gnome
 COPY --from=extension-builder /usr/share/glib-2.0/schemas /usr/share/glib-2.0/schemas
 
 # Stage 2: overlay system_files, finalize extensions, clean up, and finalize the image.
-# Narrow mount (system_files/ + build_files/shared) means package-script changes
-# do NOT invalidate this stage when build_files/base is unchanged.
+# Mounts from `ctx`, which excludes the package-install scripts, so an edit to
+# 03/04/05-*.sh cannot invalidate this stage. Editing any file this stage does
+# read — system_files/, build_files/shared/, or one of the four base scripts
+# below — still rebuilds it, which is correct.
 RUN --mount=type=cache,dst=/var/cache/libdnf5 \
     --mount=type=bind,from=ctx,source=/system_files,target=/ctx/system_files \
     --mount=type=bind,from=ctx,source=/build_files/shared,target=/ctx/build_files/shared \
@@ -132,8 +150,8 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
 
 # Embed the Stable container-native ISO contract after Stage 2. This runs
 # without the /boot tmpfs so Titanoboa can consume the committed EFI payload.
-RUN --mount=type=bind,from=ctx,source=/build_files/base/21-container-native-iso.sh,target=/ctx/build_files/base/21-container-native-iso.sh \
-    --mount=type=bind,from=ctx,source=/build_files/shared/utils/ghcurl,target=/ctx/build_files/shared/utils/ghcurl \
+RUN --mount=type=bind,from=ctx-iso,source=/build_files/base/21-container-native-iso.sh,target=/ctx/build_files/base/21-container-native-iso.sh \
+    --mount=type=bind,from=ctx-iso,source=/build_files/shared/utils/ghcurl,target=/ctx/build_files/shared/utils/ghcurl \
     --mount=type=secret,id=GITHUB_TOKEN \
     bash -euo pipefail -c ' \
         mkdir -p /var/cache/bluefin-iso/helpers && \
