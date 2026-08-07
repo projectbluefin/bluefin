@@ -36,7 +36,8 @@ Two mechanisms enforce this:
 
 - `.worktrees/` is gitignored. A nested `.git` directory stages as a gitlink
   and silently corrupts history, so it must never be tracked.
-- The `pre-push` hook refuses to push a feature branch from the main checkout.
+- The `pre-push` hook refuses to push a feature branch from the main checkout,
+  and refuses any remote outside the `projectbluefin` org.
   Install it once after cloning with `bash .github/scripts/install-hooks.sh`.
 
 ## Procedure

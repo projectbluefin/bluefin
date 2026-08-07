@@ -3,7 +3,15 @@
 ## Before editing
 
 Read [`../AGENTS.md`](../AGENTS.md), then load the matching skill from
-[`skills/index.md`](skills/index.md). Start from the remote `testing` branch, not an unrelated local commit.
+[`skills/index.md`](skills/index.md). Do the work in an isolated worktree cut
+from the remote `testing` branch, not in the main checkout and not on an
+unrelated local commit:
+
+```bash
+bash .github/scripts/worktree.sh new <branch>
+```
+
+See [`skills/worktrees/SKILL.md`](skills/worktrees/SKILL.md).
 
 ## Required local checks
 

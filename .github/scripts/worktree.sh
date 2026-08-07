@@ -42,6 +42,15 @@ pr_state() {
     --json state --jq '.[0].state' 2>/dev/null
 }
 
+# Emit "<path>\t<branch>" for every worktree that has a branch checked out.
+# --porcelain paths may contain spaces, so take everything after the keyword
+# rather than a whitespace-split field. Detached worktrees emit no branch line
+# and are skipped.
+worktree_pairs() {
+  git worktree list --porcelain |
+    awk '/^worktree /{p=substr($0, 10)} /^branch /{sub("refs/heads/", "", $2); print p"\t"$2}'
+}
+
 cmd_new() {
   local branch="${1:-}"
   [[ -n "$branch" ]] || die "usage: worktree.sh new <branch-name>"
@@ -66,8 +75,7 @@ cmd_new() {
 
 cmd_list() {
   local path branch state
-  git worktree list --porcelain |
-    awk '/^worktree /{p=$2} /^branch /{sub("refs/heads/","",$2); print p"\t"$2}' |
+  worktree_pairs |
     while IFS=$'\t' read -r path branch; do
       [[ "$path" == "$ROOT" ]] && { printf '%-50s %-40s %s\n' "$path" "$branch" "(main checkout)"; continue; }
       state="$(pr_state "$branch" || true)"
@@ -122,8 +130,7 @@ cmd_prune() {
         echo "KEEP ${path} (branch ${branch}, PR: ${state:-none})"
         ;;
     esac
-  done < <(git worktree list --porcelain |
-    awk '/^worktree /{p=$2} /^branch /{sub("refs/heads/","",$2); print p"\t"$2}')
+  done < <(worktree_pairs)
 }
 
 case "${1:-}" in

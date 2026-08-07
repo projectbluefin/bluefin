@@ -35,13 +35,21 @@ fi
 
 cat > "$HOOKS_DIR/pre-push" << 'EOF'
 #!/usr/bin/env bash
-# Guard 1: block accidental pushes to origin (ublue-os/bluefin).
-# The correct remote for projectbluefin contributors is: git push projectbluefin <branch>
-remote="$1"
-if [[ "$remote" == "origin" ]]; then
-  echo "ERROR: Pushing to 'origin' (ublue-os/bluefin) is not allowed." >&2
+# Guard 1: never write to a repository outside the projectbluefin org.
+# Checking the URL rather than the remote name is deliberate: a clone made from
+# projectbluefin/bluefin already calls that remote 'origin', and blocking by
+# name would reject every legitimate push in that setup.
+# Bypass for a one-off with: SKIP_REMOTE_GUARD=1 git push <remote> <branch>
+remote_name="$1"
+remote_url="${2:-}"
+if [[ -z "$remote_url" && -n "$remote_name" ]]; then
+  remote_url="$(git remote get-url --push "$remote_name" 2>/dev/null || true)"
+fi
+if [[ -z "${SKIP_REMOTE_GUARD:-}" && -n "$remote_url" && "$remote_url" != *[:/]projectbluefin/* ]]; then
+  echo "ERROR: Refusing to push to '${remote_name}' (${remote_url})." >&2
+  echo "Only repositories in the projectbluefin org accept writes." >&2
   echo "Use: git push projectbluefin <branch>" >&2
-  echo "See docs/contributing.md for repository setup instructions." >&2
+  echo "Override with SKIP_REMOTE_GUARD=1. See docs/contributing.md." >&2
   exit 1
 fi
 
@@ -84,7 +92,7 @@ EOF
 fi
 
 chmod +x "$HOOKS_DIR/pre-push"
-echo "Installed pre-push hook: blocks pushes to origin and feature-branch pushes from the main checkout."
+echo "Installed pre-push hook: blocks pushes outside the projectbluefin org and feature-branch pushes from the main checkout."
 
 # Redirecting core.hooksPath would orphan every other global hook, so shim each
 # one this script does not manage back to the previously configured directory.
