@@ -1,7 +1,22 @@
 ---
 name: build
-description: Build, validate, and test image changes. Use for Containerfile, build scripts, image contents, or local validation.
+version: "1.0"
+last_updated: 2026-08-06
+id: build
+one_line_purpose: Build, validate, and test image changes locally before pushing.
+entry_point: docs/skills/build/SKILL.md
+category: ci-ops
+mcp_compliance_level: partial
+optimization_status: draft
+status: active
+dependencies: []
+tags: [build, containerfile, justfile, validation]
+description: >-
+  Covers Containerfile stages, build_files layering, local image builds, and
+  which validation gate to run for a given change. Use when editing image
+  inputs or deciding whether a full build is required.
 metadata:
+  type: procedure
   source-of-truth:
     - Containerfile
     - Justfile

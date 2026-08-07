@@ -1,7 +1,22 @@
 ---
 name: skill-improvement
-description: Add, refactor, validate, and maintain agent skills without duplicating facts.
+version: "1.0"
+last_updated: 2026-08-06
+id: skill-improvement
+one_line_purpose: Maintain and refactor agent skills without duplicating facts.
+entry_point: docs/skills/skill-improvement/SKILL.md
+category: meta
+mcp_compliance_level: partial
+optimization_status: draft
+status: active
+dependencies: []
+tags: [skills, documentation, maintenance, agents]
+description: >-
+  Explains when to update an existing skill, how to avoid duplicating
+  source-of-truth facts, and how to split oversized skills. Use when a
+  reusable fact or procedure changes and a skill must follow.
 metadata:
+  type: procedure
   audience:
     - contributor
     - maintainer

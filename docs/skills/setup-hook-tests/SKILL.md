@@ -1,7 +1,22 @@
 ---
 name: setup-hook-tests
-description: Add or extend Bats coverage for setup-hook scripts.
+version: "1.0"
+last_updated: 2026-08-06
+id: setup-hook-tests
+one_line_purpose: Add or extend Bats coverage for setup-hook scripts.
+entry_point: docs/skills/setup-hook-tests/SKILL.md
+category: test-authoring
+mcp_compliance_level: partial
+optimization_status: draft
+status: active
+dependencies: []
+tags: [testing, bats, setup-hooks, sandbox]
+description: >-
+  Describes the Bats sandbox layout, path patching, and command stubbing
+  used to test setup hooks in tests/unit. Use when adding or changing
+  coverage for a system_files setup hook.
 metadata:
+  type: procedure
   source-of-truth:
     - tests/unit/
     - system_files/
