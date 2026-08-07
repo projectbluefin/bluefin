@@ -91,6 +91,9 @@ MergeRaptor installation token to update one `testing-lab / bluefin` Check Run
 for the exact PR head SHA. Do not duplicate the result in a PR comment or commit
 status.
 
+The MergeRaptor installation on `projectbluefin` also needs **Checks: write**
+for `lab-check.yml`; see [MergeRaptor checks](references/mergeraptor-checks.md).
+
 ## Workflow input and job constraints
 
 A `type: string` input is truthy in an `if:` even when its value is `"false"`.
@@ -148,6 +151,7 @@ gh run watch RUN_ID --repo projectbluefin/bluefin --exit-status
 
 - [workflow reference](references/workflow-map.md)
 - [failure modes](references/failure-modes.md)
+- [MergeRaptor checks](references/mergeraptor-checks.md)
 
 ## When to Use
 
