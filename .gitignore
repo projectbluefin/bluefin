@@ -3,13 +3,18 @@ flatpak.*
 
 *_build
 *_build.*
-previous.manifest.json
-changelog.md
-output.env
 version.txt
 sbom_out/
 
 devcontainer
+
+# Isolated feature worktrees (see .github/scripts/worktree.sh).
+# Never track these: a nested .git directory stages as a gitlink and
+# silently corrupts history.
+.worktrees/
+
+# Scratch checkouts of sibling projectbluefin repos
+.common-ref/
 
 # Python cache
 __pycache__/

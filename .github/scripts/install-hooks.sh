@@ -4,20 +4,113 @@
 
 set -euo pipefail
 
-HOOKS_DIR="$(git rev-parse --git-dir)/hooks"
+# Hooks live in the common git dir, which is shared by every worktree.
+# --git-dir would resolve to the per-worktree directory, which has no hooks/.
+GIT_COMMON="$(cd "$(git rev-parse --git-common-dir)" && pwd -P)"
+HOOKS_DIR="${GIT_COMMON}/hooks"
+mkdir -p "$HOOKS_DIR"
+
+# A global core.hooksPath silently overrides repo-local hooks, so installing
+# into HOOKS_DIR alone would be a no-op. Point this repo at its own hooks and
+# chain to whatever was configured before, so global hooks keep running.
+CHAIN_DIR=""
+CONFIGURED_PATH="$(git config --get core.hooksPath || true)"
+if [[ -n "$CONFIGURED_PATH" && "$CONFIGURED_PATH" != "$HOOKS_DIR" ]]; then
+  CHAIN_DIR="$(cd "$CONFIGURED_PATH" 2>/dev/null && pwd -P || echo "$CONFIGURED_PATH")"
+  # Remember the target: on a re-run core.hooksPath already points here, so the
+  # original path would otherwise be lost and the global hooks silently dropped.
+  git config --local bluefin.chainedHooksPath "$CHAIN_DIR"
+  git config --local core.hooksPath "$HOOKS_DIR"
+  echo "NOTE: core.hooksPath was set to ${CHAIN_DIR}."
+  echo "      Repo-local core.hooksPath now points at ${HOOKS_DIR}; existing hooks are chained."
+else
+  # On a re-run core.hooksPath already points here, so recover the original
+  # target from the saved value, falling back to the global setting.
+  CHAIN_DIR="$(git config --local --get bluefin.chainedHooksPath || true)"
+  if [[ -z "$CHAIN_DIR" ]]; then
+    CHAIN_DIR="$(git config --global --get core.hooksPath || true)"
+    [[ -n "$CHAIN_DIR" ]] && git config --local bluefin.chainedHooksPath "$CHAIN_DIR"
+  fi
+fi
 
 cat > "$HOOKS_DIR/pre-push" << 'EOF'
 #!/usr/bin/env bash
-# Block accidental pushes to origin (ublue-os/bluefin).
-# The correct remote for projectbluefin contributors is: git push projectbluefin <branch>
-remote="$1"
-if [[ "$remote" == "origin" ]]; then
-  echo "ERROR: Pushing to 'origin' (ublue-os/bluefin) is not allowed." >&2
+# Guard 1: never write to a repository outside the projectbluefin org.
+# Checking the URL rather than the remote name is deliberate: a clone made from
+# projectbluefin/bluefin already calls that remote 'origin', and blocking by
+# name would reject every legitimate push in that setup.
+# Bypass for a one-off with: SKIP_REMOTE_GUARD=1 git push <remote> <branch>
+remote_name="$1"
+remote_url="${2:-}"
+if [[ -z "$remote_url" && -n "$remote_name" ]]; then
+  remote_url="$(git remote get-url --push "$remote_name" 2>/dev/null || true)"
+fi
+if [[ -z "${SKIP_REMOTE_GUARD:-}" && -n "$remote_url" && "$remote_url" != *[:/]projectbluefin/* ]]; then
+  echo "ERROR: Refusing to push to '${remote_name}' (${remote_url})." >&2
+  echo "Only repositories in the projectbluefin org accept writes." >&2
   echo "Use: git push projectbluefin <branch>" >&2
-  echo "See docs/contributing.md for repository setup instructions." >&2
+  echo "Override with SKIP_REMOTE_GUARD=1. See docs/contributing.md." >&2
   exit 1
+fi
+
+# Guard 2: keep the main checkout clean. Feature branches belong in a worktree
+# so the main checkout always sits on testing/main with nothing in flight.
+# Bypass for a one-off with: SKIP_WORKTREE_GUARD=1 git push projectbluefin <branch>
+if [[ -z "${SKIP_WORKTREE_GUARD:-}" ]]; then
+  git_dir="$(cd "$(git rev-parse --git-dir)" && pwd -P)"
+  git_common="$(cd "$(git rev-parse --git-common-dir)" && pwd -P)"
+  branch="$(git branch --show-current)"
+
+  # git_dir == git_common means this is the main checkout, not a linked worktree.
+  if [[ "$git_dir" == "$git_common" && -n "$branch" ]]; then
+    case "$branch" in
+      testing | main) ;;
+      *)
+        echo "ERROR: Refusing to push feature branch '${branch}' from the main checkout." >&2
+        echo "Create an isolated worktree instead:" >&2
+        echo "  bash .github/scripts/worktree.sh new ${branch}" >&2
+        echo "See docs/skills/worktrees/SKILL.md. Override with SKIP_WORKTREE_GUARD=1." >&2
+        exit 1
+        ;;
+    esac
+  fi
 fi
 EOF
 
+if [[ -n "$CHAIN_DIR" ]]; then
+  cat >> "$HOOKS_DIR/pre-push" << EOF
+
+# Chain to the previously configured hooks directory so global hooks still run.
+chained="${CHAIN_DIR}/pre-push"
+if [[ -x "\$chained" ]]; then
+  exec "\$chained" "\$@"
+elif [[ -f "\$chained" ]]; then
+  echo "WARNING: \$chained exists but is not executable; skipping it." >&2
+  echo "         Fix with: chmod +x \$chained" >&2
+fi
+EOF
+fi
+
 chmod +x "$HOOKS_DIR/pre-push"
-echo "Installed pre-push hook: blocks accidental pushes to origin (ublue-os/bluefin)."
+echo "Installed pre-push hook: blocks pushes outside the projectbluefin org and feature-branch pushes from the main checkout."
+
+# Redirecting core.hooksPath would orphan every other global hook, so shim each
+# one this script does not manage back to the previously configured directory.
+if [[ -n "$CHAIN_DIR" && -d "$CHAIN_DIR" ]]; then
+  for chained in "$CHAIN_DIR"/*; do
+    [[ -f "$chained" ]] || continue
+    hook="$(basename "$chained")"
+    [[ "$hook" == "pre-push" || "$hook" == *.sample ]] && continue
+
+    cat > "$HOOKS_DIR/$hook" << EOF
+#!/usr/bin/env bash
+# Passthrough shim to the previously configured hooks directory.
+# Generated by .github/scripts/install-hooks.sh — do not edit.
+chained="${CHAIN_DIR}/${hook}"
+[[ -x "\$chained" ]] || exit 0
+exec "\$chained" "\$@"
+EOF
+    chmod +x "$HOOKS_DIR/$hook"
+    echo "Chained global hook: ${hook}"
+  done
+fi
