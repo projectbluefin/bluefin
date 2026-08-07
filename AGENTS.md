@@ -66,7 +66,7 @@ just build <image> <stream> <flavor>
 just clean
 ```
 
-Install the repository hook once after cloning:
+Install the repository hooks once after cloning:
 
 ```bash
 bash .github/scripts/install-hooks.sh
@@ -84,9 +84,13 @@ bash .github/scripts/install-hooks.sh
 
 ## Change flow
 
-- Branch from the remote target, not from whatever is checked out:
-  `git fetch projectbluefin testing && git checkout -b <branch> projectbluefin/testing`.
-- Push to the `projectbluefin` remote explicitly; a pre-push hook blocks `origin`.
+- Do every change in an isolated worktree; never work in the main checkout. The
+  helper cuts the branch from a freshly fetched `projectbluefin/testing`:
+  `bash .github/scripts/worktree.sh new <branch>`. See
+  [worktrees](docs/skills/worktrees/SKILL.md).
+- Push to the `projectbluefin` remote explicitly. The `pre-push` hook rejects
+  remotes outside the `projectbluefin` org and feature branches pushed from the
+  main checkout.
 - All pull requests target `testing`. Never open a content PR against `main`.
 - One logical change per pull request; squash merge only.
 - Check for an existing pull request before opening a new one:
@@ -100,7 +104,7 @@ bash .github/scripts/install-hooks.sh
 
 ## Boundaries
 
-- Do not modify generated artifacts, caches, or worktree contents.
+- Do not modify generated artifacts, caches, or another task's worktree.
 - Never create, propose, or add new secrets, tokens, PATs, or app credentials.
   Reach for documented git and GitHub primitives first, then ask a human.
 - Do not add credentials or personal infrastructure details.

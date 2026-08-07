@@ -5,6 +5,7 @@ the selected skill directs you to do so.
 
 | Task | Skill |
 |---|---|
+| Set up an isolated workspace before starting work | [worktrees](worktrees/SKILL.md) |
 | Build or validate image changes | [build](build/SKILL.md) |
 | Debug workflows | [ci](ci/SKILL.md) |
 | Change package inputs | [packages](packages/SKILL.md) |
