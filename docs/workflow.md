@@ -6,7 +6,8 @@
 
 The factory uses exactly seven canonical labels. The contract is canonical in
 [`common/docs/skills/label-workflow.md`](https://github.com/projectbluefin/common/blob/main/docs/skills/label-workflow.md);
-this list exists only so the names are searchable here.
+this list exists only so the names are searchable here. If it ever disagrees
+with `common`, `common` wins and this table is the bug.
 
 | Label | Meaning |
 |---|---|
@@ -25,7 +26,7 @@ branch; read the current assignment, project state, branch, and pull request.
 
 Repository-local labels (`kind/`, `area/`, `priority/`, `release/`) are
 descriptive metadata, not workflow states. Confirm counts from `ujust report`
-escalate `priority/*` and are evidence for a human priority call.
+are evidence for a human priority call, not a label transition.
 
 ## Finding work
 
