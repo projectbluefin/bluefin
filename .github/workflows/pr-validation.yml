@@ -2,8 +2,11 @@ name: PR Validation — testsuite
 
 on:
   pull_request:
+    # Also trigger on `main` so check-base-branch can reject mis-targeted PRs;
+    # with a testing-only trigger a main-targeted PR silently gets zero checks.
     branches:
       - testing
+      - main
   merge_group:
 
 permissions:

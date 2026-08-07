@@ -65,13 +65,15 @@ The instrumented rerun does not gate the job — `Run unit tests` owns pass/fail
 Tests that `source` a library into the BATS process itself are not traced.
 
 A pull request whose head branch lives on a fork reports **zero** checks until a
-maintainer approves the run. That looks identical to "checks still queued", so
-confirm the state before waiting on it:
+maintainer approves the run — identical to "checks still queued", so confirm:
 
 ```bash
 gh pr view PR --repo projectbluefin/bluefin --json headRepositoryOwner,maintainerCanModify
 gh api -X POST repos/projectbluefin/bluefin/actions/runs/RUN_ID/approve
 ```
+
+Zero checks with no pending approval means the PR targets `main`. Retarget
+with `gh pr edit PR --base testing`; rebuild branches cut from `main`.
 
 `maintainerCanModify: true` also means fix commits can be pushed straight to the
 contributor's branch.

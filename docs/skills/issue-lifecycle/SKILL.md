@@ -32,7 +32,9 @@ metadata:
    `3-clanker-queue`.
 3. Create a scoped branch from `projectbluefin/testing` and keep the change small.
 4. Run the repository validation commands.
-5. Open a pull request containing `Closes #NNN`.
+5. Open a pull request targeting `testing` containing `Closes #NNN`
+   (`gh pr create --base testing ...`; `gh pr create` defaults to the
+   repository's default branch `main`, which the base-branch guard rejects).
 6. Respond to review feedback; do not self-approve or self-merge.
 
 Automation applies and repairs the seven canonical workflow labels. Agents do
