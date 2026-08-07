@@ -39,6 +39,26 @@ gh run view RUN_ID --repo projectbluefin/bluefin --log-failed
 gh run watch RUN_ID --repo projectbluefin/bluefin --exit-status
 ```
 
+## Verify a stream tag against its gate
+
+A stream tag (`:testing`, `:stable`) is a claim that a digest passed its gate.
+Verify the claim rather than trusting the tag: resolve what the tag points at,
+then confirm that digest actually passed.
+
+```bash
+skopeo inspect docker://ghcr.io/projectbluefin/bluefin:testing --format '{{.Digest}}'
+gh run list --repo projectbluefin/bluefin --workflow post-testing-e2e.yml --limit 20
+```
+
+A promotion job reported as `skipped` while the stream tag still advanced means
+something outside the gate is publishing it. Build-time tag computation is the
+usual source: the bare stream tag can sit in the tag list that the push step
+consumes, so excluding it from a conditional does not remove it from the push.
+Filter the stream tag out of the list itself.
+
+Never re-point or delete a published stream tag to "repair" this — that is
+user-visible and belongs to a human.
+
 ## Red flags
 
 - Re-pulling a large image during release only to generate metadata.
@@ -65,8 +85,11 @@ Read the workflow, verify the exact digest and artifact, then inspect the run.
 ## Red Flags
 
 - Guessing tags or bypassing a failed release gate.
+- Trusting a stream tag as evidence of promotion without resolving its digest.
+- A promotion job that has never succeeded, yet its stream tag keeps advancing.
 
 ## Verification
 
 - [ ] The selected source and focused command were checked.
+- [ ] The stream tag's digest was resolved and traced to a passing gate run.
 - [ ] The repository default gate passes.
