@@ -2,9 +2,15 @@ name: PR Validation — testsuite
 
 on:
   pull_request:
+    # Also trigger on `main` so check-base-branch can reject mis-targeted PRs;
+    # with a testing-only trigger a main-targeted PR silently gets zero checks.
     branches:
       - testing
+      - main
   merge_group:
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
