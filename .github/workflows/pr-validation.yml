@@ -79,18 +79,100 @@ jobs:
     needs: [check-base-branch]
     if: always() && (needs.check-base-branch.result == 'success' || needs.check-base-branch.result == 'skipped')
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 25
     permissions:
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Install bats
-        run: sudo apt-get install -y bats
+      - name: Install unit test tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bats \
+            binutils-dev \
+            build-essential \
+            cmake \
+            libcurl4-openssl-dev \
+            libdw-dev \
+            libelf-dev \
+            libiberty-dev \
+            libssl-dev \
+            zlib1g-dev
+
+      - name: Cache kcov build
+        id: kcov-cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/bluefin-kcov
+          key: kcov-v43-a39874f-${{ runner.os }}-${{ runner.arch }}
+
+      - name: Install kcov
+        env:
+          KCOV_SOURCE_SHA: a39874f938ce13f7a65f253120d1ec946b349ffe # v43
+          KCOV_ARCHIVE_SHA256: dac01569171979477b500924be264d2a1bc649dae6010536228cbb319344d516
+        run: |
+          set -euo pipefail
+          cache_dir="${HOME}/.cache/bluefin-kcov"
+          if [[ -x "${cache_dir}/usr/local/bin/kcov" ]]; then
+            sudo cp -a "${cache_dir}/usr/local/." /usr/local/
+            kcov --version
+            exit 0
+          fi
+
+          archive="${RUNNER_TEMP}/kcov.tar.gz"
+          source_dir="${RUNNER_TEMP}/kcov-source"
+          build_dir="${RUNNER_TEMP}/kcov-build"
+
+          curl --proto '=https' --tlsv1.2 --fail --silent --show-error --location \
+            "https://github.com/SimonKagstrom/kcov/archive/${KCOV_SOURCE_SHA}.tar.gz" \
+            --output "${archive}"
+          echo "${KCOV_ARCHIVE_SHA256}  ${archive}" | sha256sum --check
+
+          mkdir -p "${source_dir}"
+          tar --extract --gzip --file "${archive}" \
+            --directory "${source_dir}" --strip-components=1
+          cmake -S "${source_dir}" -B "${build_dir}" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "${build_dir}" --parallel "$(nproc)"
+          DESTDIR="${cache_dir}" cmake --install "${build_dir}"
+          sudo cp -a "${cache_dir}/usr/local/." /usr/local/
+          kcov --version
 
       - name: Run unit tests
         run: bats --formatter tap tests/unit/ | tee results.tap
+
+      - name: Generate BATS coverage report
+        env:
+          INCLUDE_PATHS: ${{ github.workspace }}/build_files,${{ github.workspace }}/system_files
+          EXCLUDE_PATHS: ${{ github.workspace }}/tests,${{ github.workspace }}/.github
+        run: |
+          set -euo pipefail
+          export KCOV_REPO_ROOT="${GITHUB_WORKSPACE}"
+          export KCOV_RAW_DIR="${GITHUB_WORKSPACE}/coverage/kcov-raw"
+          export PATH="${GITHUB_WORKSPACE}/tests/coverage/bin:${PATH}"
+          mkdir -p "${KCOV_RAW_DIR}"
+
+          # The instrumented rerun exists to collect coverage; the "Run unit
+          # tests" step above owns pass/fail, so a failing test must not mask
+          # the coverage report.
+          coverage_status=0
+          kcov \
+            --bash-method=DEBUG \
+            --bash-parse-files-in-dir="${INCLUDE_PATHS}" \
+            --include-path="${INCLUDE_PATHS}" \
+            --exclude-path="${EXCLUDE_PATHS}" \
+            "${KCOV_RAW_DIR}/top" \
+            bash -c 'exec bats --formatter tap tests/unit/ > coverage/bats-coverage-run.tap 2>&1' \
+            || coverage_status=$?
+          echo "instrumented bats exit status: ${coverage_status}"
+          grep -c '^ok' coverage/bats-coverage-run.tap
+          python3 tests/coverage/merge_kcov.py \
+            --raw-dir "${KCOV_RAW_DIR}" \
+            --output-dir coverage/kcov \
+            --repo-root "${GITHUB_WORKSPACE}"
+          cat coverage/kcov/summary.md >> "${GITHUB_STEP_SUMMARY}"
+          rm -rf "${KCOV_RAW_DIR}"
 
       - name: Upload TAP results
         if: always()
@@ -98,6 +180,16 @@ jobs:
         with:
           name: bats-tap-results
           path: results.tap
+
+      - name: Upload BATS coverage report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bats-kcov-report
+          path: coverage/kcov
+
+      - name: Run Python unit tests
+        run: python3 -m unittest discover -s tests -p 'test_*.py'
 
   testsuite:
     name: E2E smoke
