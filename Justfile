@@ -218,6 +218,10 @@ build $image="bluefin" $tag="testing" $flavor="main" rechunk="0" ghcr="0" pipeli
     BUILD_ARGS+=("--build-arg" "IMAGE_VENDOR={{ repo_organization }}")
     BUILD_ARGS+=("--build-arg" "KERNEL=${kernel_release}")
     BUILD_ARGS+=("--build-arg" "VERSION=${ver}")
+    # Explicit content hash over build_files/ so Stage 1 rebuilds when a script changes.
+    # -r keeps an empty tree from hashing stdin; paths are included so renames count.
+    BUILD_FILES_SHA="$(cd "{{ justfile_directory() }}" && find build_files -type f -print0 | LC_ALL=C sort -z | xargs -0 -r sha256sum | sha256sum | cut -d' ' -f1)"
+    BUILD_ARGS+=("--build-arg" "BUILD_FILES_SHA=${BUILD_FILES_SHA}")
     if [[ -z "$(git status -s)" ]]; then
         BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
     fi
