@@ -56,6 +56,11 @@ Coverage runs route child `bash <script>` calls through
 does not trace those child shells. The wrapper records each sandbox copy's
 original source path, and `merge_kcov.py` combines those hits with kcov's
 pre-parsed source inventory. A zero-line report is an instrumentation failure.
+kcov is not packaged for Ubuntu 24.04, so the job builds v43 from a pinned,
+SHA-256-verified source archive and caches the result. The coverage run must
+redirect BATS output to a file: kcov captures child stdout through a pipe it
+stops draining, so streaming the full TAP log through it deadlocks the job.
+Tests that `source` a library into the BATS process itself are not traced.
 
 Containerfile stages that consume source through bind mounts inherit the mounted
 stage's image ID as part of their cache key. Give the package stage its own

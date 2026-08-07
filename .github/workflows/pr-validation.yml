@@ -79,7 +79,7 @@ jobs:
     needs: [check-base-branch]
     if: always() && (needs.check-base-branch.result == 'success' || needs.check-base-branch.result == 'skipped')
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     permissions:
       contents: read
     steps:
@@ -101,12 +101,26 @@ jobs:
             libssl-dev \
             zlib1g-dev
 
+      - name: Cache kcov build
+        id: kcov-cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/bluefin-kcov
+          key: kcov-v43-a39874f-${{ runner.os }}-${{ runner.arch }}
+
       - name: Install kcov
         env:
           KCOV_SOURCE_SHA: a39874f938ce13f7a65f253120d1ec946b349ffe # v43
           KCOV_ARCHIVE_SHA256: dac01569171979477b500924be264d2a1bc649dae6010536228cbb319344d516
         run: |
           set -euo pipefail
+          cache_dir="${HOME}/.cache/bluefin-kcov"
+          if [[ -x "${cache_dir}/usr/local/bin/kcov" ]]; then
+            sudo cp -a "${cache_dir}/usr/local/." /usr/local/
+            kcov --version
+            exit 0
+          fi
+
           archive="${RUNNER_TEMP}/kcov.tar.gz"
           source_dir="${RUNNER_TEMP}/kcov-source"
           build_dir="${RUNNER_TEMP}/kcov-build"
@@ -120,8 +134,9 @@ jobs:
           tar --extract --gzip --file "${archive}" \
             --directory "${source_dir}" --strip-components=1
           cmake -S "${source_dir}" -B "${build_dir}" -DCMAKE_BUILD_TYPE=Release
-          cmake --build "${build_dir}" --parallel 2
-          sudo cmake --install "${build_dir}"
+          cmake --build "${build_dir}" --parallel "$(nproc)"
+          DESTDIR="${cache_dir}" cmake --install "${build_dir}"
+          sudo cp -a "${cache_dir}/usr/local/." /usr/local/
           kcov --version
 
       - name: Run unit tests
@@ -140,11 +155,12 @@ jobs:
 
           kcov \
             --bash-method=DEBUG \
-            --bash-parse-files-in-dirs="${INCLUDE_PATHS}" \
+            --bash-parse-files-in-dir="${INCLUDE_PATHS}" \
             --include-path="${INCLUDE_PATHS}" \
             --exclude-path="${EXCLUDE_PATHS}" \
             "${KCOV_RAW_DIR}/top" \
-            bats tests/unit/
+            bash -c 'exec bats --formatter tap tests/unit/ > coverage/bats-coverage-run.tap 2>&1'
+          tail -n 20 coverage/bats-coverage-run.tap
           python3 tests/coverage/merge_kcov.py \
             --raw-dir "${KCOV_RAW_DIR}" \
             --output-dir coverage/kcov \

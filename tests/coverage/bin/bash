@@ -3,8 +3,11 @@ set -euo pipefail
 
 real_bash="/usr/bin/bash"
 
+kcov_bin="$(command -v kcov || true)"
+
 if [[ "${KCOV_ACTIVE:-}" == "1" || -z "${KCOV_RAW_DIR:-}" ||
-    -z "${KCOV_REPO_ROOT:-}" || $# -eq 0 || "$1" == -* || ! -f "$1" ]]; then
+    -z "${KCOV_REPO_ROOT:-}" || -z "${kcov_bin}" || ! -d "${KCOV_RAW_DIR}" ||
+    $# -eq 0 || "$1" == -* || ! -f "$1" ]]; then
     exec "${real_bash}" "$@"
 fi
 
@@ -35,7 +38,7 @@ fi
 run_dir="$(mktemp -d "${KCOV_RAW_DIR}/run.XXXXXX")"
 printf '%s\n' "${source_path}" > "${run_dir}/source-path"
 shift
-exec env KCOV_ACTIVE=1 kcov \
+exec env KCOV_ACTIVE=1 "${kcov_bin}" \
     --bash-method=DEBUG \
     --include-path="$(dirname "${script}"),${KCOV_REPO_ROOT}/build_files,${KCOV_REPO_ROOT}/system_files" \
     --exclude-path="${KCOV_REPO_ROOT}/.github" \
