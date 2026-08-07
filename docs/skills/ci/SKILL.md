@@ -50,6 +50,18 @@ gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 Read the actual workflow before describing or changing its behavior. Shared
 logic belongs in the reusable workflow that owns it; callers should stay thin.
 
+A pull request whose head branch lives on a fork reports **zero** checks until a
+maintainer approves the run. That looks identical to "checks still queued", so
+confirm the state before waiting on it:
+
+```bash
+gh pr view PR --repo projectbluefin/bluefin --json headRepositoryOwner,maintainerCanModify
+gh api -X POST repos/projectbluefin/bluefin/actions/runs/RUN_ID/approve
+```
+
+`maintainerCanModify: true` also means fix commits can be pushed straight to the
+contributor's branch.
+
 Containerfile stages that consume source through bind mounts inherit the mounted
 stage's image ID as part of their cache key. Give the package stage its own
 narrow `scratch` context so unrelated edits do not invalidate it, and pass an
@@ -62,6 +74,25 @@ That workflow must exist on the default branch and uses a short-lived
 MergeRaptor installation token to update one `testing-lab / bluefin` Check Run
 for the exact PR head SHA. Do not duplicate the result in a PR comment or commit
 status.
+
+## Workflow input and job constraints
+
+A `type: string` input is truthy in an `if:` even when its value is `"false"`.
+Gating on the bare input therefore fails **open**. Compare explicitly and treat
+any unexpected value as the safe state:
+
+```yaml
+if: inputs.publish_stream_tag == 'true'
+```
+
+A job that calls a reusable workflow accepts only `name`, `uses`, `with`,
+`secrets`, `needs`, `if`, and `permissions`. `continue-on-error` and
+`runs-on` are rejected, so a reusable-workflow call cannot be made advisory —
+it either gates or it is absent. `actionlint` catches this.
+
+A job listed in `needs:` without `always()` makes its dependents `skipped` when
+it fails. Confirm whether a promotion job is *failing* or *never running*; the
+two look the same in the UI and have different fixes.
 
 ## Hard rules
 
@@ -113,3 +144,6 @@ Read the affected YAML, identify the owning reusable workflow, validate locally.
 
 - Changing a caller when the behavior belongs in shared workflow logic.
 - Posting a lab result as a PR comment instead of updating the MergeRaptor Check Run.
+- Reading a gate's log message as proof of what it did. A step can report that a
+  tag was excluded and push it anyway; confirm against the pushed artifact.
+- Treating a fork PR with no checks as pending rather than unapproved.
