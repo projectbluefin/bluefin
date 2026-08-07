@@ -7,13 +7,11 @@ on:
       - main
     paths:
       - ".github/renovate.json5"
-      - ".github/workflows/renovate.yml"
   push:
     branches:
       - main
     paths:
       - ".github/renovate.json5"
-      - ".github/workflows/renovate.yml"
 
 permissions: {}
 
