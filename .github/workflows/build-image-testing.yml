@@ -61,5 +61,7 @@ jobs:
           || '["main", "nvidia"]'
         }}
       stream_name: testing
+      # Gate the mutable :testing pointer behind post-testing-e2e.yml's
+      # promote-to-testing job. This build must publish version alias tags only.
       publish_stream_tag: "false"
       pr_number: ${{ inputs.pr_number }}
