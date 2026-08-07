@@ -59,6 +59,12 @@ Filter the stream tag out of the list itself.
 Never re-point or delete a published stream tag to "repair" this — that is
 user-visible and belongs to a human.
 
+Release consumes `:testing` as its **input**: the release job resolves the
+digest behind that tag rather than re-running end-to-end validation. The gate
+on `:testing` is therefore the only functional gate, and anything it admits
+propagates to `:stable` unchallenged. A gate step that reports `skipped` must
+never be accepted as a pass — treat only an explicit success as a pass.
+
 ## Red flags
 
 - Re-pulling a large image during release only to generate metadata.

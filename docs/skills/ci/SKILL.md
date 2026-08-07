@@ -108,6 +108,10 @@ A job listed in `needs:` without `always()` makes its dependents `skipped` when
 it fails. Confirm whether a promotion job is *failing* or *never running*; the
 two look the same in the UI and have different fixes.
 
+`cmd | tee results.tap` reports the exit status of `tee`, not of `cmd`, so a
+failing test run passes the step. Set `pipefail` or check `PIPESTATUS` whenever
+a test command is piped.
+
 ## Hard rules
 
 - Verify the pull request base branch before debugging missing checks.
