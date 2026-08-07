@@ -12,10 +12,17 @@ ARG BREW_IMAGE_SHA=""
 FROM ${COMMON_IMAGE}@${COMMON_IMAGE_SHA} AS common
 FROM ${BREW_IMAGE}@${BREW_IMAGE_SHA} AS brew
 
+# Package-install context. Kept separate from `ctx` on purpose: buildah folds the
+# mounted stage's image ID into the RUN cache key, so a combined context would make
+# every system_files edit invalidate Stage 1. Only build_files/ and image-versions.yml
+# belong here.
+FROM scratch AS ctx-build
+COPY /build_files /build_files
+COPY /image-versions.yml /image-versions.yml
+
 FROM scratch AS ctx
 COPY /system_files /system_files
 COPY /build_files /build_files
-COPY /image-versions.yml /image-versions.yml
 COPY --from=common /system_files/shared /system_files/shared
 COPY --from=common /system_files/bluefin /system_files/shared
 COPY --from=brew /system_files /system_files/shared
@@ -32,19 +39,23 @@ ARG IMAGE_VENDOR="projectbluefin"
 ARG KERNEL="6.10.10-200.fc40.x86_64"
 ARG UBLUE_IMAGE_TAG="stable"
 ARG IMAGE_FLAVOR=""
+ARG BUILD_FILES_SHA=""
 
 # Stage 1 — Package installs only (cache key: build_files/)
 # Runs the package-install layer (`03-packages.sh`, `04-install-kernel-akmods.sh`,
 # `05-override-install.sh`) before any system_files overlay work.
-# Narrow mount (build_files/ only) enables granular layer caching:
+# Mounting from `ctx-build` (not `ctx`) enables granular layer caching:
 # a system_files-only PR change gets a cache hit here, saving 20-80 min.
+# BUILD_FILES_SHA is a second, explicit cache key over build_files/ so the layer
+# still rebuilds if a builder ever stops keying on the mounted stage.
 RUN --mount=type=cache,dst=/var/cache/libdnf5 \
     --mount=type=cache,dst=/var/cache/rpm-ostree \
-    --mount=type=bind,from=ctx,source=/build_files,target=/ctx/build_files \
-    --mount=type=bind,from=ctx,source=/image-versions.yml,target=/ctx/image-versions.yml \
+    --mount=type=bind,from=ctx-build,source=/build_files,target=/ctx/build_files \
+    --mount=type=bind,from=ctx-build,source=/image-versions.yml,target=/ctx/image-versions.yml \
     --mount=type=secret,id=GITHUB_TOKEN \
     --mount=type=tmpfs,dst=/boot \
     bash -euo pipefail -c ' \
+        echo "build_files cache key: ${BUILD_FILES_SHA}" && \
         dnf5 config-manager setopt keepcache=1 && \
         dnf5 config-manager setopt install_weak_deps=0 && \
         dnf5 -y swap fedora-logos generic-logos && \
