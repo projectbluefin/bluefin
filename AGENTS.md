@@ -21,6 +21,14 @@ Stable guidance:
 - Release model: [`docs/release.md`](docs/release.md)
 - Issue lifecycle: [`docs/workflow.md`](docs/workflow.md)
 
+## Agent fast path
+
+- Read source before asserting project-internal facts such as image names, tags,
+  or workflow outputs. Use `gh api` to inspect workflows, not memory.
+- Look up external tool documentation through Context7 before quoting it.
+- When a session surfaces a non-obvious pattern or workaround, update the
+  matching skill in the same change.
+
 ## Factory contracts
 
 This repository is part of the `projectbluefin` factory. Cross-repo procedure is
