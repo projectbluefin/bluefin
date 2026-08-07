@@ -105,6 +105,23 @@ whether a branch is finished. `worktree.sh` asks the forge via `gh` instead.
 | `worktree already exists` | Stale directory from earlier work | `worktree.sh done <branch>`, or `git worktree prune` if the directory is already gone |
 | Untracked `.worktrees/` in `git status` | Hook and ignore rules predate this setup | Confirm `.worktrees/` is in `.gitignore` |
 | Uncommitted work blocks `done` | Real changes in the worktree | Commit them, or `git worktree remove <path> --force` to discard |
+| A repo script reports zero files | It filters `.worktrees` out by path and is running inside one | Run it from the main checkout, or fix the filter to be checkout-relative |
+
+Tooling that excludes `.worktrees/` by absolute path components silently matches
+*everything* when it runs from inside a worktree. A validator that passes with a
+zero-file count is failing, not succeeding — check the count, not the exit code.
 
 Never use `git add -A` or `git add .`. Stage explicit paths, then verify with
 `git status` and `git diff --cached --name-only` before committing.
+
+## Red Flags
+
+- Feature work committed directly in the main checkout.
+- A validator or linter reporting suspiciously few files while run in a worktree.
+- Removing a worktree with uncommitted changes instead of resolving them.
+
+## Verification
+
+- [ ] `bash .github/scripts/worktree.sh list` shows the expected worktrees.
+- [ ] Repository checks were run and reported a non-zero file count.
+- [ ] The main checkout is clean and on `testing` or `main`.
