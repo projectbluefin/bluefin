@@ -1,7 +1,22 @@
 ---
 name: packages
-description: Add, remove, or classify RPM, Flatpak, COPR, and Homebrew inputs.
+version: "1.0"
+last_updated: 2026-08-06
+id: packages
+one_line_purpose: Add, remove, or classify RPM, Flatpak, COPR, and Homebrew inputs.
+entry_point: docs/skills/packages/SKILL.md
+category: ci-ops
+mcp_compliance_level: partial
+optimization_status: draft
+status: active
+dependencies: []
+tags: [packages, rpm, flatpak, copr, homebrew]
+description: >-
+  Provides the decision tree for where a package belongs and the files that
+  declare each package source. Use when adding, removing, or relocating a
+  package input.
 metadata:
+  type: procedure
   source-of-truth:
     - build_files/packages/
     - build_files/base/03-packages.sh
