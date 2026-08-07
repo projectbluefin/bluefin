@@ -185,6 +185,25 @@ jobs:
           cat coverage/kcov/summary.md >> "${GITHUB_STEP_SUMMARY}"
           rm -rf "${KCOV_RAW_DIR}"
 
+      - name: Enforce BATS coverage threshold
+        run: |
+          set -euo pipefail
+          # Minimum line coverage threshold (raise this as coverage improves).
+          THRESHOLD=30
+          COBERTURA="coverage/kcov/cobertura.xml"
+          if [[ ! -f "${COBERTURA}" ]]; then
+            echo "warning: ${COBERTURA} not found; skipping threshold check" >&2
+            exit 0
+          fi
+          RATE=$(python3 -c "import xml.etree.ElementTree as ET; root=ET.parse('${COBERTURA}').getroot(); print(root.attrib.get('line-rate','0'))")
+          PCT=$(python3 -c "print(f'{float(\"${RATE}\") * 100:.1f}')")
+          echo "BATS line coverage: ${PCT}% (threshold: ${THRESHOLD}%)"
+          python3 -c "import sys; sys.exit(0 if float('${RATE}') * 100 >= ${THRESHOLD} else 1)" || {
+            echo "FAIL: coverage ${PCT}% is below ${THRESHOLD}% minimum" >&2
+            exit 1
+          }
+          echo "PASS: coverage ${PCT}% >= ${THRESHOLD}%"
+
       - name: Upload TAP results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
