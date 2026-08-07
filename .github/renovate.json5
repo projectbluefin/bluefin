@@ -1,6 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
+    "local>projectbluefin/renovate-config",
     "config:best-practices",
   ],
   "baseBranchPatterns": ["testing"],
@@ -72,13 +73,11 @@
 
   "packageRules": [
     {
+      "description": "Automerge chore dep updates (digest, pin, patch, minor) when CI passes",
       "automerge": true,
-      "matchUpdateTypes": ["pin", "pinDigest"]
-    },
-    {
-      "automerge": true,
-      "matchManagers": ["dockerfile"],
-      "matchUpdateTypes": ["digest"]
+      "automergeType": "pr",
+      "automergeStrategy": "squash",
+      "matchUpdateTypes": ["digest", "pin", "pinDigest", "patch", "minor"]
     },
     {
       "matchUpdateTypes": ["pin", "digest", "pinDigest"],
@@ -121,6 +120,12 @@
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["pinDigest", "digest"],
       "addLabels": ["renovate/low-risk"]
+    },
+    {
+      "description": "Keep projectbluefin/actions on its managed v1 tag",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["projectbluefin/actions"],
+      "enabled": false
     },
     {
       "matchDepNames": [
