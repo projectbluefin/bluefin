@@ -1,7 +1,7 @@
 ---
 name: dependency-automation
-version: "1.0"
-last_updated: 2026-08-06
+version: "1.1"
+last_updated: 2026-08-07
 id: dependency-automation
 one_line_purpose: Review Renovate configuration and automated dependency updates.
 entry_point: docs/skills/dependency-automation/SKILL.md
@@ -18,7 +18,6 @@ description: >-
 metadata:
   type: procedure
   source-of-truth:
-    - renovate.json
     - .github/renovate.json5
     - .github/workflows/renovate-automerge.yml
 ---
@@ -27,7 +26,9 @@ metadata:
 
 ## Procedure
 
-1. Read the repository configuration and the affected workflow.
+1. Read the canonical `.github/renovate.json5` configuration and the affected
+   workflow. Do not add another supported Renovate config filename: Renovate
+   stops at the first match and would silently shadow the canonical file.
 2. Validate configuration changes with the repository's configured validator.
 3. Preserve the configured authentication model; never add personal access
    tokens or credentials.

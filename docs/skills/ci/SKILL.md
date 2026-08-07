@@ -77,9 +77,11 @@ gh api -X POST repos/projectbluefin/bluefin/actions/runs/RUN_ID/approve
 contributor's branch.
 
 Containerfile stages that consume source through bind mounts inherit the mounted
-stage's image ID as part of their cache key. Give the package stage its own
-narrow `scratch` context so unrelated edits do not invalidate it, and pass an
-explicit content-hash build argument as a second guard.
+stage's image ID as part of their cache key. Give each consuming stage its own
+narrow `scratch` context covering only the paths it reads — `ctx-build` for the
+package stage, `ctx` for the overlay stages, `ctx-iso` for the ISO layer — and
+pass an explicit content-hash build argument as a second guard. A shared wide
+context silently couples every stage to every input directory.
 
 Every open Bluefin PR is discovered by the lab's five-minute PR poller. The lab
 runs smoke QA against `bluefin:testing` and sends bounded
@@ -125,7 +127,9 @@ two look the same in the UI and have different fixes.
 
 `cmd | tee results.tap` reports the exit status of `tee`, not of `cmd`, so a
 failing test run passes the step. Set `pipefail` or check `PIPESTATUS` whenever
-a test command is piped.
+a test command is piped. The authoritative BATS run in `pr-validation.yml`
+enables `pipefail` before teeing `results.tap`; the separate instrumented rerun
+collects coverage but does not own pass/fail.
 
 ## Hard rules
 
