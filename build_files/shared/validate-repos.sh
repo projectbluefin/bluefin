@@ -4,7 +4,7 @@ echo "::group:: ===$(basename "$0")==="
 
 set -eou pipefail
 
-REPOS_DIR="/etc/yum.repos.d"
+REPOS_DIR="${REPOS_DIR:-/etc/yum.repos.d}"
 VALIDATION_FAILED=0
 ENABLED_REPOS=()
 
