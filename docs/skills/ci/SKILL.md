@@ -133,6 +133,10 @@ collects coverage but does not own pass/fail.
   to digests, so `projectbluefin/testsuite` is disabled for the
   `github-actions` manager in `.github/renovate.json5`; without that rule
   Renovate re-pins the ref and freezes the gate on a stale test tree.
+- Keep the direct testsuite reference and `test_ref: v1` in the canonical
+  `.github/workflows/run-testsuite.yml` wrapper. The
+  `scripts/check-testsuite-workflow-ref.py` check prevents other callers from
+  bypassing that contract.
 - Update this skill when workflow behavior changes.
 
 ## Verification

@@ -47,6 +47,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      - name: Check testsuite workflow contract
+        run: python3 scripts/check-testsuite-workflow-ref.py
+
       - name: Check for undeclared gitlinks
         shell: bash
         env:
@@ -228,7 +231,7 @@ jobs:
     permissions:
       contents: read
       packages: write  # testsuite pushes screenshot OCI artifacts to GHCR
-    # Keep the testsuite SHA centralized in run-testsuite.yml.
+    # Keep the testsuite workflow ref centralized in run-testsuite.yml.
     uses: ./.github/workflows/run-testsuite.yml
     with:
       image: ghcr.io/projectbluefin/bluefin:testing
