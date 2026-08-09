@@ -14,6 +14,7 @@ setup() {
         "${TEST_ROOT}/usr/share/ublue-os/just" \
         "${TEST_ROOT}/usr/share/ublue-os/homebrew" \
         "${TEST_ROOT}/usr/share/flatpak/preinstall.d" \
+        "${TEST_ROOT}/usr/lib/modprobe.d" \
         "${TEST_ROOT}/usr/lib/systemd/system"
 
     touch "${TEST_ROOT}/etc/containers/signing-key.pub" \
@@ -26,6 +27,8 @@ setup() {
         "${TEST_ROOT}/usr/share/ublue-os/just/default.just" \
         "${TEST_ROOT}/usr/share/ublue-os/just/system.just" \
         "${TEST_ROOT}/usr/share/ublue-os/just/update.just"
+    echo 'options cros_charge_control probe_with_fwk_charge_control=1' \
+        > "${TEST_ROOT}/usr/lib/modprobe.d/fw-charge-control.conf"
     cat > "${TEST_ROOT}/etc/containers/policy.json" <<'EOF'
 {"transports":{"docker":{"ghcr.io/ublue-os":[{"keyPaths":["signing-key.pub","backup-key.pub"]}]}}}
 EOF
@@ -96,6 +99,23 @@ fi
 exit 0
 EOF
     chmod +x "${STUB_BIN}/rpm"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+}
+
+@test "20-tests: rejects an image missing the Framework charge control conf" {
+    # bluefin#879: losing this file silently kills battery charge limiting on
+    # Framework laptops, so the build must fail rather than ship without it.
+    rm -f "${TEST_ROOT}/usr/lib/modprobe.d/fw-charge-control.conf"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+}
+
+@test "20-tests: rejects a Framework charge control conf with the wrong option" {
+    echo 'options cros_charge_control probe_with_fwk_charge_control=0' \
+        > "${TEST_ROOT}/usr/lib/modprobe.d/fw-charge-control.conf"
 
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -ne 0 ]

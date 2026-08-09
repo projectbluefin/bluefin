@@ -31,6 +31,15 @@ test -f /usr/share/flatpak/preinstall.d/bazaar.preinstall
 # Make sure this garbage never makes it to an image
 test -f /usr/lib/systemd/system/flatpak-add-fedora-repos.service && false
 
+# Framework laptops need this modprobe option to get battery charge limiting.
+# The in-tree cros_charge-control driver refuses to bind when the EC advertises
+# Framework's own charge control, so without the option there is no
+# charge_control_end_threshold sysfs node and charge limiting silently
+# disappears on Framework hardware.
+# See: https://github.com/projectbluefin/bluefin/issues/879
+test -f /usr/lib/modprobe.d/fw-charge-control.conf
+grep -q '^options cros_charge_control probe_with_fwk_charge_control=1$' /usr/lib/modprobe.d/fw-charge-control.conf
+
 IMPORTANT_PACKAGES=(
     anaconda-live
     distrobox

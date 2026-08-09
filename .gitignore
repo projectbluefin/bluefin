@@ -16,6 +16,11 @@ devcontainer
 # Scratch checkouts of sibling projectbluefin repos
 .common-ref/
 
+# Per-test scratch roots created by the bats unit suite. Tests that abort
+# leave theirs behind, and an unsuspecting `git add -A` commits hundreds of
+# stub files.
+tests/unit/.bats-sandbox/
+
 # Python cache
 __pycache__/
 *.py[cod]
