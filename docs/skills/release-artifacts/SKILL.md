@@ -33,6 +33,18 @@ metadata:
 4. Never bypass a failed trust or verification gate.
 5. Report the run ID and exact verification commands.
 
+## Weekly stable promotion window
+
+`.github/workflows/promote-testing-to-main.yml` keeps its push and daily
+schedule triggers so the testing-to-main promotion PR and its gates stay fresh.
+Only a Tuesday UTC scheduled run enables the merge-queue enqueue step. A
+`workflow_dispatch` run remains an explicit hotfix escape hatch; push events
+and non-Tuesday scheduled runs refresh the PR without releasing stable.
+
+The release window is enforced before the reusable promotion workflow receives
+`use_merge_queue`; do not make that input unconditional or remove the daily
+heartbeat when changing the caller.
+
 ```bash
 gh run list --repo projectbluefin/bluefin --limit 20
 gh run view RUN_ID --repo projectbluefin/bluefin --log-failed
