@@ -15,14 +15,26 @@ jobs:
       github.event.client_payload.sha != ''
     runs-on: ubuntu-24.04
     steps:
+      # continue-on-error: when the app installation lacks the requested
+      # permission, create-github-app-token fails with only the annotation
+      # "The permissions requested are not granted to this installation."
+      # Keep the run alive so the next step can surface an actionable message
+      # instead of a bare red X (bluefin#939). The job still fails either way.
       - name: Get MergeRaptor token
         id: app-token
+        continue-on-error: true
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         with:
           app-id: ${{ secrets.MERGERAPTOR_APP_ID }}
           private-key: ${{ secrets.MERGERAPTOR_PRIVATE_KEY }}
           permission-checks: write
           permission-contents: read
+
+      - name: Fail with actionable message if token minting was denied
+        if: steps.app-token.outcome == 'failure' || steps.app-token.outputs.token == ''
+        run: |
+          echo "::error::MergeRaptor token mint failed — the GitHub App installation almost certainly lacks the requested 'checks: write' permission. This cannot be fixed from the repository; an org owner must grant it (Organization settings → GitHub Apps → MergeRaptor → Permissions). Verify current grants with: gh api orgs/projectbluefin/installations --jq '.installations[] | select(.app_slug == \"mergeraptor\") | .permissions' — see docs/skills/ci/references/mergeraptor-checks.md."
+          exit 1
 
       - name: Create or update lab check
         env:
