@@ -75,10 +75,15 @@ Never re-point or delete a published stream tag to "repair" this — that is
 user-visible and belongs to a human.
 
 Release consumes `:testing` as its **input**: the release job resolves the
-digest behind that tag rather than re-running end-to-end validation. The gate
-on `:testing` is therefore the only functional gate, and anything it admits
-propagates to `:stable` unchallenged. A gate step that reports `skipped` must
-never be accepted as a pass — treat only an explicit success as a pass.
+digest behind that tag rather than re-running end-to-end validation. The
+`post-testing-e2e` gate is therefore the primary producer-side gate, and a
+failure there must stop `:testing` from advancing. The current
+`execute-release.yml` caller also sets `run_release_gate: true`, so the
+reusable release gate re-tests the exact resolved digest before promoting it to
+`:stable`. When auditing an older promotion, inspect that run's job list to
+confirm the release gate existed at the time; do not assume a current workflow
+definition applied retroactively. A gate step that reports `skipped` must never
+be accepted as a pass — treat only an explicit success as validation.
 
 Only `:stable` is a promotion target. `git grep -n target_tag .github/workflows`
 returns `execute-release.yml` alone, so `:latest` has no writer in this
