@@ -38,6 +38,7 @@ IMPORTANT_PACKAGES=(
     firefox
     fish
     flatpak
+    fzf
     grub2-efi-x64-cdboot
     isomd5sum
     libblockdev-btrfs
