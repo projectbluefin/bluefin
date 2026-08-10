@@ -33,12 +33,3 @@ jobs:
       # use_merge_queue: true calls enqueuePullRequest GraphQL instead.
       use_merge_queue: true
     secrets: inherit
-
-  mirror-validate-to-merge-group:
-    needs: [promote]
-    if: needs.promote.result == 'success'
-    uses: ./.github/workflows/mirror-validate-to-merge-group.yml
-    permissions:
-      contents: read
-      pull-requests: read
-      statuses: write
