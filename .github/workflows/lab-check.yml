@@ -33,7 +33,7 @@ jobs:
       - name: Fail with actionable message if token minting was denied
         if: steps.app-token.outcome == 'failure' || steps.app-token.outputs.token == ''
         run: |
-          echo "::error::MergeRaptor token mint failed — the GitHub App installation almost certainly lacks the requested 'checks: write' permission. This cannot be fixed from the repository; an org owner must grant it (Organization settings → GitHub Apps → MergeRaptor → Permissions). Verify current grants with: gh api orgs/projectbluefin/installations --jq '.installations[] | select(.app_slug == \"mergeraptor\") | .permissions' — see docs/skills/ci/references/mergeraptor-checks.md."
+          echo "::error::MergeRaptor cannot mint a 'checks: write' token. Not fixable from this repository — it needs TWO org-owner steps in the GitHub UI, in this order: (1) DECLARE it on the app: Organization settings -> Developer settings -> GitHub Apps -> MergeRaptor -> Permissions & events -> Repository permissions -> Checks: Read and write. (2) APPROVE the request that raises on the installation: Organization settings -> GitHub Apps -> MergeRaptor. Step 2 alone does nothing while 'checks' is absent from the app definition, because there is no request to approve. To see which step you are on, compare what the app DECLARES (gh api /apps/mergeraptor) against what the installation was GRANTED (gh api orgs/projectbluefin/installations); both commands are spelled out in docs/skills/ci/references/mergeraptor-checks.md."
           exit 1
 
       - name: Create or update lab check
