@@ -28,6 +28,42 @@ The behave summary line (`N scenarios passed, N failed`) and the
 `Failing scenarios:` block name the exact feature file and line. That is the
 only evidence that identifies the failure; job names do not.
 
+## `cap_net_raw` missing on `/usr/bin/ping` is not an image regression
+
+`system_health.feature` "composefs preserves file capabilities on newuidmap,
+newgidmap, and ping" fails deterministically on smoke-b with:
+
+```
+composefs file-capability regression — missing capabilities:
+  ["/usr/bin/ping: expected 'cap_net_raw' in ''"]
+```
+
+This has been triaged twice as a possible bluefin image-content defect. It is
+not one. Fedora's `iputils` deliberately ships `ping` with **no file
+capabilities** — it relies on unprivileged ICMP sockets via
+`net.ipv4.ping_group_range`, which systemd sets by default. Only two binaries
+in that package carry capabilities (`iputils.spec`, `f44`):
+
+```spec
+%attr(0755,root,root) %caps(cap_net_raw=p) %{_bindir}/clockdiff
+%attr(0755,root,root) %caps(cap_net_raw=p) %{_bindir}/arping
+%attr(0755,root,root) %{_bindir}/ping
+```
+
+There is no xattr on `ping` to preserve or strip, so the assertion cannot pass
+on any Fedora-based image regardless of what composefs does.
+
+The same failure proves composefs is working. The other two binaries in the
+assertion do carry capabilities — `shadow-utils` sets `cap_setuid=ep` on
+`newuidmap` and `cap_setgid=ep` on `newgidmap` — and both pass. Capability
+preservation is fine; the expectation list is wrong.
+
+Do not "fix" this by adding `setcap cap_net_raw` to `ping` in the image. That
+diverges from Fedora for no functional gain — `ping` already works. The fix is
+in `projectbluefin/testsuite`: drop `ping` from the assertion, or better, swap
+it for `arping` or `clockdiff`, which genuinely carry `cap_net_raw=p` and so
+make the scenario a real composefs test rather than a vacuous one.
+
 ## The `oras` screenshot error is not the failure
 
 In `projectbluefin/testsuite`'s `e2e.yml@v1`, the `Push desktop screenshot to
