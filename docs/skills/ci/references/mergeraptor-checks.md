@@ -61,3 +61,14 @@ fallback that lets `lab-check.yml` pass without reporting: a check that silently
 skips is worse than one that fails loudly, because the gap stops being visible.
 `lab-check.yml` requests exactly `permission-checks: write` and
 `permission-contents: read`, which is the minimum the check-run API needs.
+
+## Reading a failed run
+
+The job summary shows **`Get MergeRaptor token: success`** directly above a
+failing diagnostic step. That is not a second bug and the mint did not
+half-succeed. `continue-on-error: true` makes a step report *conclusion*
+`success` while its *outcome* stays `failure`; the diagnostic keys off
+`outcome`, which is correct. Confirm the real result in the step log — a denied
+mint logs `##[error]The permissions requested are not granted to this
+installation` and an HTTP `422` from
+`POST /app/installations/{id}/access_tokens`.
