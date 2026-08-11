@@ -46,7 +46,10 @@ issue and stop.
 4. Run the relevant validation.
 5. Update the matching documentation when a reusable fact changes.
 6. Open a pull request targeting `testing` containing `Closes #NNN`; normal
-   feature work must not target `main`.
+   feature work must not target `main`. That keyword only auto-closes the
+   issue once the commit reaches the default branch `main` — see
+   [issue-lifecycle](skills/issue-lifecycle/SKILL.md) — so the issue stays
+   open through the `testing` merge until `promote-testing-to-main.yml` runs.
 
 Do not self-approve or self-merge. Automation applies `4-review`; a human
 reviews.
