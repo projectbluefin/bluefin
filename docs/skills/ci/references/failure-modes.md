@@ -155,3 +155,35 @@ single failing leg blocking it is the actual root cause of the stable
 promotion backlog, not whatever else changed between the frozen digest and
 `main` HEAD. Fixing only the other legs' known issues will not move
 `:testing` or unblock `Execute Release` until that leg passes.
+## `:testing` can carry a stream tag even when `promote-to-testing` is skipped
+
+Do not assume the bare `:testing` tag only ever moves through
+`promote-to-testing` in `post-testing-e2e.yml`. `build-image-testing.yml`
+passes `publish_stream_tag: "false"` to
+`projectbluefin/actions/.github/workflows/reusable-build.yml@v1` specifically
+so a `main`/`testing`-branch build does not publish the bare stream tag ahead
+of the e2e gate — but this repo does not control whether that input is
+actually honored by the push step in that reusable workflow.
+
+Reported on #989 (2026-08-07): the digest tagged `:testing` in the registry
+was the exact digest a `run-e2e` run had just failed against, in a run where
+`promote-to-testing` was `skipped`. That means either `compute-push-tags`'
+excluded-tag output was not honored by the later push step, or something else
+in the reusable workflow re-tags after the fact (for example `just
+tag-images` tagging `DEFAULT_TAG` locally and a later step publishing all
+local tags regardless of the computed set).
+
+Before trusting `promote-to-testing: skipped` as proof `:testing` is still
+the last known-good digest, verify what the registry actually serves:
+
+```bash
+skopeo inspect docker://ghcr.io/projectbluefin/bluefin:testing
+```
+
+Compare the returned digest against the `IMAGE:` value logged by the most
+recent `run-e2e` run for that digest. A mismatch, or a match against a
+*failing* run, means the leak reproduced again. The fix (making
+`publish_stream_tag: "false"` actually prevent the bare-tag push, plus a
+regression guard) belongs in `projectbluefin/actions`, not here — this repo
+only supplies the input; it does not control the push step that is supposed
+to honor it.
