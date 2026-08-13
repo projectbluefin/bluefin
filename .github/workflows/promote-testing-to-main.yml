@@ -29,8 +29,17 @@ permissions:
   actions: read         # inspect workflow-run statuses in release-gate
   statuses: write       # post validate status on squash branch head
 
+# Gate promotion merge to Tuesday UTC (weekly cadence).
+# workflow_dispatch is always allowed (hotfix escape hatch).
+# Push to testing is always allowed (immediate promotion by maintainers).
+# Daily schedule only triggers the merge on Tuesdays; the PR stays open
+# from the last promotion until the next push or next Tuesday.
 jobs:
   promote:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 4 * * 2')
     uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
