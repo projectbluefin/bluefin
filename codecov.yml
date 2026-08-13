@@ -1,0 +1,13 @@
+# Codecov configuration for Bluefin BATS coverage.
+# See: https://docs.codecov.com/docs/codecov-yaml
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+
+comment:
+  layout: "header, reach, diff, flags"
+  require_changes: false

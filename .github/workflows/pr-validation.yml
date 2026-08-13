@@ -189,7 +189,7 @@ jobs:
         run: |
           set -euo pipefail
           # Minimum line coverage threshold (raise this as coverage improves).
-          THRESHOLD=30
+          THRESHOLD=60
           COBERTURA="coverage/kcov/cobertura.xml"
           if [[ ! -f "${COBERTURA}" ]]; then
             echo "warning: ${COBERTURA} not found; skipping threshold check" >&2
@@ -217,6 +217,14 @@ jobs:
         with:
           name: bats-kcov-report
           path: coverage/kcov
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@5c47f156332847b0a3e2866497bd825647ac557d # v5
+        with:
+          files: coverage/kcov/cobertura.xml
+          fail_ci_if_error: false
+          verbose: true
 
       - name: Run Python unit tests
         run: python3 -m unittest discover -s tests -p 'test_*.py'
