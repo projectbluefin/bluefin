@@ -54,29 +54,23 @@ jobs:
       image: ${{ needs.e2e.outputs.image }}
       suites: smoke,common
 
-  # run-upgrade-test: DISABLED — TODO(#400)
-  # lifecycle suite fails under GNOME 50 AT-SPI changes, causing post-testing-e2e
-  # to mark as 'failure' and blocking promotion.
-  # Disabled until testsuite lifecycle scenarios are stable on GNOME 50.
-  # To restore: uncomment the job below.
-  #
-  # run-upgrade-test:
-  #   needs: [e2e]
-  #   permissions:
-  #     packages: write
-  #     contents: read
-  #   uses: projectbluefin/actions/.github/workflows/upgrade-test.yml@v1
-  #   with:
-  #     image: ${{ needs.e2e.outputs.image }}
-  #     suites: lifecycle
+  run-upgrade-test:
+    needs: [e2e]
+    permissions:
+      packages: write
+      contents: read
+    uses: projectbluefin/actions/.github/workflows/upgrade-test.yml@v1
+    with:
+      image: ${{ needs.e2e.outputs.image }}
+      suites: lifecycle
 
   promote-to-testing:
     # Promote all tested flavors to :testing only after e2e passes.
     # This ensures :testing always points to a digest that has passed gate e2e.
-    # run-upgrade-test removed from needs — lifecycle suite is non-blocking (see TODO above).
-    needs: [e2e, run-e2e]
+    needs: [e2e, run-e2e, run-upgrade-test]
     if: >-
       needs.run-e2e.result == 'success' &&
+      needs.run-upgrade-test.result == 'success' &&
       github.event.workflow_run.head_branch == 'main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
