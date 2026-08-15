@@ -24,6 +24,20 @@ done
 
 test -f /usr/share/ublue-os/homebrew/fonts.Brewfile
 
+# bluefinctl and the default CLI set (fzf, starship, htop, ...) are not baked
+# into the image — they are installed per-user at first graphical login by the
+# brew-preinstall user service. The whole delivery path is inherited from the
+# pinned `common` image, whose digest Renovate bumps automatically, so a rename
+# or drop upstream would silently stop shipping bluefinctl with no other signal.
+# Assert the pieces the service actually needs: the Brewfiles it reads, the
+# binary its ExecStart points at, the unit, and the preset that enables it.
+# See: https://github.com/projectbluefin/bluefin/issues/965
+test -f /usr/share/ublue-os/homebrew/preinstall.d/bluefinctl.Brewfile
+test -f /usr/share/ublue-os/homebrew/preinstall.d/system-cli.Brewfile
+test -x /usr/bin/brew-preinstall
+test -f /usr/lib/systemd/user/brew-preinstall.service
+grep -q '^enable brew-preinstall\.service$' /usr/lib/systemd/user-preset/01-brew-preinstall.preset
+
 # If this file is not on the image bazaar will automatically be removed from users systems :(
 # See: https://docs.flatpak.org/en/latest/flatpak-command-reference.html#flatpak-preinstall
 test -f /usr/share/flatpak/preinstall.d/bazaar.preinstall

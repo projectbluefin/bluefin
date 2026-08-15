@@ -15,6 +15,9 @@ setup() {
         "${TEST_ROOT}/usr/share/ublue-os/homebrew" \
         "${TEST_ROOT}/usr/share/flatpak/preinstall.d" \
         "${TEST_ROOT}/usr/lib/modprobe.d" \
+        "${TEST_ROOT}/usr/share/ublue-os/homebrew/preinstall.d" \
+        "${TEST_ROOT}/usr/lib/systemd/user" \
+        "${TEST_ROOT}/usr/lib/systemd/user-preset" \
         "${TEST_ROOT}/usr/lib/systemd/system"
 
     touch "${TEST_ROOT}/etc/containers/signing-key.pub" \
@@ -29,6 +32,14 @@ setup() {
         "${TEST_ROOT}/usr/share/ublue-os/just/update.just"
     echo 'options cros_charge_control probe_with_fwk_charge_control=1' \
         > "${TEST_ROOT}/usr/lib/modprobe.d/fw-charge-control.conf"
+    # brew-preinstall delivery path (bluefinctl + default CLI set) — see #965
+    touch "${TEST_ROOT}/usr/share/ublue-os/homebrew/preinstall.d/bluefinctl.Brewfile" \
+        "${TEST_ROOT}/usr/share/ublue-os/homebrew/preinstall.d/system-cli.Brewfile" \
+        "${TEST_ROOT}/usr/lib/systemd/user/brew-preinstall.service"
+    touch "${TEST_ROOT}/usr/bin/brew-preinstall"
+    chmod +x "${TEST_ROOT}/usr/bin/brew-preinstall"
+    echo 'enable brew-preinstall.service' \
+        > "${TEST_ROOT}/usr/lib/systemd/user-preset/01-brew-preinstall.preset"
     cat > "${TEST_ROOT}/etc/containers/policy.json" <<'EOF'
 {"transports":{"docker":{"ghcr.io/ublue-os":[{"keyPaths":["signing-key.pub","backup-key.pub"]}]}}}
 EOF
@@ -116,6 +127,33 @@ EOF
 @test "20-tests: rejects a Framework charge control conf with the wrong option" {
     echo 'options cros_charge_control probe_with_fwk_charge_control=0' \
         > "${TEST_ROOT}/usr/lib/modprobe.d/fw-charge-control.conf"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+}
+
+@test "20-tests: rejects an image missing the bluefinctl Brewfile" {
+    # #965: bluefinctl reaches users only through preinstall.d. If `common`
+    # renames or drops this file, the build must fail rather than ship an
+    # image where bluefinctl silently never installs.
+    rm -f "${TEST_ROOT}/usr/share/ublue-os/homebrew/preinstall.d/bluefinctl.Brewfile"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+}
+
+@test "20-tests: rejects an image missing the brew-preinstall ExecStart binary" {
+    rm -f "${TEST_ROOT}/usr/bin/brew-preinstall"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+}
+
+@test "20-tests: rejects a preset that does not enable brew-preinstall" {
+    # A shipped-but-disabled preset is the silent failure mode: every file is
+    # present, the service just never starts for the user.
+    echo 'disable brew-preinstall.service' \
+        > "${TEST_ROOT}/usr/lib/systemd/user-preset/01-brew-preinstall.preset"
 
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -ne 0 ]
