@@ -5,23 +5,21 @@ from pathlib import Path
 
 
 WORKFLOW = Path(".github/workflows/renovate-automerge.yml")
-REQUIRED_LINES = (
-    "    secrets:\n",
-    "      app_id: ${{ secrets.MERGERAPTOR_APP_ID }}\n",
-    "      private_key: ${{ secrets.MERGERAPTOR_PRIVATE_KEY }}\n",
-)
+REQUIRED_BLOCK = """\
+    secrets:
+      app_id: ${{ secrets.MERGERAPTOR_APP_ID }}
+      private_key: ${{ secrets.MERGERAPTOR_PRIVATE_KEY }}
+"""
 
 
 def main() -> int:
     workflow = WORKFLOW.read_text()
-    missing = [line.strip() for line in REQUIRED_LINES if line not in workflow]
-    if missing:
+    if REQUIRED_BLOCK not in workflow:
         print("Renovate auto-merge authentication contract failed:")
-        for line in missing:
-            print(f" - missing: {line}")
         print(
-            "Use the MergeRaptor App token so the resulting testing-branch push "
-            "can trigger image builds."
+            "The automerge job must pass the adjacent app_id and private_key "
+            "MergeRaptor secrets so the resulting testing-branch push can "
+            "trigger image builds."
         )
         return 1
 
