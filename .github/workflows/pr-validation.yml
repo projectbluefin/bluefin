@@ -50,6 +50,9 @@ jobs:
       - name: Check testsuite workflow contract
         run: python3 scripts/check-testsuite-workflow-ref.py
 
+      - name: Check Renovate auto-merge authentication contract
+        run: python3 scripts/check-renovate-automerge-auth.py
+
       - name: Check for undeclared gitlinks
         shell: bash
         env:
