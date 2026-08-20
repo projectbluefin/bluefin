@@ -29,7 +29,81 @@ jobs:
       cosign_identity_regexp: >-
         ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
       run_e2e: false
-      # main uses a merge queue ruleset (17070404): gh pr merge --auto is blocked.
-      # use_merge_queue: true calls enqueuePullRequest GraphQL instead.
-      use_merge_queue: true
+      # main uses a merge queue ruleset (17070404): gh pr merge --auto is blocked,
+      # and enqueuePullRequest requires this bit set on the reusable workflow's own
+      # call. We gate the *actual* enqueue to the weekly release window below
+      # (release-window-enqueue), so this stays false here: the reusable workflow
+      # still refreshes the squash PR and re-runs gate checks on every trigger,
+      # it just never enqueues/merges on its own.
+      use_merge_queue: false
     secrets: inherit
+
+  # bluefin:stable's weekly release day is Tuesday (UTC), part of a
+  # factory-wide 3x/week promotion schedule (bluefin-lts=Thursday,
+  # dakota=Sunday; see projectbluefin/common issue "Weekly stable release
+  # cadence"). The `promote` job above still runs daily (and on every push to
+  # testing) to keep the promotion PR fresh and re-run release-gate checks
+  # (release/ready status, cosign verify) — this job only decides *when* the
+  # already-validated PR is allowed to enter the merge queue and actually
+  # release.
+  release-window-enqueue:
+    name: Enqueue promotion PR (Tuesday release window)
+    needs: [promote]
+    if: needs.promote.outputs.pr_number != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Check release window
+        id: window
+        run: |
+          set -euo pipefail
+          # workflow_dispatch is the documented hotfix escape hatch: it bypasses
+          # the Tuesday check so a maintainer can force a release any day.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "in_window=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::workflow_dispatch hotfix escape hatch — bypassing the Tuesday release window"
+          elif [ "$(date -u +%u)" = "2" ]; then
+            echo "in_window=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "in_window=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Not Tuesday (UTC) — promotion PR #${{ needs.promote.outputs.pr_number }} stays fresh and gated, but merge queue enqueue is deferred until the weekly release window."
+          fi
+
+      - name: Check do-not-merge label
+        if: steps.window.outputs.in_window == 'true'
+        id: check-dnm
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.promote.outputs.pr_number }}
+        run: |
+          set -euo pipefail
+          LABELS=$(gh pr view "$PR_NUMBER" \
+            --repo "${{ github.repository }}" \
+            --json labels \
+            --jq '[.labels[].name] | join(",")' 2>/dev/null || echo "")
+          if echo "$LABELS" | grep -q "do-not-merge"; then
+            echo "blocked=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::PR #${PR_NUMBER} has the do-not-merge label; merge queue enqueue skipped."
+          else
+            echo "blocked=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enqueue promotion PR in merge queue
+        if: steps.window.outputs.in_window == 'true' && steps.check-dnm.outputs.blocked == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.promote.outputs.pr_number }}
+        run: |
+          set -euo pipefail
+          NODE_ID=$(gh pr view "$PR_NUMBER" \
+            --repo "${{ github.repository }}" \
+            --json id --jq '.id')
+          # shellcheck disable=SC2016  # $id is a GraphQL variable, not a shell variable
+          gh api graphql \
+            -f query='mutation($id:ID!){enqueuePullRequest(input:{pullRequestId:$id}){mergeQueueEntry{id}}}' \
+            -f id="$NODE_ID" \
+            && echo "✅ PR #${PR_NUMBER} enqueued in merge queue" \
+            || echo "⚠️  Could not enqueue PR #${PR_NUMBER} (may already be queued, or approvals not yet met)"
