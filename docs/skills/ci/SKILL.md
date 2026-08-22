@@ -64,6 +64,13 @@ The instrumented rerun does not gate the job — `Run unit tests` owns pass/fail
 — but `merge_kcov.py` fails when no source lines were executed.
 Tests that `source` a library into the BATS process itself are not traced.
 
+The `Enforce BATS coverage threshold` step's `THRESHOLD` is an evidence-based
+floor, not an aspirational target: measure several recent successful
+`pr-validation.yml` runs' `BATS line coverage` log lines via `gh api
+repos/projectbluefin/bluefin/actions/jobs/JOB_ID/logs` before raising it, and
+leave enough buffer below the observed rate to absorb normal run-to-run
+variance instead of chasing the exact current percentage.
+
 A pull request whose head branch lives on a fork reports **zero** checks until a
 maintainer approves the run — identical to "checks still queued", so confirm:
 
