@@ -98,6 +98,32 @@ teardown() {
     [ "$status" -eq 0 ]
 }
 
+@test "20-tests: rejects an image missing a required IMPORTANT_PACKAGES entry" {
+    # #965 item 1: fzf was missing from the image, breaking `ujust --choose` on
+    # first boot. #1057 added fzf to IMPORTANT_PACKAGES, but nothing asserted
+    # that the script actually fails when rpm reports it (or any other
+    # required package) absent — the existing "unwanted package" test below
+    # only exercises the UNWANTED_PACKAGES list. Guard the missing-package path
+    # directly so a future edit can't silently drop an entry with no coverage.
+    cat > "${STUB_BIN}/rpm" <<'EOF'
+#!/usr/bin/bash
+if [[ "$*" == *"%{VENDOR}"* ]]; then
+    echo "negativo17.org"
+    exit 0
+fi
+case "$*" in
+    *fedora-flathub-remote*|*fedora-logos*|*fedora-third-party*|*gnome-software*|*podman-docker*) exit 1 ;;
+    *fzf*) exit 1 ;;
+esac
+exit 0
+EOF
+    chmod +x "${STUB_BIN}/rpm"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Missing package: fzf"* ]]
+}
+
 @test "20-tests: rejects an unwanted package" {
     cat > "${STUB_BIN}/rpm" <<'EOF'
 #!/usr/bin/bash
