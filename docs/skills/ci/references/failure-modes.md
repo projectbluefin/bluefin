@@ -7,8 +7,21 @@
 | Workflow did not trigger | Event, branch, and path filters in the YAML |
 | Promotion is blocked | Exact digest, required check, and merge-group state |
 | Shared action behaves incorrectly | Reusable workflow source and its callers |
+| Tests update but E2E setup stays stale | Compare the reusable workflow `uses` ref with its test checkout ref |
 
 Always inspect the failed run logs before changing a workflow.
+
+## A reusable testsuite workflow has two independent refs
+
+`uses` selects the workflow definition; `test_ref` selects the test tree that
+workflow checks out. They move separately, so a managed `test_ref` is not
+evidence that workflow-level fixes — VM disk sizing, runner setup, anything in
+the workflow body — are current. Those arrive only when `uses` moves.
+
+This is a stable-promotion trap: `test_ref: v1` reads as "tests are current"
+and says nothing about the workflow running them. Keep both layers on the
+documented managed ref, and verify the nested workflow shown in the run log
+rather than the ref written in the caller.
 
 ## Reading a failed `post-testing-e2e` run
 
