@@ -82,9 +82,15 @@ jobs:
           STARTED_AT=$(jq -r '.started_at // empty' <<<"${CHECK_JSON}")
           COMPLETED_AT=$(jq -r '.completed_at // empty' <<<"${CHECK_JSON}")
 
+          # check_name filters server-side. Without it the first page is 100
+          # check runs of every name, newest first, so on a busy commit the
+          # existing lab check falls off the page and this lookup returns
+          # nothing -- which silently turns every update into a duplicate
+          # check run (bluefin#939).
           CHECK_ID=$(
             gh api --method GET \
               "repos/${GITHUB_REPOSITORY}/commits/${SHA}/check-runs" \
+              -f check_name="${CHECK_NAME}" \
               -f per_page=100 \
               --jq '.check_runs
                 | map(select(.name == "'"${CHECK_NAME}"'" and .app.slug == "'"${APP_SLUG}"'"))
