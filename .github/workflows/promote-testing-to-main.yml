@@ -21,7 +21,43 @@ permissions:
   statuses: write
 
 jobs:
+  release_window:
+    name: Check stable release window
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_enqueue: ${{ steps.window.outputs.should_enqueue }}
+    steps:
+      - name: Determine whether to enqueue the promotion
+        id: window
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+
+          case "$EVENT_NAME" in
+            workflow_dispatch)
+              echo "Manual dispatch — allowing the hotfix release escape hatch."
+              echo "should_enqueue=true" >> "$GITHUB_OUTPUT"
+              ;;
+            schedule)
+              weekday=$(date -u +%u)
+              if [[ "$weekday" == "2" ]]; then
+                echo "Tuesday UTC schedule — allowing the weekly stable release."
+                echo "should_enqueue=true" >> "$GITHUB_OUTPUT"
+              else
+                echo "Non-Tuesday schedule — refreshing promotion gates without enqueueing."
+                echo "should_enqueue=false" >> "$GITHUB_OUTPUT"
+              fi
+              ;;
+            *)
+              echo "Push trigger — refreshing the promotion PR without enqueueing."
+              echo "should_enqueue=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
   promote:
+    needs: [release_window]
     uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
@@ -31,5 +67,5 @@ jobs:
       run_e2e: false
       # main uses a merge queue ruleset (17070404): gh pr merge --auto is blocked.
       # use_merge_queue: true calls enqueuePullRequest GraphQL instead.
-      use_merge_queue: true
+      use_merge_queue: ${{ needs.release_window.outputs.should_enqueue == 'true' }}
     secrets: inherit
