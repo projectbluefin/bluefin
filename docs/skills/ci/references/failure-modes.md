@@ -227,3 +227,41 @@ the squashed result. A promotion PR that cycles `added_to_merge_queue` then
 `removed_from_merge_queue` roughly two hours later, day after day, means the
 release gate is genuinely failing on the squashed content — diagnose the
 underlying E2E failure (see above), not the promotion workflow, in that case.
+## `:testing` promotion blocker set (issue #989) — re-verified 2026-08-10
+
+`run-e2e / smoke,common / GNOME 50 — smoke-a` has failed on essentially every
+`post-testing-e2e` run since 2026-06-25, making `promote-to-testing` `skipped`
+(it needs `run-e2e.result == 'success'`). The root cause and fix are **owned by
+`projectbluefin/testsuite`**, not this repo — bluefin ships Firefox as an
+unmodified RPM and no bluefin-side change correlates with the regression
+window. Do not attempt to work around this from `bluefin` by adding
+`always()`, `continue-on-error`, or dropping `run-e2e` from
+`promote-to-testing`'s `needs:` — that would promote an unverified digest.
+
+State as of run
+[31358323820](https://github.com/projectbluefin/bluefin/actions/runs/31358323820)
+(2026-08-10T05:21Z):
+
+- All six `firefox.feature` scenarios still fail deterministically, through
+  both `@retry` passes, with `AssertionError: Firefox address bar not found`
+  (and the matching tab-list / "still visible" assertions for the Ctrl+T /
+  Ctrl+W / Ctrl+Q scenarios).
+- `testsuite#692` (merged 2026-08-07, in the current `v1` tag) fixed the
+  original bug: Firefox launched without `GNOME_ACCESSIBILITY=1`, so its
+  AT-SPI subtree never populated, and `_firefox_window()` falsely accepted a
+  bare `filler` node as a healthy window. That fix is real but **incomplete**:
+  the "main window is accessible" step now passes because the window exposes
+  *some* populated chrome (for example a toolbar or push button), but the
+  address-bar `entry` node specifically still never appears, so
+  `_address_bar()` still raises.
+- `testsuite#741` (open as of this writing, refs this issue) targets a
+  further gap: an exported Flatpak `.desktop` launch path does not carry
+  `FIREFOX_A11Y_ENV` across the sandbox boundary, which reproduces the same
+  address-bar/tab-list symptom. Re-check whether `#741` (or a follow-up) is
+  merged and the testsuite `v1` tag has advanced past it before re-triaging
+  this from scratch — `run-testsuite.yml` always resolves `test_ref: v1`, so a
+  merged fix does not reach `bluefin` until that tag moves.
+- Unblock criterion: one green `Post-Testing E2E` run with
+  `promote-to-testing: success` after the testsuite fix lands closes this
+  issue. There is nothing to change in `bluefin` itself beyond re-verifying
+  that run.
