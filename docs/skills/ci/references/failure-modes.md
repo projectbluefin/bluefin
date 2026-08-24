@@ -265,3 +265,74 @@ State as of run
   `promote-to-testing: success` after the testsuite fix lands closes this
   issue. There is nothing to change in `bluefin` itself beyond re-verifying
   that run.
+
+## `Testing Images` itself has been failing since 2026-08-12 — `post-testing-e2e` now skips before e2e even runs
+
+The AT-SPI/`firefox.feature` blocker documented above (issue #989,
+re-verified 2026-08-10) is no longer the proximate blocker on `:testing`.
+Every `Testing Images` run from
+[31607601482](https://github.com/projectbluefin/bluefin/actions/runs/31607601482)
+(2026-08-12T14:35Z) through
+[32753582407](https://github.com/projectbluefin/bluefin/actions/runs/32753582407)
+(2026-08-24T16:54Z–18:01Z, re-verified live) has failed before there is an
+image to test — 9 consecutive failures over 12 days, zero successes.
+Confirmed run IDs: `31607601482`, `31727537250`, `31892823167`,
+`32190444084`, `32190579865`, `32257399479`, `32341452980`, `32346294695`,
+`32753582407`.
+
+Both `bluefin` and `bluefin-nvidia` (`main`/`nvidia` flavor) fail identically,
+on every retry within a run, at the same step — the `extension-builder` stage
+in `Containerfile` (`dnf5 -y install glib2-devel meson sassc cmake
+dbus-devel`, right after the `base-common` stage completes):
+
+```
+error: rpmdb: damaged header #1808 retrieved -- skipping.
+error: SELECT hnum, blob FROM 'Packages': 11: database disk image is malformed
+Transaction failed: Rpm transaction failed.
+```
+
+The damaged header number is not perfectly stable (`#1808` on 08-20,
+`#1809` on the 08-24 re-check), so this is not one static, byte-identical
+cached blob being replayed forever — treat it as "reliably corrupts the same
+way," not "the exact same bytes every time," when investigating.
+
+`Containerfile` and `image-versions.yml` have not changed since 2026-08-07
+(before the last known-good build on 2026-08-10), which rules out a
+script/pin regression as the direct trigger — something external to those
+files changed between the 08-10 success and the 08-12 failure.
+
+Because `post-testing-e2e.yml`'s `e2e` job requires
+`github.event.workflow_run.conclusion == 'success'`, every `Post-Testing E2E`
+run since 08-12 reports `skipped` for `e2e`, `run-e2e`, and
+`promote-to-testing` — not `failure`. The AT-SPI triage above still describes
+a real, unfixed bug, but it is not what is currently stopping `:testing` from
+advancing: the pipeline no longer gets far enough to reach it.
+
+**Unconfirmed prime suspect** (flag for whoever picks this up next; not
+proven here — this runtime has no CI trigger access and per policy
+documentation changes should not run expensive image builds to test it):
+the registry-based buildah layer cache. `Justfile`'s `build` recipe computes
+`cache_ref="ghcr.io/{{ repo_organization }}/${image_name}"`, keyed only by
+flavor (`bluefin` / `bluefin-nvidia`), not by tag, and both `--cache-from`
+(every build) and `--cache-to` (every non-PR push) target that one ref. A
+`testing`-branch push and the `main`-branch push that
+`promote-testing-to-main` triggers minutes later both build the `main` flavor
+and can run concurrently, writing `--cache-to` the identical ref; a bad
+interleaving there could plausibly corrupt a cached `base-common` layer that
+every later `--cache-from` then keeps replaying, matching the observed
+determinism across flavors and retries (the damaged-header number drifting
+by one between checks is consistent with a stable corrupted layer plus
+normal package-set churn, not proof against this). Before assuming this: get
+a maintainer to trigger one build with the registry cache disabled
+(`--cache-from`/`--cache-to` both suppressed, not just `REGISTRY_CACHE_WRITE=0`,
+which still reads the poisoned cache) and compare.
+
+```bash
+# Reproduce the census
+gh run list --repo projectbluefin/bluefin --workflow "Testing Images" -L 20 \
+  --json conclusion,createdAt,headBranch,databaseId
+
+# Confirm post-testing-e2e is skipping, not failing, e2e
+gh run view RUN_ID --repo projectbluefin/bluefin --json jobs \
+  --jq '.jobs[] | [.name, .status, .conclusion] | @tsv'
+```
