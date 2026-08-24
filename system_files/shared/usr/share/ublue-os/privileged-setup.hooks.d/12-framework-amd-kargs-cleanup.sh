@@ -48,4 +48,3 @@ fi
 
 rpm-ostree kargs --delete="${STALE_KARG}"
 echo "Removed stale AMD Framework karg: ${STALE_KARG}. Reboot to activate."
-

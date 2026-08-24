@@ -145,4 +145,3 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"DMI information not available"* ]]
 }
-
