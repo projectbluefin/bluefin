@@ -67,5 +67,17 @@ jobs:
       run_e2e: false
       # main uses a merge queue ruleset (17070404): gh pr merge --auto is blocked.
       # use_merge_queue: true calls enqueuePullRequest GraphQL instead.
+      #
+      # This input doubles as the release gate, so read false carefully: it does
+      # not mean "do not merge", it routes the reusable workflow to
+      # `gh pr merge --auto`, which the merge queue ruleset above rejects -- so
+      # nothing merges. That is what holds :stable to Tuesdays (bluefin#1066)
+      # while the daily run still refreshes the PR and re-runs the gate checks.
+      #
+      # Do not "correct" this to a constant true on the grounds that main is
+      # always queue-protected: that statement is true and it would delete the
+      # release window. Expressing this directly needs a merge on/off input in
+      # projectbluefin/actions; until that exists,
+      # tests/test_promote_release_window.py pins the wiring.
       use_merge_queue: ${{ needs.release_window.outputs.should_enqueue == 'true' }}
     secrets: inherit
