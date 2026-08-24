@@ -195,7 +195,12 @@ jobs:
         run: |
           set -euo pipefail
           # Minimum line coverage threshold (raise this as coverage improves).
-          THRESHOLD=30
+          # Measured BATS line coverage has held steady at 53.8-54.4% across
+          # recent pr-validation runs (e.g. runs 31344003528, 31345539779,
+          # 31715546591, 31742984919). 45% keeps a buffer against normal
+          # run-to-run variance while still catching real regressions; see
+          # https://github.com/projectbluefin/bluefin/issues/518.
+          THRESHOLD=45
           COBERTURA="coverage/kcov/cobertura.xml"
           if [[ ! -f "${COBERTURA}" ]]; then
             echo "warning: ${COBERTURA} not found; skipping threshold check" >&2
