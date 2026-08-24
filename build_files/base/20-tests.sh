@@ -35,6 +35,13 @@ test -f /usr/share/ublue-os/homebrew/fonts.Brewfile
 test -f /usr/share/ublue-os/homebrew/preinstall.d/bluefinctl.Brewfile
 test -f /usr/share/ublue-os/homebrew/preinstall.d/system-cli.Brewfile
 test -x /usr/bin/brew-preinstall
+# ExecStart names /usr/bin/brew-preinstall, but that is a two-line trampoline
+# (`exec /usr/libexec/brew-preinstall`). Asserting only the trampoline still
+# passes when the payload it exec's is renamed or dropped upstream -- the unit
+# then fails at first login with status 127 and bluefinctl silently never
+# installs, which is exactly the symptom reported in #965. Assert the file that
+# actually does the work, not just the one systemd calls.
+test -x /usr/libexec/brew-preinstall
 test -f /usr/lib/systemd/user/brew-preinstall.service
 grep -q '^enable brew-preinstall\.service$' /usr/lib/systemd/user-preset/01-brew-preinstall.preset
 
