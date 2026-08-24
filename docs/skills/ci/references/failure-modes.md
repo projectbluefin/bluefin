@@ -45,3 +45,57 @@ That step is `continue-on-error: true`, so it produces a red `##[error]` line in
 the log without failing the job. Runs that pass `:testing` by tag (for example
 `nightly.yml`) do not show it at all. Do not report it as the cause of a
 `post-testing-e2e` failure; find the behave summary instead.
+
+## Stable promotion blocker set (issue #929) — re-verified 2026-08-10
+
+`Execute Release` has failed on every attempt since July 20 (tracked in #929).
+The failing legs move over time; re-check the current run rather than trusting
+an older triage comment. State as of run
+[31355954836](https://github.com/projectbluefin/bluefin/actions/runs/31355954836)
+(2026-08-10T04:35Z, candidate `bluefin:testing` ->
+`sha256:bf615b200faefc44b50232ecc8a3eb21490e88dd9316b528b27f54472122611d`):
+
+| Leg | Status | Notes |
+|---|---|---|
+| `bluefin` / `smoke-a` | failing | Dash to Dock / Firefox / AT-SPI session lookups fail (`gdbus ... Extensions.GetExtensionInfo` returns `UnknownMethod`, Firefox/Settings not found via AT-SPI). No open PR claims this; see prior findings on #929. |
+| `bluefin` / `common-b` | failing (new) | `ujust toggle-updates` non-interactive scenario — see below. |
+| `bluefin-nvidia` / `common-b` | failing (new) | Same `ujust toggle-updates` failure, identical error, on the NVIDIA variant. |
+| `bluefin` / `bluefin-nvidia` smoke-b, common-a | passing | The composefs `cap_net_raw` regression tracked in `testsuite#524` / `dakota#841` **no longer appears** in this run — treat that blocker as resolved unless a fresh run shows it again. |
+
+### New: `ujust toggle-updates` fails with a `gum` TTY error, not a skip
+
+`tests/common/features/common_ujust.feature:30` (`projectbluefin/testsuite`)
+exercises `projectbluefin/common`'s non-interactive `toggle-updates ACTION=`
+contract (shipped in `common#966`, 2026-08-09). The `@requires_toggle_action`
+gate in `tests/common/features/environment.py` probes with
+`ujust toggle-updates cancel` and only runs the scenario when that exits `0` —
+so the scenario ran here, meaning the probe found ACTION support present, but
+the actual `enable`/`disable` exchange still failed:
+
+```
+ASSERT FAILED: SSH command exited 1, expected 0
+stderr: unable to pick selection: could not open a new TTY: open /dev/tty: no such device or address
+```
+
+That message comes only from `gum choose` in the recipe's `*` (unmatched
+`ACTION`) branch — the `enable`/`disable`/`cancel` branches never call `gum`.
+Reproducing `common@main`'s current `update.just` locally with plain `just`
+(1.58.0) resolves `enable`/`disable`/`cancel` correctly with no `gum`
+invocation, so the recipe logic on `common@main` is not the bug by itself.
+Two explanations remain open, and neither could be checked here — this
+runtime has no podman/skopeo/container toolchain to inspect the actual layered
+image or reach the ephemeral test VM:
+
+1. The specific `bluefin`/`bluefin-nvidia` image digest above was built
+   against a `common` base layer resolved before `common#966` propagated, so
+   it still runs the old body (this predicts both variants failing
+   identically, which matches).
+2. Something in the SSH/session harness (not the recipe) causes `gum` to be
+   invoked regardless of `ACTION` in this environment specifically.
+
+Next step: confirm which `common` digest is actually layered into the
+`bluefin:testing` image tested above (e.g. via `skopeo inspect` /
+`rpm-ostree status` on a real or lab VM, not just the source repo), and if it
+already includes `common#966`, escalate as a `projectbluefin/common` or
+`projectbluefin/testsuite` bug rather than assuming a stale layer will
+self-resolve on the next build.
