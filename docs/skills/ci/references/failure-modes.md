@@ -187,3 +187,43 @@ recent `run-e2e` run for that digest. A mismatch, or a match against a
 regression guard) belongs in `projectbluefin/actions`, not here — this repo
 only supplies the input; it does not control the push step that is supposed
 to honor it.
+## `promote-testing-to-main` fails with `GH006` while another run is enqueuing
+
+`.github/workflows/promote-testing-to-main.yml` calls
+`projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1`,
+which force-pushes the rebuilt squash branch and then calls the
+`enqueuePullRequest` GraphQL mutation because `use_merge_queue: true`. If two
+triggers land close together (a `push` to `testing` and the daily `schedule`,
+or two pushes to `testing` moments apart), one run can finish enqueuing before
+the other's force-push lands, and the later run fails with:
+
+```
+remote: error: GH006: Protected branch update failed for refs/heads/auto/promote-testing-to-main.
+remote: - A pull request for this branch has been added to a merge queue. Branches that
+remote:   are queued for merging cannot be updated. To modify this branch, dequeue the
+remote:   associated pull request.
+```
+
+This is noise, not a lost promotion: the workflow's `concurrency` group
+serializes runs, and the earlier run already reached the intended state
+(branch pushed, PR enqueued). Confirm with the promotion PR's timeline before
+treating the failed run as a real blocker:
+
+```bash
+gh pr view <promotion-pr> --repo projectbluefin/bluefin --json number \
+  --jq '.number' | xargs -I{} gh api repos/projectbluefin/bluefin/issues/{}/timeline \
+  --jq '.[] | select(.event | test("force_pushed|merge_queue")) | [.event, .created_at]'
+```
+
+Interleaved `head_ref_force_pushed` / `added_to_merge_queue` events around the
+same minute confirm this benign race. The retry logic that would need to
+change (retry the enqueue instead of failing outright) lives in
+`reusable-promote-squash.yml` in `projectbluefin/actions`, not in this repo's
+thin caller — do not add push-retry logic here.
+
+The GitHub merge queue itself removes a queued PR once its required checks
+resolve, including the release-gate check that re-runs the E2E suite against
+the squashed result. A promotion PR that cycles `added_to_merge_queue` then
+`removed_from_merge_queue` roughly two hours later, day after day, means the
+release gate is genuinely failing on the squashed content — diagnose the
+underlying E2E failure (see above), not the promotion workflow, in that case.
