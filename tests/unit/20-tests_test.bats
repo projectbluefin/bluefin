@@ -11,6 +11,7 @@ setup() {
     mkdir -p "${STUB_BIN}"
     mkdir -p "${TEST_ROOT}/etc/containers" \
         "${TEST_ROOT}/usr/bin" \
+        "${TEST_ROOT}/usr/libexec" \
         "${TEST_ROOT}/usr/share/ublue-os/just" \
         "${TEST_ROOT}/usr/share/ublue-os/homebrew" \
         "${TEST_ROOT}/usr/share/flatpak/preinstall.d" \
@@ -36,8 +37,10 @@ setup() {
     touch "${TEST_ROOT}/usr/share/ublue-os/homebrew/preinstall.d/bluefinctl.Brewfile" \
         "${TEST_ROOT}/usr/share/ublue-os/homebrew/preinstall.d/system-cli.Brewfile" \
         "${TEST_ROOT}/usr/lib/systemd/user/brew-preinstall.service"
-    touch "${TEST_ROOT}/usr/bin/brew-preinstall"
-    chmod +x "${TEST_ROOT}/usr/bin/brew-preinstall"
+    touch "${TEST_ROOT}/usr/bin/brew-preinstall" \
+        "${TEST_ROOT}/usr/libexec/brew-preinstall"
+    chmod +x "${TEST_ROOT}/usr/bin/brew-preinstall" \
+        "${TEST_ROOT}/usr/libexec/brew-preinstall"
     echo 'enable brew-preinstall.service' \
         > "${TEST_ROOT}/usr/lib/systemd/user-preset/01-brew-preinstall.preset"
     cat > "${TEST_ROOT}/etc/containers/policy.json" <<'EOF'
@@ -170,6 +173,17 @@ EOF
 
 @test "20-tests: rejects an image missing the brew-preinstall ExecStart binary" {
     rm -f "${TEST_ROOT}/usr/bin/brew-preinstall"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+}
+
+@test "20-tests: rejects an image whose brew-preinstall trampoline has no payload" {
+    # /usr/bin/brew-preinstall is `exec /usr/libexec/brew-preinstall`. Dropping
+    # the payload leaves the trampoline, the unit and the preset all intact, so
+    # every other assertion here still passes -- the build ships and the service
+    # dies with 127 at first login. That silent shape is the one #965 reported.
+    rm -f "${TEST_ROOT}/usr/libexec/brew-preinstall"
 
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -ne 0 ]
