@@ -6,7 +6,7 @@ HELPER="${SCRIPT_DIR}/../../system_files/shared/usr/libexec/bluefin-runsc"
 RUNSC_VERSION="release-20260817.0"
 
 setup() {
-    TEST_ROOT="$(mktemp -d)"
+    TEST_ROOT="${SCRIPT_DIR}/.bats-sandbox/runsc-provisioning.${BATS_TEST_NUMBER:-0}.$$"
     STUB_BIN="${TEST_ROOT}/stub-bin"
     PATCHED_HELPER="${TEST_ROOT}/bluefin-runsc"
     mkdir -p "${STUB_BIN}" "${TEST_ROOT}/archive/gvisor-bin" "${TEST_ROOT}/bin"
