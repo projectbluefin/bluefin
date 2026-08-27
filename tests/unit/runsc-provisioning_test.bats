@@ -78,7 +78,7 @@ EOF
     [[ -x "${HELPER}" ]]
     patch_helper
 
-    run "${PATCHED_HELPER}" install
+    run bash "${PATCHED_HELPER}" install
 
     [ "${status}" -eq 0 ]
     release_dirs=("${TEST_ROOT}/usr/local/libexec/bluefin-runsc/releases/${RUNSC_VERSION}-"*)
@@ -96,7 +96,7 @@ EOF
     patch_helper
     stub_uname riscv64
 
-    run "${PATCHED_HELPER}" install
+    run bash "${PATCHED_HELPER}" install
 
     [ "${status}" -ne 0 ]
     [ ! -s "${CURL_LOG}" ]
@@ -107,7 +107,7 @@ EOF
     patch_helper
     stub_uname arm64
 
-    run "${PATCHED_HELPER}" install
+    run bash "${PATCHED_HELPER}" install
 
     [ "${status}" -eq 0 ]
     grep -Fq 'gvisor-aarch64.tar.bz2' "${CURL_LOG}"
@@ -125,7 +125,7 @@ EOF
     chmod +x "${STUB_BIN}/tar"
     export TAR_LOG="${TEST_ROOT}/tar.log"
 
-    run "${PATCHED_HELPER}" install
+    run bash "${PATCHED_HELPER}" install
 
     [ "${status}" -ne 0 ]
     [ ! -e "${TAR_LOG}" ]
@@ -135,11 +135,11 @@ EOF
     [[ -x "${HELPER}" ]]
     patch_helper
 
-    run "${PATCHED_HELPER}" install
+    run bash "${PATCHED_HELPER}" install
     [ "${status}" -eq 0 ]
     first_curl_count="$(wc -l < "${CURL_LOG}")"
 
-    run "${PATCHED_HELPER}" install
+    run bash "${PATCHED_HELPER}" install
 
     [ "${status}" -eq 0 ]
     [ "$(wc -l < "${CURL_LOG}")" -eq "${first_curl_count}" ]
@@ -154,7 +154,7 @@ EOF
     rm -rf "$(dirname "${active_link}")/gvisor-bin"
     printf 'corrupt\n' > "${CURL_MODE_FILE}"
 
-    run "${PATCHED_HELPER}" update
+    run bash "${PATCHED_HELPER}" update
 
     [ "${status}" -ne 0 ]
     [ "$(readlink "${TEST_ROOT}/usr/local/bin/runsc")" = "${active_link}" ]
@@ -163,10 +163,10 @@ EOF
 @test "runsc helper removes only its owned installation" {
     [[ -x "${HELPER}" ]]
     patch_helper
-    run "${PATCHED_HELPER}" install
+    run bash "${PATCHED_HELPER}" install
     [ "${status}" -eq 0 ]
 
-    run "${PATCHED_HELPER}" remove
+    run bash "${PATCHED_HELPER}" remove
 
     [ "${status}" -eq 0 ]
     [ ! -e "${TEST_ROOT}/usr/local/bin/runsc" ]
@@ -183,7 +183,7 @@ EOF
     mkdir -p "${TEST_ROOT}/usr/local/libexec/bluefin-runsc"
     printf 'owned data\n' > "${TEST_ROOT}/usr/local/libexec/bluefin-runsc/keep"
 
-    run "${PATCHED_HELPER}" remove
+    run bash "${PATCHED_HELPER}" remove
 
     [ "${status}" -ne 0 ]
     [ -L "${TEST_ROOT}/usr/local/bin/runsc" ]
@@ -203,7 +203,7 @@ EOF
     [ "${status}" -ne 0 ]
     [ -e "${TEST_ROOT}/usr/local/libexec/bluefin-runsc/foreign" ]
 
-    run "${PATCHED_HELPER}" install
+    run bash "${PATCHED_HELPER}" install
 
     [ "${status}" -ne 0 ]
     [ ! -s "${CURL_LOG}" ]
@@ -231,7 +231,7 @@ EOF
     ln -s "${TEST_ROOT}/foreign" \
         "${TEST_ROOT}/usr/local/libexec/bluefin-runsc/releases"
 
-    run "${PATCHED_HELPER}" install
+    run bash "${PATCHED_HELPER}" install
 
     [ "${status}" -ne 0 ]
     [ -d "${TEST_ROOT}/foreign" ]
@@ -261,7 +261,7 @@ EOF
     chmod +x "${TEST_ROOT}/bluefin-runsc-update"
     export FAIL_MV_TARGET="${TEST_ROOT}/usr/local/bin/runsc"
 
-    run "${TEST_ROOT}/bluefin-runsc-update" update
+    run bash "${TEST_ROOT}/bluefin-runsc-update" update
 
     [ "${status}" -ne 0 ]
     [ "$(readlink "${TEST_ROOT}/usr/local/bin/runsc")" = "${active_link}" ]
