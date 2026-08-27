@@ -58,13 +58,15 @@ adjacent `gvisor-bin/` payload required by `runsc`.
 The install is exposed as `/usr/local/bin/runsc` for Podman's documented
 runtime name lookup, while versioned payloads live under the exact
 Bluefin-owned `/usr/local/libexec/bluefin-runsc/` directory. The recipe does
-not alter Podman's default runtime or configuration. Updates stage a complete
-payload before atomically switching the link; a failed update leaves the
-active link in place. A failure during staging cleans the temporary payload, and
-an interrupted publication can be recovered with the same idempotent install or
-the removal command. Repeating install/update is idempotent for the pinned
-release. `ujust runsc remove` removes only that owned directory and a link that
-resolves inside it, and refuses foreign paths.
+not alter Podman's default runtime or configuration. The helper writes its
+ownership marker only after a complete release is staged and refuses to adopt
+an unmarked or symlinked root or release path. Updates stage a complete payload
+before atomically switching the link; a failed update leaves the active link in
+place and cleans the newly staged release. An interrupted publication can be
+recovered with the same idempotent install or the removal command. Repeating
+install/update is idempotent for the pinned release. `ujust runsc remove`
+removes only that marked owned directory and a link that resolves inside it, and
+refuses foreign paths.
 
 The gVisor GitHub release currently publishes HTTPS assets and SHA-256/SHA-512
 checksum files but no detached signature for these archives; see the [official

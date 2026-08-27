@@ -84,6 +84,7 @@ EOF
     [ "${#release_dirs[@]}" -eq 1 ]
     [ -x "${release_dirs[0]}/runsc" ]
     [ -x "${release_dirs[0]}/gvisor-bin/runsc-sandbox" ]
+    [ -f "${TEST_ROOT}/usr/local/libexec/bluefin-runsc/.bluefin-owned" ]
     [ "$(readlink "${TEST_ROOT}/usr/local/bin/runsc")" = \
         "${release_dirs[0]}/runsc" ]
     grep -Fq 'gvisor-x86_64.tar.bz2' "${CURL_LOG}"
@@ -186,6 +187,87 @@ EOF
     [ "${status}" -ne 0 ]
     [ -L "${TEST_ROOT}/usr/local/bin/runsc" ]
     [ -e "${TEST_ROOT}/usr/local/libexec/bluefin-runsc/keep" ]
+}
+
+@test "runsc helper refuses an unowned root and preserves foreign children" {
+
+    [[ -x "${HELPER}" ]]
+
+    patch_helper
+    mkdir -p "${TEST_ROOT}/usr/local/libexec/bluefin-runsc"
+    printf 'foreign data\n' > "${TEST_ROOT}/usr/local/libexec/bluefin-runsc/foreign"
+
+    run "${PATCHED_HELPER}" remove
+
+    [ "${status}" -ne 0 ]
+    [ -e "${TEST_ROOT}/usr/local/libexec/bluefin-runsc/foreign" ]
+
+    run "${PATCHED_HELPER}" install
+
+    [ "${status}" -ne 0 ]
+    [ ! -s "${CURL_LOG}" ]
+    [ -e "${TEST_ROOT}/usr/local/libexec/bluefin-runsc/foreign" ]
+}
+
+@test "runsc helper refuses a symlinked root or release directory" {
+
+    [[ -x "${HELPER}" ]]
+
+    patch_helper
+    mkdir -p "${TEST_ROOT}/usr/local/libexec"
+    mkdir -p "${TEST_ROOT}/foreign"
+    ln -s "${TEST_ROOT}/foreign" "${TEST_ROOT}/usr/local/libexec/bluefin-runsc"
+
+    run "${PATCHED_HELPER}" remove
+
+    [ "${status}" -ne 0 ]
+    [ -d "${TEST_ROOT}/foreign" ]
+
+    rm -f "${TEST_ROOT}/usr/local/libexec/bluefin-runsc"
+    mkdir -p "${TEST_ROOT}/usr/local/libexec/bluefin-runsc"
+    printf 'bluefin-runsc ownership marker v1\n' > \
+        "${TEST_ROOT}/usr/local/libexec/bluefin-runsc/.bluefin-owned"
+    ln -s "${TEST_ROOT}/foreign" \
+        "${TEST_ROOT}/usr/local/libexec/bluefin-runsc/releases"
+
+    run "${PATCHED_HELPER}" install
+
+    [ "${status}" -ne 0 ]
+    [ -d "${TEST_ROOT}/foreign" ]
+}
+
+@test "runsc helper cleans a staged release after publication failure" {
+
+    [[ -x "${HELPER}" ]]
+
+    patch_helper
+    run "${PATCHED_HELPER}" install
+    [ "${status}" -eq 0 ]
+    active_link="$(readlink "${TEST_ROOT}/usr/local/bin/runsc")"
+    release_dirs=("${TEST_ROOT}/usr/local/libexec/bluefin-runsc/releases/"*)
+
+    cat > "${STUB_BIN}/mv" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${!#}" == "${FAIL_MV_TARGET}" ]]; then
+    exit 23
+fi
+exec /usr/bin/mv "$@"
+EOF
+    chmod +x "${STUB_BIN}/mv"
+    sed 's/release-20260817.0/release-20260818.0/g' \
+        "${PATCHED_HELPER}" > "${TEST_ROOT}/bluefin-runsc-update"
+    chmod +x "${TEST_ROOT}/bluefin-runsc-update"
+    export FAIL_MV_TARGET="${TEST_ROOT}/usr/local/bin/runsc"
+
+    run "${TEST_ROOT}/bluefin-runsc-update" update
+
+    [ "${status}" -ne 0 ]
+    [ "$(readlink "${TEST_ROOT}/usr/local/bin/runsc")" = "${active_link}" ]
+    [ -x "${active_link}" ]
+    [ -d "$(dirname "${active_link}")/gvisor-bin" ]
+    after_release_dirs=("${TEST_ROOT}/usr/local/libexec/bluefin-runsc/releases/"*)
+    [ "${#after_release_dirs[@]}" -eq "${#release_dirs[@]}" ]
 }
 
 @test "runsc recipe and helper do not change defaults or weaken runtime isolation" {
