@@ -46,6 +46,34 @@ pre-commit run --all-files
 For container signatures, use the repository's existing verification recipe;
 do not invent a replacement key or trust path.
 
+## Bluefin host runsc provisioning
+
+The Bluefin-owned `ujust runsc install` and `ujust runsc update` recipes
+provision the pinned [gVisor `release-20260817.0` archive](https://github.com/google/gvisor/releases/tag/release-20260817.0) for the host's
+`x86_64` or `aarch64` architecture. They reject other architectures before
+network access, use the exact GitHub release asset and SHA-256 recorded in the
+recipe helper, verify the archive before reading it with `tar`, and retain the
+adjacent `gvisor-bin/` payload required by `runsc`.
+
+The install is exposed as `/usr/local/bin/runsc` for Podman's documented
+runtime name lookup, while versioned payloads live under the exact
+Bluefin-owned `/usr/local/libexec/bluefin-runsc/` directory. The recipe does
+not alter Podman's default runtime or configuration. Updates stage a complete
+payload before atomically switching the link; a failed update leaves the
+active link in place. A failure during staging cleans the temporary payload, and
+an interrupted publication can be recovered with the same idempotent install or
+the removal command. Repeating install/update is idempotent for the pinned
+release. `ujust runsc remove` removes only that owned directory and a link that
+resolves inside it, and refuses foreign paths.
+
+The gVisor GitHub release currently publishes HTTPS assets and SHA-256/SHA-512
+checksum files but no detached signature for these archives; see the [official
+installation guide](https://gvisor.dev/docs/user_guide/install/) for the
+multi-file payload requirement. This path therefore provides
+checksum-plus-HTTPS/GitHub asset-digest verification, not a detached-signature
+claim. Native rootless Podman execution, networking, cgroup
+behavior, and separate arm64 acceptance remain deployment-time gates.
+
 ## References
 
 - [COPR isolation invariant](references/copr-isolation.md)
