@@ -8,6 +8,7 @@ RUNSC_VERSION="release-20260817.0"
 setup() {
     TEST_ROOT="$(mktemp -d)"
     STUB_BIN="${TEST_ROOT}/stub-bin"
+    PATCHED_HELPER="${SCRIPT_DIR}/../../system_files/shared/usr/libexec/.bluefin-runsc-test"
     mkdir -p "${STUB_BIN}" "${TEST_ROOT}/archive/gvisor-bin" "${TEST_ROOT}/bin"
 
     printf '#!/usr/bin/env bash\n' > "${TEST_ROOT}/archive/runsc"
@@ -46,11 +47,11 @@ EOF
 }
 
 teardown() {
+    rm -f "${PATCHED_HELPER}"
     rm -rf "${TEST_ROOT}"
 }
 
 patch_helper() {
-    PATCHED_HELPER="${TEST_ROOT}/bluefin-runsc"
     sed \
         -e "s|/usr/local/libexec/bluefin-runsc|${TEST_ROOT}/usr/local/libexec/bluefin-runsc|g" \
         -e "s|/usr/local/bin/runsc|${TEST_ROOT}/usr/local/bin/runsc|g" \
