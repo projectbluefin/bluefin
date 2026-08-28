@@ -127,6 +127,57 @@ EOF
     [[ "$output" == *"Missing package: fzf"* ]]
 }
 
+@test "20-tests: rejects an image missing just, the binary ujust exec's" {
+    # /usr/bin/ujust is a wrapper that ends in `exec just --justfile ...`, and
+    # it ships from `common`, so the `stat /usr/bin/ujust` check above passes
+    # whether or not the just RPM is on the image. Drop just from base.toml and
+    # every ujust invocation exits 127 -- a strictly worse version of the #965
+    # item 1 symptom -- with nothing failing the build. This case fails if just
+    # is ever removed from IMPORTANT_PACKAGES.
+    cat > "${STUB_BIN}/rpm" <<'EOF'
+#!/usr/bin/bash
+if [[ "$*" == *"%{VENDOR}"* ]]; then
+    echo "negativo17.org"
+    exit 0
+fi
+case "$*" in
+    *fedora-flathub-remote*|*fedora-logos*|*fedora-third-party*|*gnome-software*|*podman-docker*) exit 1 ;;
+    *" just"*) exit 1 ;;
+esac
+exit 0
+EOF
+    chmod +x "${STUB_BIN}/rpm"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Missing package: just"* ]]
+}
+
+@test "20-tests: rejects an image missing gum, which the just recipes render with" {
+    # The .just files come from `common` and call gum for every prompt, spinner
+    # and styled block, so a missing gum RPM leaves the recipes present and the
+    # stat checks green while every interactive recipe degrades into a stream of
+    # "gum: command not found". This case fails if gum is ever removed from
+    # IMPORTANT_PACKAGES.
+    cat > "${STUB_BIN}/rpm" <<'EOF'
+#!/usr/bin/bash
+if [[ "$*" == *"%{VENDOR}"* ]]; then
+    echo "negativo17.org"
+    exit 0
+fi
+case "$*" in
+    *fedora-flathub-remote*|*fedora-logos*|*fedora-third-party*|*gnome-software*|*podman-docker*) exit 1 ;;
+    *" gum"*) exit 1 ;;
+esac
+exit 0
+EOF
+    chmod +x "${STUB_BIN}/rpm"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Missing package: gum"* ]]
+}
+
 @test "20-tests: rejects an unwanted package" {
     cat > "${STUB_BIN}/rpm" <<'EOF'
 #!/usr/bin/bash
