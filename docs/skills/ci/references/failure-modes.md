@@ -71,47 +71,60 @@ an older triage comment. State as of run
 | Leg | Status | Notes |
 |---|---|---|
 | `bluefin` / `smoke-a` | failing | Dash to Dock / Firefox / AT-SPI session lookups fail (`gdbus ... Extensions.GetExtensionInfo` returns `UnknownMethod`, Firefox/Settings not found via AT-SPI). No open PR claims this; see prior findings on #929. |
-| `bluefin` / `common-b` | failing (new) | `ujust toggle-updates` non-interactive scenario — see below. |
-| `bluefin-nvidia` / `common-b` | failing (new) | Same `ujust toggle-updates` failure, identical error, on the NVIDIA variant. |
+| `bluefin` / `common-b` | failing — freeze artifact, not a defect | `ujust toggle-updates` non-interactive scenario. The tested image predates the contract the scenario asserts; resolved below, nothing to fix here. |
+| `bluefin-nvidia` / `common-b` | failing — freeze artifact, not a defect | Same cause on the NVIDIA variant, which is why both fail identically. |
 | `bluefin` / `bluefin-nvidia` smoke-b, common-a | passing | The composefs `cap_net_raw` regression tracked in `testsuite#524` / `dakota#841` **no longer appears** in this run — treat that blocker as resolved unless a fresh run shows it again. |
 
-### New: `ujust toggle-updates` fails with a `gum` TTY error, not a skip
+### Resolved: `ujust toggle-updates` fails because the tested image predates the contract
 
 `tests/common/features/common_ujust.feature:30` (`projectbluefin/testsuite`)
 exercises `projectbluefin/common`'s non-interactive `toggle-updates ACTION=`
-contract (shipped in `common#966`, 2026-08-09). The `@requires_toggle_action`
-gate in `tests/common/features/environment.py` probes with
-`ujust toggle-updates cancel` and only runs the scenario when that exits `0` —
-so the scenario ran here, meaning the probe found ACTION support present, but
-the actual `enable`/`disable` exchange still failed:
+contract (`common#966`, commit `93068cd`, merged 2026-08-09T02:16Z). The
+scenario failed with a `gum` TTY error instead of skipping:
 
 ```
 ASSERT FAILED: SSH command exited 1, expected 0
 stderr: unable to pick selection: could not open a new TTY: open /dev/tty: no such device or address
 ```
 
-That message comes only from `gum choose` in the recipe's `*` (unmatched
-`ACTION`) branch — the `enable`/`disable`/`cancel` branches never call `gum`.
-Reproducing `common@main`'s current `update.just` locally with plain `just`
-(1.58.0) resolves `enable`/`disable`/`cancel` correctly with no `gum`
-invocation, so the recipe logic on `common@main` is not the bug by itself.
-Two explanations remain open, and neither could be checked here — this
-runtime has no podman/skopeo/container toolchain to inspect the actual layered
-image or reach the ephemeral test VM:
+Of the two explanations previously left open, the first is confirmed and the
+second is refuted: **the image under test was built before that contract
+existed**, and nothing in the SSH/session harness is involved. Resolving the
+tag against the registry on 2026-08-28 still returns the 2026-08-04 build:
 
-1. The specific `bluefin`/`bluefin-nvidia` image digest above was built
-   against a `common` base layer resolved before `common#966` propagated, so
-   it still runs the old body (this predicts both variants failing
-   identically, which matches).
-2. Something in the SSH/session harness (not the recipe) causes `gum` to be
-   invoked regardless of `ACTION` in this environment specifically.
+| Field | Value |
+|---|---|
+| `:testing` digest | `sha256:bf615b20…` — unchanged since this was first reported on 2026-08-07 |
+| `org.opencontainers.image.version` | `testing-44.20260804` |
+| `org.opencontainers.image.created` | `2026-08-04T15:59:11Z` |
 
-Next step: confirm which `common` digest is actually layered into the
-`bluefin:testing` image tested above (e.g. via `skopeo inspect` /
-`rpm-ostree status` on a real or lab VM, not just the source repo), and if it
-already includes `common#966`, escalate as a `projectbluefin/common` or
-`projectbluefin/testsuite` bug rather than assuming a stale layer will
-self-resolve on the next build.
+That build predates `common#966` by five days, so it ships the previous
+`update.just` (`bd90527`, 2026-06-20).
+
+**Why the `@requires_toggle_action` gate did not skip.** The pre-`#966` recipe
+already declared `toggle-updates ACTION="prompt"` — it *accepts* the argument
+and then ignores it, falling straight through to the interactive body. So the
+probe `ujust toggle-updates cancel` reaches `gum choose`, which fails with no
+TTY and leaves `SELECTED_OPTION` empty, and the next line is
+
+```bash
+[[ "${SELECTED_OPTION}" == "Cancel" || "${SELECTED_OPTION}" == "" ]] && exit 0
+```
+
+which exits `0`. The gate meant to skip images lacking ACTION support passes on
+exactly those images, so the scenario runs and fails. An exit-status probe
+cannot detect this contract; it has to observe the behaviour (that `enable`
+actually changes timer state) or inspect the recipe body. That is the only part
+of this thread that is still a bug — report it to `projectbluefin/testsuite`.
+
+**Consequence: `common-b` is not an independent blocker.** It is an artifact of
+the freeze and needs no change in `bluefin`. This repo's `common` pin in
+`image-versions.yml` is bumped by Renovate near-daily, has carried `#966` since
+#1069 (2026-08-09), and is current as of #1146 (2026-08-28) — so any newly
+built image satisfies the scenario. The leg goes green on its own once a fresh
+image is promoted. Do not chase it as a product regression, and do not count it
+when deciding what still has to be fixed to unfreeze `:testing`.
+
 ## `:testing` can silently freeze for weeks, invalidating every downstream triage (#929)
 
 `build-image-testing.yml` never moves the mutable `:testing` tag itself
@@ -142,6 +155,12 @@ curl -sI -H "Authorization: Bearer $TOKEN" \
   -H "Accept: application/vnd.oci.image.manifest.v1+json" \
   "https://ghcr.io/v2/projectbluefin/bluefin/manifests/testing" \
   | grep -i docker-content-digest
+
+# ...and when that digest was built. The age is what settles "is this image
+# older than the fix I am looking for?" — a tag that has not moved in days is
+# frozen, and its failures describe that old build, not the current tree.
+skopeo inspect docker://ghcr.io/projectbluefin/bluefin:testing \
+  | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["Labels"]["org.opencontainers.image.version"], d["Created"])'
 
 # Confirm promote-to-testing's real status, not just the workflow conclusion —
 # a failing leg elsewhere still shows the workflow as "failure" while masking
