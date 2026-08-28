@@ -13,8 +13,15 @@ BuildStream repository.
 - `tests/unit/` contains Bats coverage.
 - `.github/workflows/` contains CI and release callers.
 
-`build_files/shared/build.sh` is unused legacy code. Do not update or reference
-it.
+### Stage reachability
+
+The `Containerfile` is the only orchestrator of the build-stage sequence. Every
+`build_files/base/*.sh` script must be invoked by it, and every shell script
+under `build_files/` must be reachable from it — directly or by being sourced
+from a script that is. `tests/unit/build_stage_reachability_test.bats` enforces
+this, so a stage that is added without being wired up, or silently unwired by a
+Containerfile restructure, fails the test suite instead of shipping as dead
+code. Do not add a second script that re-runs the stage list.
 
 ## Cache boundaries
 
