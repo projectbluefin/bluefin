@@ -227,7 +227,7 @@ the squashed result. A promotion PR that cycles `added_to_merge_queue` then
 `removed_from_merge_queue` roughly two hours later, day after day, means the
 release gate is genuinely failing on the squashed content — diagnose the
 underlying E2E failure (see above), not the promotion workflow, in that case.
-## `:testing` promotion blocker set (issue #989) — re-verified 2026-08-10
+## `:testing` promotion blocker set (issue #989) — re-verified 2026-08-27
 
 `run-e2e / smoke,common / GNOME 50 — smoke-a` has failed on essentially every
 `post-testing-e2e` run since 2026-06-25, making `promote-to-testing` `skipped`
@@ -238,14 +238,15 @@ window. Do not attempt to work around this from `bluefin` by adding
 `always()`, `continue-on-error`, or dropping `run-e2e` from
 `promote-to-testing`'s `needs:` — that would promote an unverified digest.
 
-State as of run
-[31358323820](https://github.com/projectbluefin/bluefin/actions/runs/31358323820)
-(2026-08-10T05:21Z):
+State as of Nightly E2E run
+[33036921142](https://github.com/projectbluefin/bluefin/actions/runs/33036921142)
+(2026-08-27T03:37Z):
 
 - All six `firefox.feature` scenarios still fail deterministically, through
-  both `@retry` passes, with `AssertionError: Firefox address bar not found`
-  (and the matching tab-list / "still visible" assertions for the Ctrl+T /
-  Ctrl+W / Ctrl+Q scenarios).
+  both `@retry` passes. The initial run and both retries report zero Firefox
+  scenarios passed, with `AssertionError: Firefox address bar not found` (and
+  the matching tab-list / "still visible" assertions for the Ctrl+T / Ctrl+W /
+  Ctrl+Q scenarios).
 - `testsuite#692` (merged 2026-08-07, in the current `v1` tag) fixed the
   original bug: Firefox launched without `GNOME_ACCESSIBILITY=1`, so its
   AT-SPI subtree never populated, and `_firefox_window()` falsely accepted a
@@ -254,13 +255,23 @@ State as of run
   *some* populated chrome (for example a toolbar or push button), but the
   address-bar `entry` node specifically still never appears, so
   `_address_bar()` still raises.
-- `testsuite#741` (open as of this writing, refs this issue) targets a
-  further gap: an exported Flatpak `.desktop` launch path does not carry
-  `FIREFOX_A11Y_ENV` across the sandbox boundary, which reproduces the same
-  address-bar/tab-list symptom. Re-check whether `#741` (or a follow-up) is
-  merged and the testsuite `v1` tag has advanced past it before re-triaging
-  this from scratch — `run-testsuite.yml` always resolves `test_ref: v1`, so a
-  merged fix does not reach `bluefin` until that tag moves.
+- `testsuite#741` merged 2026-08-26 and is conclusively **not** the remaining
+  fix. The run above resolved both the reusable workflow and `test_ref` to
+  testsuite commit `ee82d53`, which contains `#741`'s merge commit, yet the
+  failure reproduced unchanged. That PR forwards `FIREFOX_A11Y_ENV` through
+  exported Flatpak desktop launches, but testsuite checks the `firefox` command
+  before its Flatpak candidates. Bluefin's base package manifest and image
+  validation require the Firefox RPM, so that command candidate is available
+  first; the Flatpak-export path changed by `#741` is not selected.
+- Continue the fix in `projectbluefin/testsuite`: log the selected
+  `context.firefox_launch_target` and dump the Firefox AT-SPI subtree on
+  failure, then correct the RPM-command path from that live evidence. Do not
+  guess at another Bluefin workflow bypass or treat a later `#741` merge as
+  evidence that the gate is fixed.
+- A post-testing rerun has not yet validated the updated testsuite because
+  every qualifying `Testing Images` run since 2026-08-12 has failed before E2E
+  (tracked separately in `#995`). The first successful push build will trigger
+  `post-testing-e2e.yml` automatically.
 - Unblock criterion: one green `Post-Testing E2E` run with
   `promote-to-testing: success` after the testsuite fix lands closes this
   issue. There is nothing to change in `bluefin` itself beyond re-verifying
