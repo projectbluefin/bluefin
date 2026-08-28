@@ -62,7 +62,9 @@ just clean
 
 ## Hard rules
 
-- Do not update the unused `build_files/shared/build.sh`.
+- Do not add a second orchestrator for the stage sequence; the `Containerfile`
+  is the only one. Every `build_files/base/*.sh` must be invoked by it —
+  `tests/unit/build_stage_reachability_test.bats` enforces this.
 - Keep `build_files/base/04-install-kernel-akmods.sh` as an entrypoint wrapper;
   the orchestration logic lives in `04-install-kernel-akmods.py`.
 - `/tmp` does not persist between container `RUN` instructions.
