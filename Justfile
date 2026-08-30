@@ -484,6 +484,9 @@ verify-container container="" registry="ghcr.io/ublue-os" key="":
         trap 'rm -f "${COSIGN_INSTALL_PATH}"' EXIT
         curl -fsSL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" \
             -o "${COSIGN_INSTALL_PATH}"
+        # SHA-256 pinned from upstream cosign_checksums.txt for v3.1.1 — fail closed on mismatch.
+        COSIGN_SHA256="ae1ecd212663f3693ad9edf8b1a183900c9a52d3155ba6e354237f9a0f6463fc"
+        echo "${COSIGN_SHA256}  ${COSIGN_INSTALL_PATH}" | sha256sum -c -
         chmod +x "${COSIGN_INSTALL_PATH}"
         ${SUDOIF} install -m 0755 "${COSIGN_INSTALL_PATH}" /usr/local/bin/cosign
         echo "cosign installed: $(cosign version 2>/dev/null | awk '/GitVersion:/{print $2}')"
@@ -550,8 +553,12 @@ secureboot $image="bluefin" $tag="testing" $flavor="main":
     ${PODMAN} rm "$TMP"
 
     # Get the Public Certificates
-    curl --retry 3 -Lo /tmp/kernel-sign.der https://github.com/ublue-os/akmods/raw/main/certs/public_key.der
-    curl --retry 3 -Lo /tmp/akmods.der https://github.com/ublue-os/akmods/raw/main/certs/public_key_2.der
+    # Pinned to akmods commit + SHA-256 (same pin as build_files/base/21-container-native-iso.sh) — fail closed on mismatch.
+    AKMODS_COMMIT="c30e9467fe158dcf82c5176dec76d4373871ffda"
+    curl --retry 3 -Lo /tmp/kernel-sign.der "https://raw.githubusercontent.com/ublue-os/akmods/${AKMODS_COMMIT}/certs/public_key.der"
+    curl --retry 3 -Lo /tmp/akmods.der "https://raw.githubusercontent.com/ublue-os/akmods/${AKMODS_COMMIT}/certs/public_key_2.der"
+    echo "4e5c68474cb133fd8984d9599762cece9100c3e6cd8a9709aeaabd85dd9e70d1  /tmp/kernel-sign.der" | sha256sum -c -
+    echo "c01ef5e7fb9f6108fc58735f7eeb4dec084764a8aac404831e0ce3f9da63757d  /tmp/akmods.der" | sha256sum -c -
     openssl x509 -in /tmp/kernel-sign.der -out /tmp/kernel-sign.crt
     openssl x509 -in /tmp/akmods.der -out /tmp/akmods.crt
 
