@@ -7,7 +7,10 @@ set -euo pipefail
 ROOT="${FAKE_ROOT:-}"
 IMAGE_INFO="${ROOT}/usr/share/ublue-os/image-info.json"
 ISO_CONFIG="${ROOT}/usr/lib/bootc-image-builder/iso.yaml"
-SBKEY_URL="https://github.com/ublue-os/akmods/raw/main/certs/public_key.der"
+# Pinned to a full commit SHA with a checked-in digest so a compromised or
+# rotated akmods main branch fails the build instead of enrolling a bad key.
+SBKEY_URL="https://github.com/ublue-os/akmods/raw/c30e9467fe158dcf82c5176dec76d4373871ffda/certs/public_key.der"
+SBKEY_SHA256="4e5c68474cb133fd8984d9599762cece9100c3e6cd8a9709aeaabd85dd9e70d1"
 
 IMAGE_REF="$(jq -r '."image-ref"' "${IMAGE_INFO}")"
 IMAGE_REF="${IMAGE_REF##*://}"
@@ -123,6 +126,7 @@ rsync -aAXUHKP --filter='-x security.selinux' /var/lib/flatpak "$target"
 EOF
 
 ghcurl "${SBKEY_URL}" --retry 15 -o "${ROOT}/etc/sb_pubkey.der"
+echo "${SBKEY_SHA256}  ${ROOT}/etc/sb_pubkey.der" | sha256sum -c -
 cat >"${ROOT}/usr/share/anaconda/post-scripts/secureboot-enroll-key.ks" <<'EOF'
 %post --erroronfail --nochroot
 set -oue pipefail
