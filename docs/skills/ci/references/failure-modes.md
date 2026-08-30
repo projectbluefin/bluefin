@@ -347,3 +347,53 @@ gh run list --repo projectbluefin/bluefin --workflow "Testing Images" -L 20 \
 gh run view RUN_ID --repo projectbluefin/bluefin --json jobs \
   --jq '.jobs[] | [.name, .status, .conclusion] | @tsv'
 ```
+
+### Update 2026-08-28 — registry-cache suspect disproven; failure is a WAL-mode rpmdb read across the stage-commit boundary
+
+Full-log forensics across the good/bad boundary correct two claims above and
+retire the prime suspect:
+
+- **The census conflates two failure modes.** Run `31607601482` (08-12) built
+  every stage successfully — including the `extension-builder` dnf install —
+  and failed only while *pushing* (GHCR secondary rate limit, HTTP 403, on
+  both the cache push and the image push). The rpmdb-malformed signature
+  starts with `31727537250` (08-13) and appears in every failing run from
+  then on. Last good *build* is therefore 08-12, not 08-10.
+- **The registry-cache-replay suspect is disproven.** The failing step's
+  parent (`base-common`) rebuilds fresh in the failing runs — its `FROM`
+  digest is re-resolved daily, so its cache key changes daily, and run
+  `32924887367` (08-26) demonstrably executed Stage 1 live (new
+  `BUILD_FILES_SHA`, full 251-package install in the log) and still failed.
+  Seven distinct daily base digests (08-13 → 08-26) all fail identically; no
+  stale cached layer is involved. Do not ask a maintainer for a cache-disabled
+  run; that experiment answers a question this evidence already settles.
+- **Environment is constant across the boundary.** Last-good (08-12) and
+  first-bad (08-13) runs used the identical runner image (`20260720.247.2`),
+  identical podman/buildah/crun from Ubuntu resolute
+  (5.7.0 / 1.42.1 / 1.21), a `projectbluefin/actions` delta touching only
+  sync-branches/renovate workflows, and a bluefin delta touching only
+  `20-tests.sh` (runs in Stage 2, after the failing step).
+- **The base composes are package-identical.** `44.20260812.0` (works) and
+  `44.20260813.0` (fails) have byte-identical `rpm -qa` sets and
+  byte-identical shipped `rpmdb.sqlite-shm`/`-wal` sidecars. Only the
+  `rpmdb.sqlite` bytes and layer packing differ.
+- **What is actually failing:** the Fedora bootc bases ship
+  `/usr/lib/sysimage/rpm/rpmdb.sqlite` in SQLite **WAL journal mode** with
+  stale `-shm`/`-wal` sidecars, and every dnf transaction in a build stage
+  leaves the database in WAL mode with fresh sidecars. The
+  `extension-builder` failure is the next stage's *first read* of that
+  committed WAL state (`SELECT hnum, blob FROM 'Packages'` is the rpmdb
+  Packages table): under CI's rootful buildah 1.42.1 overlay it reports
+  SQLITE_CORRUPT, while the same image and same read succeed under local
+  rootless podman 5.8.4 — the residual trigger is in the
+  buildah-version/overlay interaction with post-0812 rpmdb bytes, not in any
+  input this repo pins.
+- **Fix applied in this repo:** `build_files/shared/checkpoint-rpmdb.sh`
+  checkpoints the WAL, converts the rpmdb to the default rollback-journal
+  mode, and removes the sidecars; `Containerfile` runs it as the last step of
+  Stage 1 and Stage 2, so every committed layer (and the shipped image)
+  carries a single self-contained `rpmdb.sqlite`. Validated locally: with the
+  checkpoint in place, a two-stage build on the failing-era base commits a
+  sidecar-free `journal_mode=delete` database that the next stage reads and
+  installs against cleanly; without it, a stage's dnf write always re-enables
+  WAL, which is why the script must run per-stage, not once.
