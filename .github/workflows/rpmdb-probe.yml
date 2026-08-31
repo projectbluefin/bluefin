@@ -37,9 +37,10 @@ concurrency:
 
 env:
   # Leg selection: flip to "false" to drop a leg from the next run.
-  RUN_CONTROL_LEG: "false"
-  RUN_PARITY_LEG: "true"
+  RUN_CONTROL_LEG: "true"
+  RUN_PARITY_LEG: "false"
   RUN_VFS_LEG: "false"
+  RUN_NATIVE_LEG: "true"
 
 jobs:
   plan:
@@ -56,6 +57,7 @@ jobs:
           RUN_CONTROL: ${{ env.RUN_CONTROL_LEG }}
           RUN_PARITY: ${{ env.RUN_PARITY_LEG }}
           RUN_VFS: ${{ env.RUN_VFS_LEG }}
+          RUN_NATIVE: ${{ env.RUN_NATIVE_LEG }}
         run: |
           set -euo pipefail
           legs='[]'
@@ -67,6 +69,9 @@ jobs:
           fi
           if [[ "${RUN_VFS}" == "true" ]]; then
             legs="$(jq -c '. + [{"checkpoint":"1","driver":"vfs"}]' <<<"${legs}")"
+          fi
+          if [[ "${RUN_NATIVE}" == "true" ]]; then
+            legs="$(jq -c '. + [{"checkpoint":"1","driver":"native-overlay"}]' <<<"${legs}")"
           fi
           echo "matrix=${legs}" >> "${GITHUB_OUTPUT}"
 
@@ -90,11 +95,14 @@ jobs:
 
       # Same composite the production reusable-build uses: btrfs loopback for
       # /var/lib/containers plus the resolute podman/buildah/crun stack.
+      # native-overlay switches rootful podman to kernel overlayfs (no
+      # fuse-overlayfs mount_program) via setup-runner's own reset+verify path.
       - name: Setup runner
         uses: projectbluefin/actions/bootc-build/setup-runner@v1
         with:
           storage-backend: btrfs
           update-podman: "true"
+          native-overlay: ${{ matrix.driver == 'native-overlay' && 'true' || 'false' }}
 
       - name: Force vfs storage driver
         if: matrix.driver == 'vfs'
@@ -122,6 +130,7 @@ jobs:
       - name: Record storage configuration
         run: |
           sudo podman info --format json | jq '.store | {graphDriverName, graphStatus, graphOptions}'
+          echo "mount_program: $(sudo podman info --format json | jq -r '.store.graphOptions.overlay.mount_program.Executable // "none (kernel overlayfs)"')"
 
       - name: Resolve build arguments
         id: args
