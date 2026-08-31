@@ -37,7 +37,8 @@ concurrency:
 
 env:
   # Leg selection: flip to "false" to drop a leg from the next run.
-  RUN_CONTROL_LEG: "true"
+  RUN_CONTROL_LEG: "false"
+  RUN_PARITY_LEG: "false"
   RUN_VFS_LEG: "true"
 
 jobs:
@@ -53,10 +54,14 @@ jobs:
         id: plan
         env:
           RUN_CONTROL: ${{ env.RUN_CONTROL_LEG }}
+          RUN_PARITY: ${{ env.RUN_PARITY_LEG }}
           RUN_VFS: ${{ env.RUN_VFS_LEG }}
         run: |
           set -euo pipefail
-          legs='[{"checkpoint":"1","driver":"overlay"}]'
+          legs='[]'
+          if [[ "${RUN_PARITY}" == "true" ]]; then
+            legs="$(jq -c '. + [{"checkpoint":"1","driver":"overlay"}]' <<<"${legs}")"
+          fi
           if [[ "${RUN_CONTROL}" == "true" ]]; then
             legs="$(jq -c '. + [{"checkpoint":"0","driver":"overlay"}]' <<<"${legs}")"
           fi
@@ -95,6 +100,11 @@ jobs:
         if: matrix.driver == 'vfs'
         run: |
           set -euxo pipefail
+          # Rootful podman persists the first-initialized driver in its libpod
+          # database, which overrides storage.conf ("overwritten by graph
+          # driver ... from database"). Reset the store before selecting vfs,
+          # mirroring setup-runner's native-overlay path.
+          sudo podman system reset --force
           sudo install -d -m 0755 /etc/containers
           sudo tee /etc/containers/storage.conf >/dev/null <<'EOF'
           [storage]
@@ -102,7 +112,8 @@ jobs:
           runroot = "/run/containers/storage"
           graphroot = "/var/lib/containers/storage"
           EOF
-          DRIVER="$(sudo podman info --format '{{.store.graphDriverName}}')"
+          # --format evaluates Go struct fields (case-sensitive); parse JSON instead.
+          DRIVER="$(sudo podman info --format json | jq -r '.store.graphDriverName')"
           if [[ "${DRIVER}" != "vfs" ]]; then
             echo "::error::expected vfs storage driver, got '${DRIVER}'"
             exit 1
