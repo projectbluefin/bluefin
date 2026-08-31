@@ -1,0 +1,160 @@
+# One-shot diagnostic: reproduce the #995 rpmdb-malformed failure in isolation
+# and bisect its trigger. Dispatch-only — never runs on push or PR.
+#
+# Legs (selected by dispatch inputs):
+#   checkpoint=0, overlay → control: Stage 1 without the checkpoint step.
+#   checkpoint=1, overlay → the current fix, under CI-parity conditions.
+#   checkpoint=1, vfs     → optional: same build on the vfs storage driver;
+#                           a pass here while checkpoint=1/overlay fails pins
+#                           the trigger to the overlay driver interaction.
+#
+# Containerfile.probe replicates production Stage 1 verbatim (same context
+# stage, mounts, script order) and ends with a probe stage that reads the
+# inherited rpmdb and runs the exact dnf5 install that fails in the
+# production extension-builder stage. No registry layer cache is used: cache
+# replay would mask whether Stage 1 itself produced a bad layer, and probe
+# layers must not pollute the image cache repos.
+name: RPMDB probe
+on:
+  workflow_dispatch:
+    inputs:
+      run_control_leg:
+        description: "Also run the no-checkpoint control leg"
+        type: boolean
+        default: true
+      run_vfs_leg:
+        description: "Also run the vfs-driver leg (slower, disk-heavy)"
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: rpmdb-probe-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Plan matrix
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - name: Plan legs
+        id: plan
+        env:
+          RUN_CONTROL: ${{ inputs.run_control_leg }}
+          RUN_VFS: ${{ inputs.run_vfs_leg }}
+        run: |
+          set -euo pipefail
+          legs='[{"checkpoint":"1","driver":"overlay"}]'
+          if [[ "${RUN_CONTROL}" == "true" ]]; then
+            legs="$(jq -c '. + [{"checkpoint":"0","driver":"overlay"}]' <<<"${legs}")"
+          fi
+          if [[ "${RUN_VFS}" == "true" ]]; then
+            legs="$(jq -c '. + [{"checkpoint":"1","driver":"vfs"}]' <<<"${legs}")"
+          fi
+          echo "matrix=${legs}" >> "${GITHUB_OUTPUT}"
+
+  probe:
+    name: probe (checkpoint=${{ matrix.checkpoint }}, driver=${{ matrix.driver }})
+    needs: [plan]
+    if: needs.plan.outputs.matrix != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+
+      # Same composite the production reusable-build uses: btrfs loopback for
+      # /var/lib/containers plus the resolute podman/buildah/crun stack.
+      - name: Setup runner
+        uses: projectbluefin/actions/bootc-build/setup-runner@v1
+        with:
+          storage-backend: btrfs
+          update-podman: "true"
+
+      - name: Force vfs storage driver
+        if: matrix.driver == 'vfs'
+        run: |
+          set -euxo pipefail
+          sudo install -d -m 0755 /etc/containers
+          sudo tee /etc/containers/storage.conf >/dev/null <<'EOF'
+          [storage]
+          driver = "vfs"
+          runroot = "/run/containers/storage"
+          graphroot = "/var/lib/containers/storage"
+          EOF
+          DRIVER="$(sudo podman info --format '{{.store.graphDriverName}}')"
+          if [[ "${DRIVER}" != "vfs" ]]; then
+            echo "::error::expected vfs storage driver, got '${DRIVER}'"
+            exit 1
+          fi
+
+      - name: Record storage configuration
+        run: |
+          sudo podman info --format json | jq '.store | {graphDriverName, graphStatus, graphOptions}'
+
+      - name: Resolve build arguments
+        id: args
+        run: |
+          set -euo pipefail
+          fedora_major="44"
+          base_digest="$(skopeo inspect --retry-times 3 docker://quay.io/fedora-ostree-desktops/silverblue:${fedora_major} | jq -r '.Digest')"
+          kernel_release="$(skopeo inspect --retry-times 3 docker://ghcr.io/ublue-os/akmods:main-${fedora_major} | jq -r '.Labels["ostree.linux"]')"
+          common_sha="$(awk '/name: common/{f=1;next} f && /digest:/{print $2; exit}' image-versions.yml)"
+          brew_sha="$(awk '/name: brew/{f=1;next} f && /digest:/{print $2; exit}' image-versions.yml)"
+          build_files_sha="$(find build_files -type f -print0 | LC_ALL=C sort -z | xargs -0 -r sha256sum | sha256sum | cut -d' ' -f1)"
+          {
+            echo "base_ref=quay.io/fedora-ostree-desktops/silverblue:${fedora_major}@${base_digest}"
+            echo "kernel=${kernel_release}"
+            echo "common_sha=${common_sha}"
+            echo "brew_sha=${brew_sha}"
+            echo "build_files_sha=${build_files_sha}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Build probe image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHECKPOINT: ${{ matrix.checkpoint }}
+        run: |
+          set -euxo pipefail
+          sudo -E podman build \
+            --build-arg AKMODS_FLAVOR=main \
+            --build-arg BASE_IMAGE_REF="${{ steps.args.outputs.base_ref }}" \
+            --build-arg COMMON_IMAGE=ghcr.io/projectbluefin/common:latest \
+            --build-arg COMMON_IMAGE_SHA="${{ steps.args.outputs.common_sha }}" \
+            --build-arg BREW_IMAGE=ghcr.io/ublue-os/brew:latest \
+            --build-arg BREW_IMAGE_SHA="${{ steps.args.outputs.brew_sha }}" \
+            --build-arg FEDORA_MAJOR_VERSION=44 \
+            --build-arg IMAGE_NAME=bluefin \
+            --build-arg IMAGE_VENDOR=projectbluefin \
+            --build-arg KERNEL="${{ steps.args.outputs.kernel }}" \
+            --build-arg UBLUE_IMAGE_TAG=testing \
+            --build-arg BUILD_FILES_SHA="${{ steps.args.outputs.build_files_sha }}" \
+            --build-arg CHECKPOINT_RPMDB="${CHECKPOINT}" \
+            --secret id=GITHUB_TOKEN,env=GITHUB_TOKEN \
+            --tag localhost/bluefin-probe:probe \
+            --file Containerfile.probe \
+            .
+
+      - name: Summarize
+        if: always()
+        run: |
+          {
+            echo "checkpoint=${{ matrix.checkpoint }} driver=${{ matrix.driver }} outcome=${{ job.status }}"
+            echo ""
+            echo "The probe stage prints inherited journal_mode, integrity_check, and"
+            echo "sidecar listing immediately before the dnf5 install that fails in"
+            echo "production. On failure, read those diagnostics from the build log."
+          } >> "${GITHUB_STEP_SUMMARY}"

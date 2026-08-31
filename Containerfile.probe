@@ -1,0 +1,82 @@
+# Diagnostic build for the #995 rpmdb-malformed CI failure. Not part of the
+# image pipeline: run only via .github/workflows/rpmdb-probe.yml.
+#
+# Replicates Containerfile Stage 1 (base-common) verbatim — same context
+# stage, mounts, and script order — with one toggle: the checkpoint step runs
+# only when CHECKPOINT_RPMDB=1. The probe stage then reads the inherited
+# rpmdb and runs the exact dnf5 install that fails in CI's extension-builder
+# stage, printing diagnostics before each read path.
+ARG BASE_IMAGE_NAME="silverblue"
+ARG FEDORA_MAJOR_VERSION="44"
+ARG BASE_IMAGE="quay.io/fedora-ostree-desktops/silverblue"
+ARG BASE_IMAGE_REF="${BASE_IMAGE}:${FEDORA_MAJOR_VERSION}"
+ARG COMMON_IMAGE="ghcr.io/projectbluefin/common:latest"
+ARG COMMON_IMAGE_SHA=""
+ARG BREW_IMAGE="ghcr.io/ublue-os/brew:latest"
+ARG BREW_IMAGE_SHA=""
+
+FROM ${COMMON_IMAGE}@${COMMON_IMAGE_SHA} AS common
+FROM ${BREW_IMAGE}@${BREW_IMAGE_SHA} AS brew
+
+# Same narrow context the production Stage 1 mounts, so the RUN cache key and
+# the script set match production exactly.
+FROM scratch AS ctx-build
+COPY /build_files /build_files
+COPY /image-versions.yml /image-versions.yml
+
+FROM ${BASE_IMAGE_REF} AS base-common
+
+ARG AKMODS_FLAVOR="main"
+ARG BASE_IMAGE_NAME="silverblue"
+ARG FEDORA_MAJOR_VERSION="44"
+ARG IMAGE_NAME="bluefin"
+ARG IMAGE_VENDOR="projectbluefin"
+ARG KERNEL=""
+ARG UBLUE_IMAGE_TAG="testing"
+ARG IMAGE_FLAVOR=""
+ARG BUILD_FILES_SHA=""
+ARG CHECKPOINT_RPMDB="0"
+
+RUN --mount=type=cache,dst=/var/cache/libdnf5 \
+    --mount=type=cache,dst=/var/cache/rpm-ostree \
+    --mount=type=bind,from=ctx-build,source=/build_files,target=/ctx/build_files \
+    --mount=type=bind,from=ctx-build,source=/image-versions.yml,target=/ctx/image-versions.yml \
+    --mount=type=secret,id=GITHUB_TOKEN \
+    --mount=type=tmpfs,dst=/boot \
+    bash -euo pipefail -c ' \
+        echo "build_files cache key: ${BUILD_FILES_SHA}" && \
+        echo "checkpoint_rpmdb=${CHECKPOINT_RPMDB}" && \
+        dnf5 config-manager setopt keepcache=1 && \
+        dnf5 config-manager setopt install_weak_deps=0 && \
+        dnf5 -y swap fedora-logos generic-logos && \
+        rpm --erase --nodeps --nodb generic-logos && \
+        mkdir -p /tmp/scripts/helpers && \
+        install -Dm0755 /ctx/build_files/shared/utils/ghcurl /tmp/scripts/helpers/ghcurl && \
+        export PATH="/tmp/scripts/helpers:$PATH" && \
+        /ctx/build_files/base/03-packages.sh && \
+        /ctx/build_files/base/04-install-kernel-akmods.sh && \
+        /ctx/build_files/base/05-override-install.sh && \
+        if [[ "${CHECKPOINT_RPMDB}" == "1" ]]; then /ctx/build_files/shared/checkpoint-rpmdb.sh; fi \
+    '
+
+# Probe stage: the first read of the inherited rpmdb, mirroring the
+# extension-builder stage where CI reports the corruption. Diagnostics run
+# before the dnf install so a failure names the exact read path that broke.
+FROM base-common AS probe
+
+ARG CHECKPOINT_RPMDB="0"
+
+RUN --mount=type=cache,dst=/var/cache/libdnf5 \
+    bash -euo pipefail -c ' \
+        echo "=== checkpoint_rpmdb=${CHECKPOINT_RPMDB} ===" && \
+        echo "=== inherited journal_mode ===" && \
+        python3 -c "import sqlite3; c = sqlite3.connect(\"/usr/lib/sysimage/rpm/rpmdb.sqlite\"); print(c.execute(\"PRAGMA journal_mode\").fetchone())" && \
+        echo "=== inherited integrity_check ===" && \
+        python3 -c "import sqlite3; c = sqlite3.connect(\"/usr/lib/sysimage/rpm/rpmdb.sqlite\"); rows = c.execute(\"PRAGMA integrity_check\").fetchall(); print(rows[:5]); print(\"total issues:\", len(rows))" && \
+        echo "=== rpmdb directory (sidecars?) ===" && \
+        ls -la /usr/lib/sysimage/rpm/ && \
+        echo "=== rpm -qa (rpm read path) ===" && \
+        rpm -qa | wc -l && \
+        echo "=== dnf5 install (the step that fails in CI) ===" && \
+        dnf5 -y install glib2-devel meson sassc cmake dbus-devel \
+    '
