@@ -61,6 +61,14 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
         python3 -c "import sqlite3; c = sqlite3.connect(\"/usr/lib/sysimage/rpm/rpmdb.sqlite\"); print(c.execute(\"PRAGMA journal_mode\").fetchone())" && \
         echo "=== stage1-final sha256 ===" && \
         sha256sum /usr/lib/sysimage/rpm/rpmdb.sqlite && \
+        echo "=== stage1-final size ===" && \
+        stat -c '%s bytes' /usr/lib/sysimage/rpm/rpmdb.sqlite && \
+        echo "=== stage1-final header (magic/pagesize/journal bytes) ===" && \
+        od -A d -t x1 -N 24 /usr/lib/sysimage/rpm/rpmdb.sqlite | head -2 && \
+        echo "=== stage1-final quick_check ===" && \
+        python3 -c "import sqlite3; c = sqlite3.connect(\"/usr/lib/sysimage/rpm/rpmdb.sqlite\"); rows = c.execute(\"PRAGMA quick_check\").fetchall(); print(rows[:5]); print(\"total issues:\", len(rows))" && \
+        echo "=== stage1-final rpm -qa ===" && \
+        rpm -qa | wc -l && \
         echo "=== stage1-final sidecars ===" && \
         ls -la /usr/lib/sysimage/rpm/ \
     '
