@@ -37,10 +37,11 @@ concurrency:
 
 env:
   # Leg selection: flip to "false" to drop a leg from the next run.
-  RUN_CONTROL_LEG: "true"
+  RUN_CONTROL_LEG: "false"
   RUN_PARITY_LEG: "false"
   RUN_VFS_LEG: "false"
-  RUN_NATIVE_LEG: "true"
+  RUN_NATIVE_LEG: "false"
+  RUN_NATIVE_CONTROL_LEG: "true"
 
 jobs:
   plan:
@@ -58,6 +59,7 @@ jobs:
           RUN_PARITY: ${{ env.RUN_PARITY_LEG }}
           RUN_VFS: ${{ env.RUN_VFS_LEG }}
           RUN_NATIVE: ${{ env.RUN_NATIVE_LEG }}
+          RUN_NATIVE_CONTROL: ${{ env.RUN_NATIVE_CONTROL_LEG }}
         run: |
           set -euo pipefail
           legs='[]'
@@ -72,6 +74,9 @@ jobs:
           fi
           if [[ "${RUN_NATIVE}" == "true" ]]; then
             legs="$(jq -c '. + [{"checkpoint":"1","driver":"native-overlay"}]' <<<"${legs}")"
+          fi
+          if [[ "${RUN_NATIVE_CONTROL}" == "true" ]]; then
+            legs="$(jq -c '. + [{"checkpoint":"0","driver":"native-overlay"}]' <<<"${legs}")"
           fi
           echo "matrix=${legs}" >> "${GITHUB_OUTPUT}"
 
