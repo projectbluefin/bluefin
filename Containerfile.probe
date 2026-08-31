@@ -62,7 +62,7 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
         echo "=== stage1-final sha256 ===" && \
         sha256sum /usr/lib/sysimage/rpm/rpmdb.sqlite && \
         echo "=== stage1-final size ===" && \
-        stat -c '%s bytes' /usr/lib/sysimage/rpm/rpmdb.sqlite && \
+        stat -c "%s bytes" /usr/lib/sysimage/rpm/rpmdb.sqlite && \
         echo "=== stage1-final header (magic/pagesize/journal bytes) ===" && \
         od -A d -t x1 -N 24 /usr/lib/sysimage/rpm/rpmdb.sqlite | head -2 && \
         echo "=== stage1-final quick_check ===" && \
