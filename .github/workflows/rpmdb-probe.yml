@@ -1,7 +1,13 @@
 # One-shot diagnostic: reproduce the #995 rpmdb-malformed failure in isolation
-# and bisect its trigger. Dispatch-only — never runs on push or PR.
+# and bisect its trigger.
 #
-# Legs (selected by dispatch inputs):
+# Trigger: push to this branch only, and only when a probe file changes.
+# (workflow_dispatch needs the workflow on the default branch, which a
+# diagnostic branch will never have; push-trigger is the lowest-friction way
+# to run it from CI. It cannot fire on testing/main: the file only exists on
+# this branch.)
+#
+# Legs (controlled by editing the env block below):
 #   checkpoint=0, overlay → control: Stage 1 without the checkpoint step.
 #   checkpoint=1, overlay → the current fix, under CI-parity conditions.
 #   checkpoint=1, vfs     → optional: same build on the vfs storage driver;
@@ -16,22 +22,23 @@
 # layers must not pollute the image cache repos.
 name: RPMDB probe
 on:
-  workflow_dispatch:
-    inputs:
-      run_control_leg:
-        description: "Also run the no-checkpoint control leg"
-        type: boolean
-        default: true
-      run_vfs_leg:
-        description: "Also run the vfs-driver leg (slower, disk-heavy)"
-        type: boolean
-        default: false
+  push:
+    branches:
+      - ci/rpmdb-probe
+    paths:
+      - ".github/workflows/rpmdb-probe.yml"
+      - "Containerfile.probe"
 
 permissions: {}
 
 concurrency:
   group: rpmdb-probe-${{ github.ref }}
   cancel-in-progress: false
+
+env:
+  # Leg selection: flip to "false" to drop a leg from the next run.
+  RUN_CONTROL_LEG: "true"
+  RUN_VFS_LEG: "false"
 
 jobs:
   plan:
@@ -45,8 +52,8 @@ jobs:
       - name: Plan legs
         id: plan
         env:
-          RUN_CONTROL: ${{ inputs.run_control_leg }}
-          RUN_VFS: ${{ inputs.run_vfs_leg }}
+          RUN_CONTROL: ${{ env.RUN_CONTROL_LEG }}
+          RUN_VFS: ${{ env.RUN_VFS_LEG }}
         run: |
           set -euo pipefail
           legs='[{"checkpoint":"1","driver":"overlay"}]'
