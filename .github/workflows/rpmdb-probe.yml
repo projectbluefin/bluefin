@@ -38,7 +38,7 @@ concurrency:
 env:
   # Leg selection: flip to "false" to drop a leg from the next run.
   RUN_CONTROL_LEG: "true"
-  RUN_VFS_LEG: "false"
+  RUN_VFS_LEG: "true"
 
 jobs:
   plan:

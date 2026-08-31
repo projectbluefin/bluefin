@@ -56,7 +56,13 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
         /ctx/build_files/base/03-packages.sh && \
         /ctx/build_files/base/04-install-kernel-akmods.sh && \
         /ctx/build_files/base/05-override-install.sh && \
-        if [[ "${CHECKPOINT_RPMDB}" == "1" ]]; then /ctx/build_files/shared/checkpoint-rpmdb.sh; fi \
+        if [[ "${CHECKPOINT_RPMDB}" == "1" ]]; then /ctx/build_files/shared/checkpoint-rpmdb.sh; fi && \
+        echo "=== stage1-final journal_mode ===" && \
+        python3 -c "import sqlite3; c = sqlite3.connect(\"/usr/lib/sysimage/rpm/rpmdb.sqlite\"); print(c.execute(\"PRAGMA journal_mode\").fetchone())" && \
+        echo "=== stage1-final sha256 ===" && \
+        sha256sum /usr/lib/sysimage/rpm/rpmdb.sqlite && \
+        echo "=== stage1-final sidecars ===" && \
+        ls -la /usr/lib/sysimage/rpm/ \
     '
 
 # Probe stage: the first read of the inherited rpmdb, mirroring the
@@ -69,6 +75,8 @@ ARG CHECKPOINT_RPMDB="0"
 RUN --mount=type=cache,dst=/var/cache/libdnf5 \
     bash -euo pipefail -c ' \
         echo "=== checkpoint_rpmdb=${CHECKPOINT_RPMDB} ===" && \
+        echo "=== inherited sha256 ===" && \
+        sha256sum /usr/lib/sysimage/rpm/rpmdb.sqlite && \
         echo "=== inherited journal_mode ===" && \
         python3 -c "import sqlite3; c = sqlite3.connect(\"/usr/lib/sysimage/rpm/rpmdb.sqlite\"); print(c.execute(\"PRAGMA journal_mode\").fetchone())" && \
         echo "=== inherited integrity_check ===" && \
