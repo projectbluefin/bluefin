@@ -126,12 +126,19 @@ EOF
 
 @test "12-framework-amd-kargs-cleanup: missing rpm-ostree exits with warning" {
     rm -f "${STUB_BIN}/rpm-ostree"
-    export PATH="${STUB_BIN}:/usr/bin:/bin"
+    # Drop the stub so the hook's `command -v rpm-ostree` guard is exercised for
+    # real. PATH is narrowed for the hook process ONLY — it must not re-admit
+    # the host's /usr/bin. On any rpm-ostree host (Bluefin and every other
+    # ostree desktop this project is developed on) the real binary would be
+    # found there, the warning branch would never run, and the hook would go on
+    # to drive rpm-ostree against the developer's own deployment. Setting PATH
+    # via `env` rather than `export` keeps the change off the test's own shell,
+    # so teardown still has its normal PATH.
 
     echo "Framework" > "${TEST_ROOT}/chassis_vendor"
     echo "Laptop 13 (AMD Ryzen 7040 Series)" > "${TEST_ROOT}/product_name"
 
-    run bash "${PATCHED_SCRIPT}"
+    run env PATH="${STUB_BIN}" "${BASH}" "${PATCHED_SCRIPT}"
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Warning: rpm-ostree not found"* ]]
