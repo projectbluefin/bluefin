@@ -61,6 +61,16 @@ test -f /usr/lib/systemd/system/flatpak-add-fedora-repos.service && false
 test -f /usr/lib/modprobe.d/fw-charge-control.conf
 grep -q '^options cros_charge_control probe_with_fwk_charge_control=1$' /usr/lib/modprobe.d/fw-charge-control.conf
 
+# `ujust` is the entry point for every user-facing recipe, and it is only a
+# wrapper: its last line is `exec just --justfile
+# /usr/share/ublue-os/just/00-entry.just`, and the recipes it hands off to
+# render their prompts with `gum`. Both the wrapper and the .just files come
+# from `common`, so the stat checks above still pass if these two RPMs are
+# dropped from base.toml -- `ujust` then exits 127 on every invocation, or every
+# interactive recipe fills with "gum: command not found", and nothing here
+# fails the build. That is #965 item 1 (`ujust --choose` broken by a missing
+# fzf) one level up the same chain, so guard the chain and not just its leaf.
+# See: https://github.com/projectbluefin/bluefin/issues/965
 IMPORTANT_PACKAGES=(
     anaconda-live
     distrobox
@@ -70,7 +80,9 @@ IMPORTANT_PACKAGES=(
     flatpak
     fzf
     grub2-efi-x64-cdboot
+    gum
     isomd5sum
+    just
     libblockdev-btrfs
     libblockdev-dm
     libblockdev-lvm
