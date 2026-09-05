@@ -47,22 +47,24 @@ gh run view RUN_ID --repo projectbluefin/bluefin --log-failed
 gh run rerun RUN_ID --repo projectbluefin/bluefin --failed-only
 ```
 
-Read the actual workflow before describing or changing its behavior. Shared
-logic belongs in the reusable workflow that owns it; callers should stay thin.
+Read the actual workflow before changing its behavior. Shared logic belongs in
+the reusable workflow that owns it; callers should stay thin.
 The `unit-tests` job in `pr-validation.yml` runs BATS with kcov and publishes
 `bats-tap-results` plus `bats-kcov-report` artifacts for shell-test visibility.
 Coverage runs route child `bash <script>` calls through
 `tests/coverage/bin/bash`, because wrapping only the top-level BATS process
 does not trace those child shells. The wrapper records each sandbox copy's
 original source path, and `merge_kcov.py` combines those hits with kcov's
-pre-parsed source inventory. A zero-line report is an instrumentation failure.
+pre-parsed source inventory (a zero-line report is an instrumentation failure).
 kcov is not packaged for Ubuntu 24.04, so the job builds v43 from a pinned,
 SHA-256-verified source archive and caches the result. The coverage run must
-redirect BATS output to a file: kcov captures child stdout through a pipe it
+redirect BATS output to a file — kcov captures child stdout through a pipe it
 stops draining, so streaming the full TAP log through it deadlocks the job.
-The instrumented rerun does not gate the job — `Run unit tests` owns pass/fail
-— but `merge_kcov.py` fails when no source lines were executed.
-Tests that `source` a library into the BATS process itself are not traced.
+The instrumented rerun does not gate the job — `Run unit tests` owns pass/fail —
+but `merge_kcov.py` fails when no source lines were executed. Tests that
+`source` a library into the BATS process itself are not traced.
+
+The `Enforce BATS coverage threshold` step's `THRESHOLD` is an evidence-based floor: measure recent successful runs' `BATS line coverage` log lines before raising it, and leave buffer for run-to-run variance.
 
 A pull request whose head branch lives on a fork reports **zero** checks until a
 maintainer approves the run — identical to "checks still queued", so confirm:
@@ -72,17 +74,16 @@ gh pr view PR --repo projectbluefin/bluefin --json headRepositoryOwner,maintaine
 gh api -X POST repos/projectbluefin/bluefin/actions/runs/RUN_ID/approve
 ```
 
-Zero checks with no pending approval means the PR targets `main`. Retarget
-with `gh pr edit PR --base testing`; rebuild branches cut from `main`.
+Zero checks with no pending approval means the PR targets `main`. Retarget with
+`gh pr edit PR --base testing`; rebuild branches cut from `main`.
 
-`maintainerCanModify: true` also means fix commits can be pushed straight to the
-contributor's branch.
+`maintainerCanModify: true` also means fix commits can be pushed straight to the contributor's branch.
 
 Containerfile stages that consume source through bind mounts inherit the mounted
 stage's image ID as part of their cache key. Give each consuming stage its own
 narrow `scratch` context covering only the paths it reads — `ctx-build` for the
 package stage, `ctx` for the overlay stages, `ctx-iso` for the ISO layer — and
-pass an explicit content-hash build argument as a second guard. A shared wide
+pass an explicit content-hash build argument as a second guard; a shared wide
 context silently couples every stage to every input directory.
 
 Every open Bluefin PR is discovered by the lab's five-minute PR poller. The lab
@@ -90,8 +91,7 @@ runs smoke QA against `bluefin:testing` and sends bounded
 `repository_dispatch` lifecycle events to `.github/workflows/lab-check.yml`.
 That workflow must exist on the default branch and uses a short-lived
 MergeRaptor installation token to update one `testing-lab / bluefin` Check Run
-for the exact PR head SHA. Do not duplicate the result in a PR comment or commit
-status.
+for the exact PR head SHA. Do not duplicate the result in a PR comment or commit status.
 
 The MergeRaptor installation on `projectbluefin` also needs **Checks: write**
 for `lab-check.yml`; see [MergeRaptor checks](references/mergeraptor-checks.md).

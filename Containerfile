@@ -35,6 +35,7 @@ COPY /build_files/shared/utils/ghcurl /build_files/shared/utils/ghcurl
 FROM scratch AS ctx
 COPY /system_files /system_files
 COPY /build_files/shared/build-gnome-extensions.sh /build_files/shared/build-gnome-extensions.sh
+COPY /build_files/shared/checkpoint-rpmdb.sh /build_files/shared/checkpoint-rpmdb.sh
 COPY /build_files/shared/clean-stage.sh /build_files/shared/clean-stage.sh
 COPY /build_files/shared/disable-repos.sh /build_files/shared/disable-repos.sh
 COPY /build_files/shared/finalize-gnome-extensions.sh /build_files/shared/finalize-gnome-extensions.sh
@@ -86,7 +87,8 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
         export PATH="/tmp/scripts/helpers:$PATH" && \
         /ctx/build_files/base/03-packages.sh && \
         /ctx/build_files/base/04-install-kernel-akmods.sh && \
-        /ctx/build_files/base/05-override-install.sh \
+        /ctx/build_files/base/05-override-install.sh && \
+        /ctx/build_files/shared/checkpoint-rpmdb.sh \
     '
 
 # hadolint ignore=DL3006
@@ -150,7 +152,8 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
         /ctx/build_files/base/19-initramfs.sh && \
         /ctx/build_files/shared/validate-repos.sh && \
         /ctx/build_files/shared/clean-stage.sh && \
-        /ctx/build_files/base/20-tests.sh \
+        /ctx/build_files/base/20-tests.sh && \
+        /ctx/build_files/shared/checkpoint-rpmdb.sh \
     '
 
 # Embed the Stable container-native ISO contract after Stage 2. This runs

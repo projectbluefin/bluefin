@@ -58,6 +58,7 @@ expected = {
     "/build_files/base/19-initramfs.sh",
     "/build_files/base/20-tests.sh",
     "/build_files/shared/build-gnome-extensions.sh",
+    "/build_files/shared/checkpoint-rpmdb.sh",
     "/build_files/shared/clean-stage.sh",
     "/build_files/shared/disable-repos.sh",
     "/build_files/shared/finalize-gnome-extensions.sh",
