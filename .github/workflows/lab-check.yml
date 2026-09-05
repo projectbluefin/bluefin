@@ -7,6 +7,22 @@ on:
 permissions:
   contents: read
 
+# The lab sends several lifecycle events (queued -> in_progress -> completed)
+# for one head SHA, and the job below is a read-then-write: it looks up the
+# existing check run, then POSTs a new one or PATCHes that one. Two runs for the
+# same SHA overlapping means both look up before either writes, both find
+# nothing, and both POST -- leaving duplicate `testing-lab / <product>` checks,
+# all but one stranded in a non-terminal state. Serialise per SHA so the lookup
+# cannot race its own write; distinct SHAs still report in parallel, which the
+# lab's five-minute poller across every open PR depends on (bluefin#939).
+#
+# cancel-in-progress stays false on purpose. Cancelling an in-flight run can
+# kill the one applying the terminal `completed` event and strand the check as
+# in_progress -- the same always-unresolved check this serialisation prevents.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.client_payload.sha }}
+  cancel-in-progress: false
+
 jobs:
   report:
     name: Update MergeRaptor check

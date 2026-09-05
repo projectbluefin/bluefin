@@ -193,3 +193,40 @@ class LabCheckReportTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LabCheckConcurrencyTests(unittest.TestCase):
+    """The workflow must serialise lifecycle events that share a head SHA.
+
+    Reporting is a read-then-write -- look up the existing check run, then POST
+    or PATCH -- so two runs for one SHA that overlap both find nothing and both
+    POST, duplicating `testing-lab / <product>` and stranding all but one in a
+    non-terminal state (bluefin#939).
+    """
+
+    def concurrency_block(self) -> str:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        # A leading newline with no indent pins this to the workflow level; a
+        # job-level `concurrency:` would not serialise across runs.
+        marker = "\nconcurrency:\n"
+        self.assertIn(marker, workflow, "lab-check.yml declares no concurrency group")
+        self.assertLess(
+            workflow.index(marker),
+            workflow.index("\njobs:"),
+            "concurrency must be declared before jobs, at the workflow level",
+        )
+        return workflow.split(marker, 1)[1].split("\njobs:", 1)[0]
+
+    def test_group_is_keyed_on_the_dispatched_head_sha(self) -> None:
+        block = self.concurrency_block()
+        group = [line for line in block.splitlines() if line.strip().startswith("group:")]
+        self.assertEqual(len(group), 1, block)
+        # Keying on the payload SHA is what makes this safe: it serialises the
+        # events for one commit while leaving different PRs to report in
+        # parallel, which the lab's five-minute poller relies on.
+        self.assertIn("github.event.client_payload.sha", group[0])
+
+    def test_in_flight_runs_are_not_cancelled(self) -> None:
+        # Cancelling can kill the run applying the terminal `completed` event
+        # and leave the check stuck in_progress for good.
+        self.assertIn("cancel-in-progress: false", self.concurrency_block())
