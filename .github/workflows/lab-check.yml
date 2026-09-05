@@ -33,7 +33,7 @@ jobs:
       - name: Fail with actionable message if token minting was denied
         if: steps.app-token.outcome == 'failure' || steps.app-token.outputs.token == ''
         run: |
-          echo "::error::MergeRaptor token mint failed — the GitHub App installation almost certainly lacks the requested 'checks: write' permission. This cannot be fixed from the repository; an org owner must grant it (Organization settings → GitHub Apps → MergeRaptor → Permissions). Verify current grants with: gh api orgs/projectbluefin/installations --jq '.installations[] | select(.app_slug == \"mergeraptor\") | .permissions' — see docs/skills/ci/references/mergeraptor-checks.md."
+          echo "::error::MergeRaptor token mint failed — the app lacks the requested 'checks: write' permission. This cannot be fixed from the repository; an org owner must grant it in the GitHub UI, and it may take TWO steps. Step 1, only if 'checks' is absent from 'gh api /apps/mergeraptor --jq .permissions': Organization settings → Developer settings → GitHub Apps → MergeRaptor → Permissions & events → Repository permissions → Checks: Read and write → Save. Until that is done the installation page has nothing to approve. Step 2: approve the resulting request under Organization settings → GitHub Apps → MergeRaptor → Review request. Verify with: gh api orgs/projectbluefin/installations --jq '.installations[] | select(.app_slug == \"mergeraptor\") | .permissions' — see docs/skills/ci/references/mergeraptor-checks.md."
           exit 1
 
       - name: Create or update lab check
@@ -82,9 +82,15 @@ jobs:
           STARTED_AT=$(jq -r '.started_at // empty' <<<"${CHECK_JSON}")
           COMPLETED_AT=$(jq -r '.completed_at // empty' <<<"${CHECK_JSON}")
 
+          # check_name filters server-side. Without it the first page is 100
+          # check runs of every name, newest first, so on a busy commit the
+          # existing lab check falls off the page and this lookup returns
+          # nothing -- which silently turns every update into a duplicate
+          # check run (bluefin#939).
           CHECK_ID=$(
             gh api --method GET \
               "repos/${GITHUB_REPOSITORY}/commits/${SHA}/check-runs" \
+              -f check_name="${CHECK_NAME}" \
               -f per_page=100 \
               --jq '.check_runs
                 | map(select(.name == "'"${CHECK_NAME}"'" and .app.slug == "'"${APP_SLUG}"'"))
