@@ -13,6 +13,36 @@ IMAGE_REF="$(jq -r '."image-ref"' "${IMAGE_INFO}")"
 IMAGE_REF="${IMAGE_REF##*://}"
 INSTALL_IMAGE="${IMAGE_REF}:stable"
 
+# Resolve the mutable `:stable` tag to an immutable digest at ISO build time,
+# so the initial Anaconda ostreecontainer payload pull is content-addressed
+# and cannot be swapped for different content by a compromised registry or a
+# network attacker, independent of --no-signature-verification below. This is
+# a best-effort resolution: if it fails (e.g. registry hiccup, first-ever
+# build with no published `:stable` tag yet), fall back to the mutable tag —
+# the subsequent `bootc switch --enforce-container-sigpolicy` %post script
+# still enforces signature policy on the final deployment.
+resolve_stable_digest() {
+    local repo="$1" tag="$2" token digest
+    token="$(ghcurl "https://ghcr.io/token?scope=repository:${repo}:pull" |
+        jq -r '.token // empty')" || return 1
+    [[ -n "${token}" ]] || return 1
+    digest="$(curl -sSL --fail \
+        -H "Authorization: Bearer ${token}" \
+        -H "Accept: application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.oci.image.manifest.v1+json,application/vnd.docker.distribution.manifest.v2+json" \
+        -D - -o /dev/null \
+        "https://ghcr.io/v2/${repo}/manifests/${tag}" |
+        tr -d '\r' | awk -F': ' 'tolower($1) == "docker-content-digest" {print $2}')" || return 1
+    [[ "${digest}" == sha256:* ]] || return 1
+    echo "${digest}"
+}
+
+if STABLE_DIGEST="$(resolve_stable_digest "${IMAGE_REF#ghcr.io/}" "stable")"; then
+    INSTALL_IMAGE="${IMAGE_REF}@${STABLE_DIGEST}"
+    echo "Pinned Anaconda install payload to ${INSTALL_IMAGE}"
+else
+    echo "::warning::Could not resolve a digest for ${INSTALL_IMAGE}; the initial Anaconda payload pull will use the mutable :stable tag." >&2
+fi
+
 mkdir -p \
     "${ROOT}/boot/efi/EFI" \
     "${ROOT}/etc/anaconda/profile.d" \
