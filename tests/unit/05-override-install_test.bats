@@ -74,7 +74,7 @@ EOF
     echo "${VALID_SHA}" > "${TEST_ROOT}/fixtures/starship.tar.gz.sha256"
 
     # coreos-sulogin-force-generator fixture matching pinned SHA-256
-    cat > "${TEST_ROOT}/fixtures/coreos-sulogin-force-generator" <<'EOF'
+    cat > "${TEST_ROOT}/fixtures/coreos-sulogin-force-generator" <<'COREOS_FIXTURE'
 #!/usr/bin/bash
 
 # This systemd.generator(7) detects if rescue or emergency targets were
@@ -125,11 +125,11 @@ write_dropin() {
 
     # /tmp isn't r/w yet, and the shell needs to cache the here-document
     TMPDIR=/run
-    cat > "${out_dir}/sulogin-force.conf" <<DROPIN
+    cat > "${out_dir}/sulogin-force.conf" <<EOF
 # Automatically created by coreos-sulogin-force-generator
 [Service]
 Environment=SYSTEMD_SULOGIN_FORCE=1
-DROPIN
+EOF
     echo "$(basename ${0}): set SYSTEMD_SULOGIN_FORCE=1 for ${service}.service"
 }
 
@@ -141,7 +141,7 @@ if have_some_karg 'systemd.unit=rescue.target' rescue single s S 1; then
 elif have_some_karg 'systemd.unit=emergency.target' emergency '-b' ; then
     write_dropin emergency
 fi
-EOF
+COREOS_FIXTURE
 
     # ── ghcurl stub ───────────────────────────────────────────────────────
     # Serves pre-created fixtures; supports a "corrupt" mode for sha256 tests.
@@ -177,7 +177,7 @@ case "\$URL" in
         cp "${TEST_ROOT}/usr/lib/firewalld/zones/FedoraWorkstation.xml" "\$DEST"
         ;;
     *coreos-sulogin-force-generator)
-        cp "${TEST_ROOT}/fixtures/coreos-sulogin-force-generator" "$DEST"
+        cp "${TEST_ROOT}/fixtures/coreos-sulogin-force-generator" "\$DEST"
         ;;
     *.pdf)
         printf 'dummy-pdf\n' > "\$DEST"
@@ -195,8 +195,7 @@ GHCURL_STUB
     # Protect the coreos generator URL before path replacements mangle it.
     # The URL contains /usr/lib/systemd/system-generators which would otherwise
     # be replaced with the TEST_ROOT path, producing a malformed URL.
-    local COREOS_COMMIT="682c839aabbc01564f1605bb41687a7511180031"
-    local COREOS_URL="https://raw.githubusercontent.com/coreos/fedora-coreos-config/${COREOS_COMMIT}/overlay.d/05core/usr/lib/systemd/system-generators/coreos-sulogin-force-generator"
+    local COREOS_URL='https://raw.githubusercontent.com/coreos/fedora-coreos-config/${COREOS_SULOGIN_COMMIT}/overlay.d/05core/usr/lib/systemd/system-generators/coreos-sulogin-force-generator'
     local COREOS_URL_PLACEHOLDER="COREOS_SULOGIN_GENERATOR_URL_PLACEHOLDER"
     sed \
         -e "s|${COREOS_URL}|${COREOS_URL_PLACEHOLDER}|g" \
