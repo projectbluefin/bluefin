@@ -142,6 +142,8 @@ elif have_some_karg 'systemd.unit=emergency.target' emergency '-b' ; then
     write_dropin emergency
 fi
 COREOS_FIXTURE
+    [ "$(sha256sum "${TEST_ROOT}/fixtures/coreos-sulogin-force-generator" | awk '{print $1}')" = \
+        "eb9222214c4647f1ed430f379dca13c3ba945a6aa7950ce6b2d5be3e0a337da1" ]
 
     # ── ghcurl stub ───────────────────────────────────────────────────────
     # Serves pre-created fixtures; supports a "corrupt" mode for sha256 tests.
