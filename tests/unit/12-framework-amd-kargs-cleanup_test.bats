@@ -28,6 +28,7 @@ EOF
         -e "s|source /usr/lib/ublue/setup-services/libsetup.sh|version-script() { return 0; }|g" \
         -e "s|/sys/devices/virtual/dmi/id/chassis_vendor|${TEST_ROOT}/chassis_vendor|g" \
         -e "s|/sys/devices/virtual/dmi/id/product_name|${TEST_ROOT}/product_name|g" \
+        -e "s|/var/lib/ublue-os/.framework-amd-kargs-cleanup-v1|${TEST_ROOT}/framework-amd-kargs-cleanup-v1|g" \
         "${HOOK_SCRIPT}" > "${PATCHED_SCRIPT}"
     chmod +x "${PATCHED_SCRIPT}"
     export PATCHED_SCRIPT TEST_ROOT STUB_BIN
@@ -151,4 +152,64 @@ EOF
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"DMI information not available"* ]]
+}
+
+@test "12-framework-amd-kargs-cleanup: failed deletion is not marked complete and retries" {
+    # Stub: kargs reports the stale entry, but --delete fails (e.g. rpm-ostree
+    # temporarily unavailable). bluefin#1126: a failed migration must not be
+    # recorded as done, so a subsequent boot retries it.
+    cat > "${STUB_BIN}/rpm-ostree" <<'EOF'
+#!/usr/bin/bash
+echo "rpm-ostree $*" >> "${STUB_BIN}/rpm-ostree.log"
+if [[ "$1" == "kargs" && "$#" -eq 1 ]]; then
+    echo "quiet rhgb module_blacklist=hid_sensor_hub"
+    exit 0
+fi
+if [[ "$1" == "kargs" && "$2" == --delete=* ]]; then
+    exit 1
+fi
+exit 0
+EOF
+    chmod +x "${STUB_BIN}/rpm-ostree"
+
+    echo "Framework" > "${TEST_ROOT}/chassis_vendor"
+    echo "Laptop 13 (AMD Ryzen 7040 Series)" > "${TEST_ROOT}/product_name"
+
+    # First (failing) invocation
+    run bash "${PATCHED_SCRIPT}"
+
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"will retry on next boot"* ]]
+    [ ! -f "${TEST_ROOT}/framework-amd-kargs-cleanup-v1" ]
+
+    # Second invocation with a working rpm-ostree simulates a later boot retry
+    cat > "${STUB_BIN}/rpm-ostree" <<'EOF'
+#!/usr/bin/bash
+echo "rpm-ostree $*" >> "${STUB_BIN}/rpm-ostree.log"
+if [[ "$1" == "kargs" && "$#" -eq 1 ]]; then
+    echo "quiet rhgb module_blacklist=hid_sensor_hub"
+    exit 0
+fi
+exit 0
+EOF
+    chmod +x "${STUB_BIN}/rpm-ostree"
+
+    run bash "${PATCHED_SCRIPT}"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Removed stale AMD Framework karg"* ]]
+    [ -f "${TEST_ROOT}/framework-amd-kargs-cleanup-v1" ]
+    grep -q "kargs --delete=module_blacklist=hid_sensor_hub" "${STUB_BIN}/rpm-ostree.log"
+}
+
+@test "12-framework-amd-kargs-cleanup: already-marked complete skips without checking hardware" {
+    mkdir -p "$(dirname "${TEST_ROOT}/framework-amd-kargs-cleanup-v1")"
+    touch "${TEST_ROOT}/framework-amd-kargs-cleanup-v1"
+
+    # No DMI files present at all; if the marker guard works, the script
+    # returns before ever reading them.
+    run bash "${PATCHED_SCRIPT}"
+
+    [ "$status" -eq 0 ]
+    [ ! -f "${STUB_BIN}/rpm-ostree.log" ]
 }
