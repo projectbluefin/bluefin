@@ -84,7 +84,7 @@ jobs:
           if [[ ${TOTAL_CACHES} -eq 0 ]]; then
             summary "| _No caches found_ | - | - | - |"
           else
-            echo "${ALL_CACHES}" | jq -r 'sort_by(.size_in_bytes) | reverse | .[] | "| \(.key[0:60]) | \(.size_in_bytes / 1024 / 1024 | floor) MB | \(.ref // \"?\") | \(.last_accessed_at // \"never\") |"' >> "$GITHUB_STEP_SUMMARY"
+            echo "${ALL_CACHES}" | jq -r 'sort_by(.size_in_bytes) | reverse | .[] | "| \(.key[0:60]) | \(.size_in_bytes / 1024 / 1024 | floor) MB | \(.ref // "?") | \(.last_accessed_at // "never") |"' >> "$GITHUB_STEP_SUMMARY"
           fi
 
           ACTIVE_REFS=$(gh api \
