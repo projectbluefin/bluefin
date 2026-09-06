@@ -45,13 +45,18 @@ DefaultZone=public
 IPv6_rpfilter=yes
 EOF
 
-    # FedoraWorkstation.xml with the content the script verifies via grep
+    # FedoraWorkstation.xml with the content matching the pinned SHA-256
     cat > "${TEST_ROOT}/usr/lib/firewalld/zones/FedoraWorkstation.xml" <<'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <zone>
   <short>Fedora Workstation</short>
+  <description>Unsolicited incoming network packets are rejected from port 1 to 1024, except for select network services. Incoming packets that are related to outgoing network connections are accepted. Outgoing network connections are allowed.</description>
+  <service name="dhcpv6-client"/>
+  <service name="ssh"/>
+  <service name="samba-client"/>
   <port protocol="udp" port="1025-65535"/>
   <port protocol="tcp" port="1025-65535"/>
+  <forward/>
 </zone>
 EOF
 
@@ -67,6 +72,76 @@ EOF
     (cd "${TEST_ROOT}/fixtures/tmp-content" && tar -czf "${TEST_ROOT}/fixtures/starship.tar.gz" starship)
     VALID_SHA=$(sha256sum "${TEST_ROOT}/fixtures/starship.tar.gz" | awk '{print $1}')
     echo "${VALID_SHA}" > "${TEST_ROOT}/fixtures/starship.tar.gz.sha256"
+
+    # coreos-sulogin-force-generator fixture matching pinned SHA-256
+    cat > "${TEST_ROOT}/fixtures/coreos-sulogin-force-generator" <<'EOF'
+#!/usr/bin/bash
+
+# This systemd.generator(7) detects if rescue or emergency targets were
+# requested from the kernel cmdline; if so, it overrides the respective
+# target to set force sulogin, allowing use of rescue/emergency targets
+# on systems with locked root password (as is Fedora default).
+#
+# This does NOT bypass locked root password on a fsck failure, but WILL
+# bypass when rescue/emergency targets are chosen from kernel cmdline.
+# Since this requires console/grub access, it is assumed to be at least
+# as secure as a user reset of the root password using grub to modify
+# the kernel cmdline with init=/bin/bash .
+#
+# NOTE: the SYSTEMD_SULOGIN_FORCE method used here does not bypass any
+# assigned password; root password is only bypassed when locked/unset.
+
+export PATH="/usr/bin:/usr/sbin:${PATH}"
+if [ -n "$1" ]; then
+    # If invoked with arguments (not testing) log to kmsg
+    # https://github.com/systemd/systemd/issues/15638
+    exec 1>/dev/kmsg; exec 2>&1
+fi
+
+# If invoked with no arguments (for testing) write to /tmp
+UNIT_DIR="${1:-/tmp}"
+
+set -euo pipefail
+
+have_some_karg() {
+    local args=("$@")
+    IFS=" " read -r -a cmdline <<< "$(</proc/cmdline)"
+    local i
+    for i in "${cmdline[@]}"; do
+        for a in "${args[@]}"; do
+        if [[ "$i" == "$a" ]]; then
+            return 0
+        fi
+        done
+    done
+    return 1
+}
+
+write_dropin() {
+    local service="$1"
+
+    local out_dir="${UNIT_DIR}/${service}.service.d"
+    mkdir -p "${out_dir}"
+
+    # /tmp isn't r/w yet, and the shell needs to cache the here-document
+    TMPDIR=/run
+    cat > "${out_dir}/sulogin-force.conf" <<DROPIN
+# Automatically created by coreos-sulogin-force-generator
+[Service]
+Environment=SYSTEMD_SULOGIN_FORCE=1
+DROPIN
+    echo "$(basename ${0}): set SYSTEMD_SULOGIN_FORCE=1 for ${service}.service"
+}
+
+# Match kernel command line targets for systemd(1) rescue/emergency
+# Ignores 'rd.' prefixed targets since they enter the dracut ramdisk
+# environment which does not interact with installed system root user.
+if have_some_karg 'systemd.unit=rescue.target' rescue single s S 1; then
+    write_dropin rescue
+elif have_some_karg 'systemd.unit=emergency.target' emergency '-b' ; then
+    write_dropin emergency
+fi
+EOF
 
     # ── ghcurl stub ───────────────────────────────────────────────────────
     # Serves pre-created fixtures; supports a "corrupt" mode for sha256 tests.
@@ -102,7 +177,7 @@ case "\$URL" in
         cp "${TEST_ROOT}/usr/lib/firewalld/zones/FedoraWorkstation.xml" "\$DEST"
         ;;
     *coreos-sulogin-force-generator)
-        printf '#!/bin/bash\n' > "\$DEST"
+        cp "${TEST_ROOT}/fixtures/coreos-sulogin-force-generator" "$DEST"
         ;;
     *.pdf)
         printf 'dummy-pdf\n' > "\$DEST"
@@ -120,7 +195,8 @@ GHCURL_STUB
     # Protect the coreos generator URL before path replacements mangle it.
     # The URL contains /usr/lib/systemd/system-generators which would otherwise
     # be replaced with the TEST_ROOT path, producing a malformed URL.
-    local COREOS_URL="https://raw.githubusercontent.com/coreos/fedora-coreos-config/refs/heads/stable/overlay.d/05core/usr/lib/systemd/system-generators/coreos-sulogin-force-generator"
+    local COREOS_COMMIT="682c839aabbc01564f1605bb41687a7511180031"
+    local COREOS_URL="https://raw.githubusercontent.com/coreos/fedora-coreos-config/${COREOS_COMMIT}/overlay.d/05core/usr/lib/systemd/system-generators/coreos-sulogin-force-generator"
     local COREOS_URL_PLACEHOLDER="COREOS_SULOGIN_GENERATOR_URL_PLACEHOLDER"
     sed \
         -e "s|${COREOS_URL}|${COREOS_URL_PLACEHOLDER}|g" \
