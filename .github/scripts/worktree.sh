@@ -84,14 +84,55 @@ cmd_list() {
 }
 
 remove_worktree() {
-  local path="$1" branch="$2"
+  local path="$1" branch="$2" force_branch_delete="${3:-false}"
   git worktree remove "$path" --force
-  git branch -D "$branch" 2>/dev/null || true
+  if [[ "$force_branch_delete" == "true" ]]; then
+    git branch -D "$branch" 2>/dev/null || true
+  else
+    git branch -d "$branch" 2>/dev/null || true
+  fi
   echo "Removed ${path} (branch ${branch})"
 }
 
+unpushed_count() {
+  local path="$1" branch="$2"
+  local target="" ahead=""
+
+  if git -C "$path" rev-parse --verify --quiet "refs/remotes/${REMOTE}/${branch}" >/dev/null 2>&1; then
+    target="${REMOTE}/${branch}"
+  elif git -C "$path" rev-parse --verify --quiet '@{upstream}' >/dev/null 2>&1; then
+    target='@{upstream}'
+  fi
+
+  if [[ -n "$target" ]]; then
+    ahead="$(git -C "$path" rev-list --count "${target}..HEAD" 2>/dev/null || echo unknown)"
+  else
+    ahead="unknown"
+  fi
+  printf '%s' "$ahead"
+}
+
 cmd_done() {
-  local target="${1:-}"
+  local force=false
+  local target=""
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --force|-f)
+        force=true
+        shift
+        ;;
+      *)
+        if [[ -z "$target" ]]; then
+          target="$1"
+        else
+          die "unexpected argument: $1"
+        fi
+        shift
+        ;;
+    esac
+  done
+
   [[ -n "$target" ]] || die "usage: worktree.sh done <branch-name>"
 
   local path
@@ -106,7 +147,19 @@ cmd_done() {
 Commit or discard them first, or run: git worktree remove ${path} --force"
   fi
 
-  remove_worktree "$path" "$branch"
+  if [[ "$force" != "true" && -z "${SKIP_UNPUSHED_GUARD:-}" ]]; then
+    local ahead
+    ahead="$(unpushed_count "$path" "$branch")"
+    if [[ "$ahead" == "unknown" ]]; then
+      die "branch '${branch}' has no remote tracking branch on '${REMOTE}'.
+Push your commits first, or override with: worktree.sh done --force ${target} (or SKIP_UNPUSHED_GUARD=1)"
+    elif [[ "$ahead" -gt 0 ]]; then
+      die "worktree has ${ahead} unpushed commit(s) on '${branch}'.
+Push your commits first, or override with: worktree.sh done --force ${target} (or SKIP_UNPUSHED_GUARD=1)"
+    fi
+  fi
+
+  remove_worktree "$path" "$branch" true
 }
 
 cmd_prune() {
@@ -119,12 +172,27 @@ cmd_prune() {
 
     state="$(pr_state "$branch" || true)"
     case "$state" in
-      MERGED | CLOSED)
+      MERGED)
         if [[ -n "$(git -C "$path" status --porcelain)" ]]; then
           echo "SKIP ${path}: PR ${state} but worktree is dirty"
           continue
         fi
-        remove_worktree "$path" "$branch"
+        remove_worktree "$path" "$branch" true
+        ;;
+      CLOSED)
+        if [[ -n "$(git -C "$path" status --porcelain)" ]]; then
+          echo "SKIP ${path}: PR ${state} but worktree is dirty"
+          continue
+        fi
+        if [[ -z "${SKIP_UNPUSHED_GUARD:-}" ]]; then
+          local ahead
+          ahead="$(unpushed_count "$path" "$branch")"
+          if [[ "$ahead" == "unknown" || "$ahead" -gt 0 ]]; then
+            echo "SKIP ${path}: PR CLOSED but branch has unpushed commits (override with SKIP_UNPUSHED_GUARD=1)"
+            continue
+          fi
+        fi
+        remove_worktree "$path" "$branch" false
         ;;
       *)
         echo "KEEP ${path} (branch ${branch}, PR: ${state:-none})"
@@ -142,10 +210,10 @@ case "${1:-}" in
     cat >&2 <<'USAGE'
 usage: worktree.sh <command>
 
-  new <branch>    Create a worktree in .worktrees/ based on projectbluefin/testing
-  list            List worktrees with their PR state
-  done <branch>   Remove a worktree and delete its local branch
-  prune           Remove every worktree whose PR is merged or closed
+  new <branch>        Create a worktree in .worktrees/ based on projectbluefin/testing
+  list                List worktrees with their PR state
+  done [--force] <b..> Remove a worktree and delete its local branch
+  prune               Remove every worktree whose PR is merged or closed
 USAGE
     exit 1
     ;;
