@@ -65,7 +65,7 @@ EOF
         cat > "${stage_path}" << EOF
 #!/usr/bin/bash
 echo "${stage}" >> "${STAGE_LOG}"
-if [[ -n "${FAIL_STAGE:-}" && "${FAIL_STAGE}" == "${stage}" ]]; then
+if [[ -n "\${FAIL_STAGE:-}" && "\${FAIL_STAGE}" == "${stage}" ]]; then
     exit 1
 fi
 exit 0
@@ -113,7 +113,7 @@ teardown() {
     run cat "${STAGE_LOG}"
     [ "$status" -eq 0 ]
     [ "${lines[-1]}" = "base/05-override-install.sh" ]
-    refute_line --output "${output}" "base/17-cleanup.sh"
+    [[ "${output}" != *"base/17-cleanup.sh"* ]]
 }
 
 @test "build.sh: fails immediately if dnf5 config-manager fails" {
