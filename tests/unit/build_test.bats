@@ -105,8 +105,7 @@ teardown() {
 }
 
 @test "build.sh: fails immediately if a stage fails" {
-    export FAIL_STAGE="base/05-override-install.sh"
-    run bash "${PATCHED_SCRIPT}"
+    run env FAIL_STAGE="base/05-override-install.sh" bash "${PATCHED_SCRIPT}"
     [ "$status" -ne 0 ]
 
     # Subsequent stages should not have run
