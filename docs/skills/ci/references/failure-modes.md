@@ -6,6 +6,7 @@
 | Validation differs locally | Run `just check` and `pre-commit run --all-files` |
 | Workflow did not trigger | Event, branch, and path filters in the YAML |
 | Promotion is blocked | Exact digest, required check, and merge-group state |
+| Promotion conflict (GH006) | Check if promotion PR is in merge queue; wait for queue cycle |
 | Shared action behaves incorrectly | Reusable workflow source and its callers |
 | Tests update but E2E setup stays stale | Compare the reusable workflow `uses` ref with its test checkout ref |
 
@@ -58,6 +59,51 @@ That step is `continue-on-error: true`, so it produces a red `##[error]` line in
 the log without failing the job. Runs that pass `:testing` by tag (for example
 `nightly.yml`) do not show it at all. Do not report it as the cause of a
 `post-testing-e2e` failure; find the behave summary instead.
+
+## Promotion conflict caused by merge-queue branch locking (GH006)
+
+When `promote-testing-to-main.yml` fails and opens an issue titled
+`ci: testing→main promotion conflict`:
+
+```bash
+gh run view RUN_ID --repo projectbluefin/bluefin --log-failed
+```
+
+If the log reports:
+
+```text
+remote: error: GH006: Protected branch update failed for refs/heads/auto/promote-testing-to-main.
+remote: - A pull request for this branch has been added to a merge queue. Branches that
+remote:   are queued for merging cannot be updated. To modify this branch, dequeue the
+remote:   associated pull request.
+remote: error: failed to push some refs to 'https://github.com/projectbluefin/bluefin'
+```
+
+### Cause
+
+1. `promote-testing-to-main.yml` invokes
+   `projectbluefin/actions/.github/workflows/reusable-promote-squash.yml` with
+   `use_merge_queue: true`.
+2. When the promotion PR (`auto/promote-testing-to-main`) is enqueued via
+   `enqueuePullRequest`, GitHub places a branch protection lock on
+   `auto/promote-testing-to-main` while it awaits merge group execution.
+3. If an intermediate commit is pushed to `testing` while the PR is in the queue,
+   the push triggers a new `promote-testing-to-main.yml` run.
+4. Because the tree on `testing` has changed, `reusable-promote-squash.yml`
+   attempts `git push --force origin "$PROMOTION_BRANCH"` to update the squash PR.
+5. GitHub's protected branch hook declines the update with error `GH006`.
+6. The `promote` job fails, and `report-failure` creates or updates a conflict
+   issue titled `ci: testing→main promotion conflict`.
+
+### Resolution
+
+- **This is not a git merge conflict.** The code trees merge cleanly without
+  conflict markers.
+- **Do not manually force-close or create empty commits.** Once the queued PR
+  merges or times out from the merge queue (ruleset 17070404 specifies a
+  120-minute timeout), the next promotion run succeeds.
+- The `close-failure-issue` job in `reusable-promote-squash.yml` automatically
+  closes the conflict issue on the next successful run.
 
 ## Stable promotion blocker set (issue #929) — re-verified 2026-08-10
 

@@ -1,7 +1,7 @@
 ---
 name: ci
 version: "1.0"
-last_updated: 2026-08-07
+last_updated: 2026-09-07
 id: ci
 one_line_purpose: Debug and change repository GitHub Actions workflows.
 entry_point: docs/skills/ci/SKILL.md
