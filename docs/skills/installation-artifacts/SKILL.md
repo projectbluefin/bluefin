@@ -34,6 +34,27 @@ metadata:
 
 Never overwrite a known-good artifact to force a broken rebuild through.
 
+## Container-native ISO contract
+
+`build_files/base/21-container-native-iso.sh` embeds the contract the ISO
+builder consumes, but only the parts that belong in a bootc image: the Anaconda
+profile and post-scripts, the livesys hooks, and
+`/usr/lib/bootc-image-builder/iso.yaml`.
+
+The shim and grub2 EFI payload stays where its RPMs put it,
+`/usr/lib/efi/*/*/EFI`. The contract asks for it in `/boot/efi/EFI/$VENDOR`, and
+the ISO builder stages it there in its own throwaway layer, exactly as the
+[reference implementations](https://github.com/ondrejbudai/bootc-isos/blob/main/bluefin-lts/src/build.sh)
+do:
+
+```bash
+mkdir -p /boot/efi && cp -a /usr/lib/efi/*/*/EFI /boot/efi/
+```
+
+Do not move that copy back into the image. `/boot` must ship empty or every
+derived image fails `bootc container lint --fatal-warnings`. See
+[#1208](https://github.com/projectbluefin/bluefin/issues/1208).
+
 ## When to Use
 
 Use for Installation media or downstream image artifacts.

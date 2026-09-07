@@ -66,6 +66,11 @@ just clean
 - Keep `build_files/base/04-install-kernel-akmods.sh` as an entrypoint wrapper;
   the orchestration logic lives in `04-install-kernel-akmods.py`.
 - `/tmp` does not persist between container `RUN` instructions.
+- `/boot` must be empty in the published image. Every `RUN` that could write
+  there mounts `--mount=type=tmpfs,dst=/boot`, and the final
+  `bootc container lint --fatal-warnings` carries no `--skip`. Content under
+  `/boot` is masked at runtime and fails that same lint in every image built
+  `FROM` ours. See [#1208](https://github.com/projectbluefin/bluefin/issues/1208).
 - Preserve Containerfile cache boundaries.
 - Report expensive builds accurately.
 
