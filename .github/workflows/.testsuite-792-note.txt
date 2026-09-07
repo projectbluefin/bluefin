@@ -1,0 +1,7 @@
+Consumer validation for projectbluefin/testsuite#792
+
+Issue #989 (`:testing` promotion frozen due to Firefox AT-SPI test failures in GNOME 50 smoke-a)
+depends on testsuite PR #792 which adds robust window lookup logic.
+
+Once testsuite#792 is merged and v1 tag updates, the Firefox tests will pass
+and the promotion gate will unblock automatically.
