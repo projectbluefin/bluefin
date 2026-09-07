@@ -462,3 +462,38 @@ retire the prime suspect:
   sidecar-free `journal_mode=delete` database that the next stage reads and
   installs against cleanly; without it, a stage's dnf write always re-enables
   WAL, which is why the script must run per-stage, not once.
+
+### Update 2026-09-06 — `Testing Images` builds again; `post-testing-e2e` reaches `run-e2e` and reproduces the unchanged `firefox.feature` blocker
+
+The `checkpoint-rpmdb.sh` fix above has held: `Testing Images` builds are
+succeeding again, so `post-testing-e2e` no longer skips before `e2e` runs.
+Run [34008857087](https://github.com/projectbluefin/bluefin/actions/runs/34008857087)
+(2026-09-06T03:23Z) confirms this — `e2e` ran and `run-e2e / smoke,common /
+GNOME 50 — smoke-a` failed, not skipped.
+
+That run resolved `projectbluefin/testsuite/.github/workflows/e2e.yml@v1` to
+commit `ee82d53` — the same commit already assessed on 2026-08-27 above — and
+`gh api repos/projectbluefin/testsuite/git/refs/tags/v1` today points to
+`3a8c79a`, whose only commits since `ee82d53` are dependency bumps and an
+unrelated behave-suite-environment refactor (`#765`); none touch
+`firefox_steps.py` or `firefox.feature`. **No testsuite fix for the RPM-vs-Flatpak
+launch-target gap identified on 2026-08-27 has landed or is open** (checked
+both merged and open PRs/issues in `projectbluefin/testsuite` for `firefox`/
+`AT-SPI`/`address bar` as of this update).
+
+All six `firefox.feature` scenarios still fail identically through both
+`@retry` passes, same signature as every prior check:
+
+```
+STEP_ERROR ['Address bar is present in Firefox']: AssertionError: Firefox address bar not found
+    assert matches or bars, "Firefox address bar not found"
+AssertionError: Firefox address bar not found
+```
+
+Nothing has changed in `bluefin` to correlate with this, and there is still
+nothing to change here — the fix remains scoped to
+`projectbluefin/testsuite`'s Firefox launch-target selection (log
+`context.firefox_launch_target` and prefer/patch the RPM `firefox` command
+path so the AT-SPI env actually reaches the process that gets a window,
+per the 2026-08-27 analysis). Re-verify against the next `post-testing-e2e`
+run once a testsuite PR addressing that gap merges.
