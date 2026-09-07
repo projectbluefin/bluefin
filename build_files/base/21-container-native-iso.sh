@@ -44,7 +44,6 @@ else
 fi
 
 mkdir -p \
-    "${ROOT}/boot/efi/EFI" \
     "${ROOT}/etc/anaconda/profile.d" \
     "${ROOT}/etc/sysconfig" \
     "${ROOT}/usr/lib/bluefin" \
@@ -231,15 +230,26 @@ EOF
 echo 'livesys_session=gnome' >"${ROOT}/etc/sysconfig/livesys"
 systemctl enable livesys.service livesys-late.service
 
+# The container-native ISO contract wants shim and grub2 in /boot/efi/EFI/$VENDOR,
+# but /boot must be empty in a bootc container image: anything left there is
+# masked at runtime and makes `bootc container lint` fail with `nonempty-boot`
+# in every image built FROM this one.
+# See https://github.com/projectbluefin/bluefin/issues/1208.
+#
+# So only assert the payload is present. Staging it into /boot/efi belongs to
+# the ISO builder, which does it in its own throwaway layer — the same split the
+# reference implementations use:
+# https://github.com/ondrejbudai/bootc-isos/blob/main/bluefin-lts/src/build.sh
+#
+#     mkdir -p /boot/efi && cp -a /usr/lib/efi/*/*/EFI /boot/efi/
+#
 shopt -s nullglob
 efi_dirs=("${ROOT}"/usr/lib/efi/*/*/EFI)
 if ((${#efi_dirs[@]} == 0)); then
     echo "No EFI payload found under /usr/lib/efi" >&2
     exit 1
 fi
-for efi_dir in "${efi_dirs[@]}"; do
-    cp -a "${efi_dir}/." "${ROOT}/boot/efi/EFI/"
-done
+printf 'EFI payload for the ISO builder: %s\n' "${efi_dirs[@]}"
 
 cat >"${ISO_CONFIG}" <<'EOF'
 label: "titanoboa_boot"

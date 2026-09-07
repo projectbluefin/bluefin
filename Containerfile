@@ -156,11 +156,15 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
         /ctx/build_files/shared/checkpoint-rpmdb.sh \
     '
 
-# Embed the Stable container-native ISO contract after Stage 2. This runs
-# without the /boot tmpfs so Titanoboa can consume the committed EFI payload.
+# Embed the Stable container-native ISO contract after Stage 2. The /boot tmpfs
+# is mounted here like in every other stage: /boot must stay empty in the
+# published image or `bootc container lint` fails in every derived build.
+# The ISO builder stages the EFI payload from /usr/lib/efi itself.
+# See build_files/base/21-container-native-iso.sh.
 RUN --mount=type=bind,from=ctx-iso,source=/build_files/base/21-container-native-iso.sh,target=/ctx/build_files/base/21-container-native-iso.sh \
     --mount=type=bind,from=ctx-iso,source=/build_files/shared/utils/ghcurl,target=/ctx/build_files/shared/utils/ghcurl \
     --mount=type=secret,id=GITHUB_TOKEN \
+    --mount=type=tmpfs,dst=/boot \
     bash -euo pipefail -c ' \
         mkdir -p /var/cache/bluefin-iso/helpers && \
         install -Dm0755 /ctx/build_files/shared/utils/ghcurl /var/cache/bluefin-iso/helpers/ghcurl && \
@@ -176,4 +180,4 @@ RUN rm -rf /opt && ln -s /var/opt /opt
 
 CMD ["/sbin/init"]
 
-RUN bootc container lint --fatal-warnings --skip nonempty-boot
+RUN bootc container lint --fatal-warnings

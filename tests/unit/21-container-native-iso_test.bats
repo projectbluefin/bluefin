@@ -162,8 +162,10 @@ teardown() {
     [ "$status" -eq 0 ]
     [ ! -e "${TEST_ROOT}/var/lib/rpm-state" ]
 
-    [ -f "${TEST_ROOT}/boot/efi/EFI/fedora/gcdx64.efi" ]
-    [ -f "${TEST_ROOT}/boot/efi/EFI/fedora/shimx64.efi" ]
+    # /boot must stay empty: content here is masked at runtime and trips
+    # `bootc container lint`'s nonempty-boot check in every derived image.
+    # See https://github.com/projectbluefin/bluefin/issues/1208.
+    [ ! -e "${TEST_ROOT}/boot" ]
     [ ! -f "${DRACUT_LOG}" ]
     [ -f "${TEST_ROOT}/usr/lib/modules/6.0.0-test/.bluefin-initramfs-done" ]
     run grep -F 'enable livesys.service livesys-late.service' \
@@ -225,7 +227,15 @@ teardown() {
     [[ "$output" != *$'\nfirefox\n'* ]]
 }
 
-@test "Containerfile runs the ISO contract script after Stage 2 without a boot tmpfs" {
+@test "Fails when the ISO builder would have no EFI payload to stage" {
+    rm -rf "${TEST_ROOT}/usr/lib/efi"
+
+    run bash "${ISO_SCRIPT}"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *'No EFI payload found under /usr/lib/efi'* ]]
+}
+
+@test "Containerfile runs the ISO contract script after Stage 2 under a boot tmpfs" {
     run python3 -c '
 from pathlib import Path
 import sys
@@ -243,11 +253,15 @@ print("\n".join(lines[start:end + 1]))
 ' "${CONTAINERFILE}"
     [ "$status" -eq 0 ]
     [[ "$output" == *'/ctx/build_files/base/21-container-native-iso.sh'* ]]
-    [[ "$output" != *'tmpfs,dst=/boot'* ]]
+    [[ "$output" == *'tmpfs,dst=/boot'* ]]
 
+    # No --skip: derived images run the default lint, so this one must too.
     run grep -Fx \
-        'RUN bootc container lint --fatal-warnings --skip nonempty-boot' \
+        'RUN bootc container lint --fatal-warnings' \
         "${CONTAINERFILE}"
     [ "$status" -eq 0 ]
     [[ "$output" != *'var-tmpfiles'* ]]
+
+    run grep -F 'nonempty-boot' "${CONTAINERFILE}"
+    [ "$status" -ne 0 ]
 }
