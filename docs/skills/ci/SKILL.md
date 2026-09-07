@@ -89,12 +89,12 @@ context silently couples every stage to every input directory.
 Every open Bluefin PR is discovered by the lab's five-minute PR poller. The lab
 runs smoke QA against `bluefin:testing` and sends bounded
 `repository_dispatch` lifecycle events to `.github/workflows/lab-check.yml`.
-That workflow must exist on the default branch and uses a short-lived
-MergeRaptor installation token to update one `testing-lab / bluefin` Check Run
-for the exact PR head SHA. Do not duplicate the result in a PR comment or commit status.
-
-The MergeRaptor installation on `projectbluefin` also needs **Checks: write**
-for `lab-check.yml`; see [MergeRaptor checks](references/mergeraptor-checks.md).
+That workflow must exist on the default branch and uses the workflow's own
+`GITHUB_TOKEN` (workflow-level `checks: write`) to update one
+`testing-lab / bluefin` Check Run for the exact PR head SHA, matched by name
+only — it is attributed to the `github-actions` app, so an app-slug filter
+would duplicate every update (bluefin#1114). Do not duplicate the result in
+a PR comment or commit status; see [MergeRaptor checks](references/mergeraptor-checks.md).
 
 ## Workflow input and job constraints
 
@@ -174,7 +174,7 @@ Read the affected YAML, identify the owning reusable workflow, validate locally.
 ## Red Flags
 
 - Changing a caller when the behavior belongs in shared workflow logic.
-- Posting a lab result as a PR comment instead of updating the MergeRaptor Check Run.
+- Posting a lab result as a PR comment instead of updating the lab Check Run.
 - Reading a gate's log message as proof of what it did. A step can report that a
   tag was excluded and push it anyway; confirm against the pushed artifact.
 - Treating a fork PR with no checks as pending rather than unapproved.

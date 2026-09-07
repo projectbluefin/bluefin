@@ -1,8 +1,8 @@
 """Tests for the check-run reporting script in lab-check.yml.
 
-The workflow has never run to completion in CI -- every dispatch so far dies at
-the MergeRaptor token mint (bluefin#939) -- so the script below is exercised
-here against a stub ``gh`` instead.
+The workflow reports with its own ``GITHUB_TOKEN`` (workflow-level
+``checks: write``, bluefin#1114), so the script below is exercised here
+against a stub ``gh`` instead.
 """
 
 from __future__ import annotations
@@ -180,7 +180,11 @@ class LabCheckReportTests(unittest.TestCase):
         self.assertNotIn("conclusion", body)
         self.assertEqual(body["details_url"], "https://lab.example/run/7")
 
-    def test_ignores_a_same_named_check_from_another_app(self) -> None:
+    def test_updates_a_same_named_check_from_any_app(self) -> None:
+        # Since bluefin#1114 the run is created with the workflow token, so it
+        # is attributed to the github-actions app, not the app that requested
+        # it: the lookup matches by name only and updates the existing run
+        # in place instead of filtering it out and POSTing a duplicate.
         requests = self.run_report(
             [check_run(4321, slug="some-other-app")],
             {"state": "completed", "conclusion": "failure",
@@ -188,7 +192,32 @@ class LabCheckReportTests(unittest.TestCase):
         )
 
         writes = [r for r in requests if r.get("method") in ("POST", "PATCH")]
-        self.assertEqual(writes[0]["method"], "POST")
+        self.assertEqual(len(writes), 1)
+        self.assertEqual(writes[0]["method"], "PATCH")
+        self.assertTrue(writes[0]["endpoint"].endswith("/check-runs/4321"))
+
+
+class LabCheckAuthTests(unittest.TestCase):
+    """The report runs on the workflow's own token, not an app token.
+
+    Minting a MergeRaptor token with ``permission-checks:write`` failed with
+    422 because the org installation was never granted checks:write
+    (bluefin#1114). The workflow now declares ``checks: write`` in its
+    permissions block and uses ``GITHUB_TOKEN`` directly.
+    """
+
+    def workflow(self) -> str:
+        return WORKFLOW.read_text(encoding="utf-8")
+
+    def test_permissions_block_grants_checks_write(self) -> None:
+        permissions = self.workflow().split("\npermissions:\n", 1)[1]
+        permissions = permissions.split("\n\n", 1)[0]
+        self.assertIn("checks: write", permissions)
+
+    def test_no_app_token_mint(self) -> None:
+        workflow = self.workflow()
+        self.assertNotIn("create-github-app-token", workflow)
+        self.assertNotIn("MERGERAPTOR", workflow)
 
 
 if __name__ == "__main__":
