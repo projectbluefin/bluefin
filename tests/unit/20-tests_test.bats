@@ -33,9 +33,8 @@ setup() {
         "${TEST_ROOT}/usr/share/ublue-os/just/update.just"
     echo 'options cros_charge_control probe_with_fwk_charge_control=1' \
         > "${TEST_ROOT}/usr/lib/modprobe.d/fw-charge-control.conf"
-    # brew-preinstall delivery path (bluefinctl + default CLI set) — see #965
-    touch "${TEST_ROOT}/usr/share/ublue-os/homebrew/preinstall.d/bluefinctl.Brewfile" \
-        "${TEST_ROOT}/usr/share/ublue-os/homebrew/preinstall.d/system-cli.Brewfile" \
+    # brew-preinstall delivery path (default CLI set) — see #965
+    touch "${TEST_ROOT}/usr/share/ublue-os/homebrew/preinstall.d/system-cli.Brewfile" \
         "${TEST_ROOT}/usr/lib/systemd/user/brew-preinstall.service"
     touch "${TEST_ROOT}/usr/bin/brew-preinstall" \
         "${TEST_ROOT}/usr/libexec/brew-preinstall"
@@ -212,11 +211,11 @@ EOF
     [ "$status" -ne 0 ]
 }
 
-@test "20-tests: rejects an image missing the bluefinctl Brewfile" {
-    # #965: bluefinctl reaches users only through preinstall.d. If `common`
-    # renames or drops this file, the build must fail rather than ship an
-    # image where bluefinctl silently never installs.
-    rm -f "${TEST_ROOT}/usr/share/ublue-os/homebrew/preinstall.d/bluefinctl.Brewfile"
+@test "20-tests: rejects an image missing the system-cli Brewfile" {
+    # The default CLI set reaches users through preinstall.d/system-cli.Brewfile.
+    # If `common` renames or drops this file, the build must fail rather than ship
+    # an image where default CLI tools silently never install.
+    rm -f "${TEST_ROOT}/usr/share/ublue-os/homebrew/preinstall.d/system-cli.Brewfile"
 
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -ne 0 ]
