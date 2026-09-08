@@ -7,6 +7,22 @@ on:
 permissions:
   contents: read
 
+# The lab sends several lifecycle events (queued -> in_progress -> completed)
+# for one head SHA, and the job below is a read-then-write: it looks up the
+# existing check run, then POSTs a new one or PATCHes that one. Two runs for the
+# same SHA overlapping means both look up before either writes, both find
+# nothing, and both POST -- leaving duplicate `testing-lab / <product>` checks,
+# all but one stranded in a non-terminal state. Serialise per SHA so the lookup
+# cannot race its own write; distinct SHAs still report in parallel, which the
+# lab's five-minute poller across every open PR depends on (bluefin#939).
+#
+# cancel-in-progress stays false on purpose. Cancelling an in-flight run can
+# kill the one applying the terminal `completed` event and strand the check as
+# in_progress -- the same always-unresolved check this serialisation prevents.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.client_payload.sha }}
+  cancel-in-progress: false
+
 jobs:
   report:
     name: Update MergeRaptor check
@@ -33,7 +49,7 @@ jobs:
       - name: Fail with actionable message if token minting was denied
         if: steps.app-token.outcome == 'failure' || steps.app-token.outputs.token == ''
         run: |
-          echo "::error::MergeRaptor token mint failed — the GitHub App installation almost certainly lacks the requested 'checks: write' permission. This cannot be fixed from the repository; an org owner must grant it (Organization settings → GitHub Apps → MergeRaptor → Permissions). Verify current grants with: gh api orgs/projectbluefin/installations --jq '.installations[] | select(.app_slug == \"mergeraptor\") | .permissions' — see docs/skills/ci/references/mergeraptor-checks.md."
+          echo "::error::MergeRaptor token mint failed — the app lacks the requested 'checks: write' permission. This cannot be fixed from the repository; an org owner must grant it in the GitHub UI, and it may take TWO steps. Step 1, only if 'checks' is absent from 'gh api /apps/mergeraptor --jq .permissions': Organization settings → Developer settings → GitHub Apps → MergeRaptor → Permissions & events → Repository permissions → Checks: Read and write → Save. Until that is done the installation page has nothing to approve. Step 2: approve the resulting request under Organization settings → GitHub Apps → MergeRaptor → Review request. Verify with: gh api orgs/projectbluefin/installations --jq '.installations[] | select(.app_slug == \"mergeraptor\") | .permissions' — see docs/skills/ci/references/mergeraptor-checks.md."
           exit 1
 
       - name: Create or update lab check
@@ -82,9 +98,15 @@ jobs:
           STARTED_AT=$(jq -r '.started_at // empty' <<<"${CHECK_JSON}")
           COMPLETED_AT=$(jq -r '.completed_at // empty' <<<"${CHECK_JSON}")
 
+          # check_name filters server-side. Without it the first page is 100
+          # check runs of every name, newest first, so on a busy commit the
+          # existing lab check falls off the page and this lookup returns
+          # nothing -- which silently turns every update into a duplicate
+          # check run (bluefin#939).
           CHECK_ID=$(
             gh api --method GET \
               "repos/${GITHUB_REPOSITORY}/commits/${SHA}/check-runs" \
+              -f check_name="${CHECK_NAME}" \
               -f per_page=100 \
               --jq '.check_runs
                 | map(select(.name == "'"${CHECK_NAME}"'" and .app.slug == "'"${APP_SLUG}"'"))

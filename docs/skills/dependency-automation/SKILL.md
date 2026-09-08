@@ -1,7 +1,7 @@
 ---
 name: dependency-automation
-version: "1.1"
-last_updated: 2026-08-07
+version: "1.2"
+last_updated: 2026-08-16
 id: dependency-automation
 one_line_purpose: Review Renovate configuration and automated dependency updates.
 entry_point: docs/skills/dependency-automation/SKILL.md
@@ -30,8 +30,10 @@ metadata:
    workflow. Do not add another supported Renovate config filename: Renovate
    stops at the first match and would silently shadow the canonical file.
 2. Validate configuration changes with the repository's configured validator.
-3. Preserve the configured authentication model; never add personal access
-   tokens or credentials.
+3. Preserve the configured authentication model: pass the MergeRaptor App
+   credentials to the reusable auto-merge workflow. A merge performed with
+   `GITHUB_TOKEN` suppresses the resulting `push` workflow, so testing images
+   would not build. Never add personal access tokens or user credentials.
 4. Confirm the pull request targets the development branch.
 5. Run the default gate.
 

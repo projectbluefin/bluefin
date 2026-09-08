@@ -13,8 +13,37 @@ IMAGE_REF="$(jq -r '."image-ref"' "${IMAGE_INFO}")"
 IMAGE_REF="${IMAGE_REF##*://}"
 INSTALL_IMAGE="${IMAGE_REF}:stable"
 
+# Resolve the mutable `:stable` tag to an immutable digest at ISO build time,
+# so the initial Anaconda ostreecontainer payload pull is content-addressed
+# and cannot be swapped for different content by a compromised registry or a
+# network attacker, independent of --no-signature-verification below. This is
+# a best-effort resolution: if it fails (e.g. registry hiccup, first-ever
+# build with no published `:stable` tag yet), fall back to the mutable tag —
+# the subsequent `bootc switch --enforce-container-sigpolicy` %post script
+# still enforces signature policy on the final deployment.
+resolve_stable_digest() {
+    local repo="$1" tag="$2" token digest
+    token="$(curl -sSL --fail "https://ghcr.io/token?scope=repository:${repo}:pull" |
+        jq -r '.token // empty')" || return 1
+    [[ -n "${token}" ]] || return 1
+    digest="$(curl -sSL --fail \
+        -H "Authorization: Bearer ${token}" \
+        -H "Accept: application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.oci.image.manifest.v1+json,application/vnd.docker.distribution.manifest.v2+json" \
+        -D - -o /dev/null \
+        "https://ghcr.io/v2/${repo}/manifests/${tag}" |
+        tr -d '\r' | awk -F': ' 'tolower($1) == "docker-content-digest" {print $2}')" || return 1
+    [[ "${digest}" == sha256:* ]] || return 1
+    echo "${digest}"
+}
+
+if STABLE_DIGEST="$(resolve_stable_digest "${IMAGE_REF#ghcr.io/}" "stable")"; then
+    INSTALL_IMAGE="${IMAGE_REF}@${STABLE_DIGEST}"
+    echo "Pinned Anaconda install payload to ${INSTALL_IMAGE}"
+else
+    echo "::warning::Could not resolve a digest for ${INSTALL_IMAGE}; the initial Anaconda payload pull will use the mutable :stable tag." >&2
+fi
+
 mkdir -p \
-    "${ROOT}/boot/efi/EFI" \
     "${ROOT}/etc/anaconda/profile.d" \
     "${ROOT}/etc/sysconfig" \
     "${ROOT}/usr/lib/bluefin" \
@@ -201,15 +230,26 @@ EOF
 echo 'livesys_session=gnome' >"${ROOT}/etc/sysconfig/livesys"
 systemctl enable livesys.service livesys-late.service
 
+# The container-native ISO contract wants shim and grub2 in /boot/efi/EFI/$VENDOR,
+# but /boot must be empty in a bootc container image: anything left there is
+# masked at runtime and makes `bootc container lint` fail with `nonempty-boot`
+# in every image built FROM this one.
+# See https://github.com/projectbluefin/bluefin/issues/1208.
+#
+# So only assert the payload is present. Staging it into /boot/efi belongs to
+# the ISO builder, which does it in its own throwaway layer — the same split the
+# reference implementations use:
+# https://github.com/ondrejbudai/bootc-isos/blob/main/bluefin-lts/src/build.sh
+#
+#     mkdir -p /boot/efi && cp -a /usr/lib/efi/*/*/EFI /boot/efi/
+#
 shopt -s nullglob
 efi_dirs=("${ROOT}"/usr/lib/efi/*/*/EFI)
 if ((${#efi_dirs[@]} == 0)); then
     echo "No EFI payload found under /usr/lib/efi" >&2
     exit 1
 fi
-for efi_dir in "${efi_dirs[@]}"; do
-    cp -a "${efi_dir}/." "${ROOT}/boot/efi/EFI/"
-done
+printf 'EFI payload for the ISO builder: %s\n' "${efi_dirs[@]}"
 
 cat >"${ISO_CONFIG}" <<'EOF'
 label: "titanoboa_boot"

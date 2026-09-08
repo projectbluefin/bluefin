@@ -11,6 +11,7 @@ setup() {
     mkdir -p "${STUB_BIN}"
     mkdir -p "${TEST_ROOT}/etc/containers" \
         "${TEST_ROOT}/usr/bin" \
+        "${TEST_ROOT}/usr/libexec" \
         "${TEST_ROOT}/usr/share/ublue-os/just" \
         "${TEST_ROOT}/usr/share/ublue-os/homebrew" \
         "${TEST_ROOT}/usr/share/flatpak/preinstall.d" \
@@ -36,8 +37,10 @@ setup() {
     touch "${TEST_ROOT}/usr/share/ublue-os/homebrew/preinstall.d/bluefinctl.Brewfile" \
         "${TEST_ROOT}/usr/share/ublue-os/homebrew/preinstall.d/system-cli.Brewfile" \
         "${TEST_ROOT}/usr/lib/systemd/user/brew-preinstall.service"
-    touch "${TEST_ROOT}/usr/bin/brew-preinstall"
-    chmod +x "${TEST_ROOT}/usr/bin/brew-preinstall"
+    touch "${TEST_ROOT}/usr/bin/brew-preinstall" \
+        "${TEST_ROOT}/usr/libexec/brew-preinstall"
+    chmod +x "${TEST_ROOT}/usr/bin/brew-preinstall" \
+        "${TEST_ROOT}/usr/libexec/brew-preinstall"
     echo 'enable brew-preinstall.service' \
         > "${TEST_ROOT}/usr/lib/systemd/user-preset/01-brew-preinstall.preset"
     cat > "${TEST_ROOT}/etc/containers/policy.json" <<'EOF'
@@ -98,6 +101,83 @@ teardown() {
     [ "$status" -eq 0 ]
 }
 
+@test "20-tests: rejects an image missing a required IMPORTANT_PACKAGES entry" {
+    # #965 item 1: fzf was missing from the image, breaking `ujust --choose` on
+    # first boot. #1057 added fzf to IMPORTANT_PACKAGES, but nothing asserted
+    # that the script actually fails when rpm reports it (or any other
+    # required package) absent — the existing "unwanted package" test below
+    # only exercises the UNWANTED_PACKAGES list. Guard the missing-package path
+    # directly so a future edit can't silently drop an entry with no coverage.
+    cat > "${STUB_BIN}/rpm" <<'EOF'
+#!/usr/bin/bash
+if [[ "$*" == *"%{VENDOR}"* ]]; then
+    echo "negativo17.org"
+    exit 0
+fi
+case "$*" in
+    *fedora-flathub-remote*|*fedora-logos*|*fedora-third-party*|*gnome-software*|*podman-docker*) exit 1 ;;
+    *fzf*) exit 1 ;;
+esac
+exit 0
+EOF
+    chmod +x "${STUB_BIN}/rpm"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Missing package: fzf"* ]]
+}
+
+@test "20-tests: rejects an image missing just, the binary ujust exec's" {
+    # /usr/bin/ujust is a wrapper that ends in `exec just --justfile ...`, and
+    # it ships from `common`, so the `stat /usr/bin/ujust` check above passes
+    # whether or not the just RPM is on the image. Drop just from base.toml and
+    # every ujust invocation exits 127 -- a strictly worse version of the #965
+    # item 1 symptom -- with nothing failing the build. This case fails if just
+    # is ever removed from IMPORTANT_PACKAGES.
+    cat > "${STUB_BIN}/rpm" <<'EOF'
+#!/usr/bin/bash
+if [[ "$*" == *"%{VENDOR}"* ]]; then
+    echo "negativo17.org"
+    exit 0
+fi
+case "$*" in
+    *fedora-flathub-remote*|*fedora-logos*|*fedora-third-party*|*gnome-software*|*podman-docker*) exit 1 ;;
+    *" just"*) exit 1 ;;
+esac
+exit 0
+EOF
+    chmod +x "${STUB_BIN}/rpm"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Missing package: just"* ]]
+}
+
+@test "20-tests: rejects an image missing gum, which the just recipes render with" {
+    # The .just files come from `common` and call gum for every prompt, spinner
+    # and styled block, so a missing gum RPM leaves the recipes present and the
+    # stat checks green while every interactive recipe degrades into a stream of
+    # "gum: command not found". This case fails if gum is ever removed from
+    # IMPORTANT_PACKAGES.
+    cat > "${STUB_BIN}/rpm" <<'EOF'
+#!/usr/bin/bash
+if [[ "$*" == *"%{VENDOR}"* ]]; then
+    echo "negativo17.org"
+    exit 0
+fi
+case "$*" in
+    *fedora-flathub-remote*|*fedora-logos*|*fedora-third-party*|*gnome-software*|*podman-docker*) exit 1 ;;
+    *" gum"*) exit 1 ;;
+esac
+exit 0
+EOF
+    chmod +x "${STUB_BIN}/rpm"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Missing package: gum"* ]]
+}
+
 @test "20-tests: rejects an unwanted package" {
     cat > "${STUB_BIN}/rpm" <<'EOF'
 #!/usr/bin/bash
@@ -144,6 +224,17 @@ EOF
 
 @test "20-tests: rejects an image missing the brew-preinstall ExecStart binary" {
     rm -f "${TEST_ROOT}/usr/bin/brew-preinstall"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+}
+
+@test "20-tests: rejects an image whose brew-preinstall trampoline has no payload" {
+    # /usr/bin/brew-preinstall is `exec /usr/libexec/brew-preinstall`. Dropping
+    # the payload leaves the trampoline, the unit and the preset all intact, so
+    # every other assertion here still passes -- the build ships and the service
+    # dies with 127 at first login. That silent shape is the one #965 reported.
+    rm -f "${TEST_ROOT}/usr/libexec/brew-preinstall"
 
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -ne 0 ]

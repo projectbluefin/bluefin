@@ -37,6 +37,17 @@ metadata:
    repository's default branch `main`, which the base-branch guard rejects).
 6. Respond to review feedback; do not self-approve or self-merge.
 
+`Closes #NNN` only auto-closes the issue once its commit reaches the
+repository's default branch (`main`), because GitHub evaluates the closing
+keyword against the default branch regardless of which branch the PR merged
+into. Merging to `testing` does not close the issue immediately; the issue
+stays open until `promote-testing-to-main.yml` carries that commit to `main`.
+Do not read a `Closes`-linked issue still being open after a `testing` merge
+as a bug in the PR, the automation, or the link itself — confirm whether the
+commit has reached `main` yet before concluding anything is wrong. See
+[`projectbluefin/bluefin#995`](https://github.com/projectbluefin/bluefin/issues/995)
+for a case where this produced exactly that confusion.
+
 Automation applies and repairs the seven canonical workflow labels. Agents do
 not use slash commands as state transitions, do not add or remove workflow
 labels, and do not manufacture queue state. If blocked, describe the exact
