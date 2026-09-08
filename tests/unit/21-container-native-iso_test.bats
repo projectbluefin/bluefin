@@ -98,9 +98,16 @@ esac
 EOF
     cat >"${STUB_BIN}/curl" <<'EOF'
 #!/usr/bin/bash
-# Emulates the GHCR manifest HEAD/GET response consumed by
-# resolve_stable_digest() in 21-container-native-iso.sh. Tests control the
-# behavior via STUB_DIGEST_STATUS (ok|no-digest|fail).
+# Emulates token and manifest endpoints for resolve_stable_digest() in
+# 21-container-native-iso.sh. Tests control behavior via STUB_DIGEST_STATUS.
+for arg in "$@"; do
+    case "$arg" in
+        https://ghcr.io/token*)
+            echo '{"token":"test-registry-token"}'
+            exit 0
+            ;;
+    esac
+done
 case "${STUB_DIGEST_STATUS:-ok}" in
     ok)
         printf 'HTTP/1.1 200 OK\r\nDocker-Content-Digest: %s\r\n\r\n' \

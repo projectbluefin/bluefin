@@ -191,8 +191,6 @@ class LabCheckReportTests(unittest.TestCase):
         self.assertEqual(writes[0]["method"], "POST")
 
 
-if __name__ == "__main__":
-    unittest.main()
 
 
 class LabCheckConcurrencyTests(unittest.TestCase):
@@ -230,3 +228,7 @@ class LabCheckConcurrencyTests(unittest.TestCase):
         # Cancelling can kill the run applying the terminal `completed` event
         # and leave the check stuck in_progress for good.
         self.assertIn("cancel-in-progress: false", self.concurrency_block())
+
+
+if __name__ == "__main__":
+    unittest.main()

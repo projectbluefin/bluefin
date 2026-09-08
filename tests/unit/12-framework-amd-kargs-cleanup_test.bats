@@ -202,6 +202,30 @@ EOF
     grep -q "kargs --delete=module_blacklist=hid_sensor_hub" "${STUB_BIN}/rpm-ostree.log"
 }
 
+@test "12-framework-amd-kargs-cleanup: failed kargs query is not marked complete and retries" {
+    # Stub: rpm-ostree kargs fails (e.g. daemon busy/locked)
+    cat > "${STUB_BIN}/rpm-ostree" <<'EOF'
+#!/usr/bin/bash
+echo "rpm-ostree $*" >> "${STUB_BIN}/rpm-ostree.log"
+if [[ "$1" == "kargs" && "$#" -eq 1 ]]; then
+    echo "error: daemon locked" >&2
+    exit 1
+fi
+exit 0
+EOF
+    chmod +x "${STUB_BIN}/rpm-ostree"
+
+    echo "Framework" > "${TEST_ROOT}/chassis_vendor"
+    echo "Laptop 13 (AMD Ryzen 7040 Series)" > "${TEST_ROOT}/product_name"
+
+    # First invocation fails to query kargs
+    run bash "${PATCHED_SCRIPT}"
+
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Failed to query kernel arguments"* ]]
+    [ ! -f "${TEST_ROOT}/framework-amd-kargs-cleanup-v1" ]
+}
+
 @test "12-framework-amd-kargs-cleanup: already-marked complete skips without checking hardware" {
     mkdir -p "$(dirname "${TEST_ROOT}/framework-amd-kargs-cleanup-v1")"
     touch "${TEST_ROOT}/framework-amd-kargs-cleanup-v1"

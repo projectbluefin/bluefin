@@ -66,7 +66,12 @@ if ! command -v rpm-ostree >/dev/null 2>&1; then
     exit 0
 fi
 
-if ! rpm-ostree kargs | grep -Fq "${STALE_KARG}"; then
+if ! current_kargs="$(rpm-ostree kargs)"; then
+    echo "Failed to query kernel arguments; will retry on next boot." >&2
+    exit 1
+fi
+
+if ! grep -Fq "${STALE_KARG}" <<< "${current_kargs}"; then
     echo "AMD Framework: ${STALE_KARG} not present — nothing to do."
     mark_done
     exit 0
