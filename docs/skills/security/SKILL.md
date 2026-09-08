@@ -51,6 +51,7 @@ do not invent a replacement key or trust path.
 - [COPR isolation invariant](references/copr-isolation.md)
 - [signing and verification](references/signing.md)
 - [CVE-2026-33186 grpc in buildah and podman](references/cve-2026-33186-grpc-buildah.md)
+- [CVE-2026-56854 crypto in container-tools and tailscale](references/cve-2026-56854-crypto.md)
 
 ## When to Use
 

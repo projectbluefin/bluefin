@@ -74,6 +74,7 @@ EOF
     cat >"${STUB_BIN}/ghcurl" <<'EOF'
 #!/usr/bin/bash
 destination=""
+url="$1"
 while (($#)); do
     case "$1" in
         -o|-Lo)
@@ -85,8 +86,33 @@ while (($#)); do
             ;;
     esac
 done
-mkdir -p "$(dirname "$destination")"
-printf 'test-key' >"$destination"
+case "$url" in
+    https://ghcr.io/token*)
+        echo '{"token":"test-registry-token"}'
+        ;;
+    *)
+        mkdir -p "$(dirname "$destination")"
+        printf 'test-key' >"$destination"
+        ;;
+esac
+EOF
+    cat >"${STUB_BIN}/curl" <<'EOF'
+#!/usr/bin/bash
+# Emulates the GHCR manifest HEAD/GET response consumed by
+# resolve_stable_digest() in 21-container-native-iso.sh. Tests control the
+# behavior via STUB_DIGEST_STATUS (ok|no-digest|fail).
+case "${STUB_DIGEST_STATUS:-ok}" in
+    ok)
+        printf 'HTTP/1.1 200 OK\r\nDocker-Content-Digest: %s\r\n\r\n' \
+            "${STUB_MANIFEST_DIGEST:-sha256:deadbeef00000000000000000000000000000000000000000000000000feed}"
+        ;;
+    no-digest)
+        printf 'HTTP/1.1 200 OK\r\n\r\n'
+        ;;
+    fail)
+        exit 22
+        ;;
+esac
 EOF
     chmod +x "${STUB_BIN}"/*
 
@@ -94,6 +120,8 @@ EOF
     export FAKE_ROOT="${TEST_ROOT}"
     export BRANDING_DIR
     export DRACUT_LOG SYSTEMCTL_LOG
+    export STUB_DIGEST_STATUS="ok"
+    export STUB_MANIFEST_DIGEST="sha256:deadbeef00000000000000000000000000000000000000000000000000feed"
 }
 
 teardown() {
@@ -118,11 +146,11 @@ teardown() {
         "${TEST_ROOT}/etc/anaconda/profile.d/bluefin.conf"
     [ "$status" -eq 0 ]
     run grep -F \
-        'ostreecontainer --url=ghcr.io/projectbluefin/bluefin:stable --transport=registry' \
+        "ostreecontainer --url=ghcr.io/projectbluefin/bluefin@${STUB_MANIFEST_DIGEST} --transport=registry" \
         "${TEST_ROOT}/usr/share/anaconda/interactive-defaults.ks"
     [ "$status" -eq 0 ]
     run grep -F \
-        'bootc switch --mutate-in-place --enforce-container-sigpolicy --transport registry ghcr.io/projectbluefin/bluefin:stable' \
+        "bootc switch --mutate-in-place --enforce-container-sigpolicy --transport registry ghcr.io/projectbluefin/bluefin@${STUB_MANIFEST_DIGEST}" \
         "${TEST_ROOT}/usr/share/anaconda/post-scripts/install-configure-upgrade.ks"
     [ "$status" -eq 0 ]
     run grep -F 'favorite-apps' \
@@ -134,12 +162,42 @@ teardown() {
     [ "$status" -eq 0 ]
     [ ! -e "${TEST_ROOT}/var/lib/rpm-state" ]
 
-    [ -f "${TEST_ROOT}/boot/efi/EFI/fedora/gcdx64.efi" ]
-    [ -f "${TEST_ROOT}/boot/efi/EFI/fedora/shimx64.efi" ]
+    # /boot must stay empty: content here is masked at runtime and trips
+    # `bootc container lint`'s nonempty-boot check in every derived image.
+    # See https://github.com/projectbluefin/bluefin/issues/1208.
+    [ ! -e "${TEST_ROOT}/boot" ]
     [ ! -f "${DRACUT_LOG}" ]
     [ -f "${TEST_ROOT}/usr/lib/modules/6.0.0-test/.bluefin-initramfs-done" ]
     run grep -F 'enable livesys.service livesys-late.service' \
         "${SYSTEMCTL_LOG}"
+    [ "$status" -eq 0 ]
+}
+
+@test "Falls back to the mutable :stable tag when the registry manifest lookup fails" {
+    export STUB_DIGEST_STATUS="fail"
+    run bash "${ISO_SCRIPT}"
+    [ "$status" -eq 0 ]
+
+    [[ "$output" == *"::warning::Could not resolve a digest"* ]]
+    run grep -F \
+        'ostreecontainer --url=ghcr.io/projectbluefin/bluefin:stable --transport=registry' \
+        "${TEST_ROOT}/usr/share/anaconda/interactive-defaults.ks"
+    [ "$status" -eq 0 ]
+    run grep -F \
+        'bootc switch --mutate-in-place --enforce-container-sigpolicy --transport registry ghcr.io/projectbluefin/bluefin:stable' \
+        "${TEST_ROOT}/usr/share/anaconda/post-scripts/install-configure-upgrade.ks"
+    [ "$status" -eq 0 ]
+}
+
+@test "Falls back to the mutable :stable tag when the manifest response has no digest header" {
+    export STUB_DIGEST_STATUS="no-digest"
+    run bash "${ISO_SCRIPT}"
+    [ "$status" -eq 0 ]
+
+    [[ "$output" == *"::warning::Could not resolve a digest"* ]]
+    run grep -F \
+        'ostreecontainer --url=ghcr.io/projectbluefin/bluefin:stable --transport=registry' \
+        "${TEST_ROOT}/usr/share/anaconda/interactive-defaults.ks"
     [ "$status" -eq 0 ]
 }
 
@@ -169,7 +227,15 @@ teardown() {
     [[ "$output" != *$'\nfirefox\n'* ]]
 }
 
-@test "Containerfile runs the ISO contract script after Stage 2 without a boot tmpfs" {
+@test "Fails when the ISO builder would have no EFI payload to stage" {
+    rm -rf "${TEST_ROOT}/usr/lib/efi"
+
+    run bash "${ISO_SCRIPT}"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *'No EFI payload found under /usr/lib/efi'* ]]
+}
+
+@test "Containerfile runs the ISO contract script after Stage 2 under a boot tmpfs" {
     run python3 -c '
 from pathlib import Path
 import sys
@@ -187,11 +253,15 @@ print("\n".join(lines[start:end + 1]))
 ' "${CONTAINERFILE}"
     [ "$status" -eq 0 ]
     [[ "$output" == *'/ctx/build_files/base/21-container-native-iso.sh'* ]]
-    [[ "$output" != *'tmpfs,dst=/boot'* ]]
+    [[ "$output" == *'tmpfs,dst=/boot'* ]]
 
+    # No --skip: derived images run the default lint, so this one must too.
     run grep -Fx \
-        'RUN bootc container lint --fatal-warnings --skip nonempty-boot' \
+        'RUN bootc container lint --fatal-warnings' \
         "${CONTAINERFILE}"
     [ "$status" -eq 0 ]
     [[ "$output" != *'var-tmpfiles'* ]]
+
+    run grep -F 'nonempty-boot' "${CONTAINERFILE}"
+    [ "$status" -ne 0 ]
 }

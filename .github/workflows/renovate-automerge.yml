@@ -15,3 +15,6 @@ jobs:
     uses: projectbluefin/actions/.github/workflows/reusable-renovate-automerge.yml@v1
     with:
       head_sha: ${{ github.event.workflow_run.head_sha }}
+    secrets:
+      app_id: ${{ secrets.MERGERAPTOR_APP_ID }}
+      private_key: ${{ secrets.MERGERAPTOR_PRIVATE_KEY }}

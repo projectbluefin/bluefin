@@ -1,14 +1,21 @@
 name: issue lifecycle
 
+# Triggers are deliberately narrower than they look like they could be. The
+# pinned bonedigger lifecycle has exactly two jobs, `issues.opened` and
+# `issue_comment.created`, so subscribing to any other activity type dispatches
+# the reusable workflow only to skip every job in it (bluefin#981). Widen this
+# only alongside a bonedigger release that actually handles the new type.
 on:
   issues:
-    types: [opened, labeled, closed]
+    types: [opened]
   issue_comment:
     types: [created]
 
+# Scoped to what the callee declares (issues: write, contents: read). It reads
+# `event.issue.pull_request` straight from the payload and never calls the pulls
+# API, so no pull-requests scope is needed.
 permissions:
   issues: write
-  pull-requests: write
   contents: read
 
 jobs:
