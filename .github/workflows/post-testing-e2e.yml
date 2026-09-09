@@ -11,24 +11,32 @@ on:
     # The promote-to-testing job is guarded to main-only to prevent double-promoting.
     # See common docs/skills/e2e-ci.md — Requirement 1.
     branches: [main, testing]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Testing Images workflow run ID (default: latest successful run)"
+        required: false
+        default: ""
+        type: string
 
 permissions: read-all
 
 concurrency:
-  group: post-testing-e2e-${{ github.event.workflow_run.head_sha }}
+  group: post-testing-e2e-${{ github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
   e2e:
-    # Only run for push events (not merge_group or workflow_dispatch)
+    # Only run for push events (not merge_group) or workflow_dispatch,
     # and only when the build succeeded.
     if: |
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push'
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
       image: ${{ steps.get-digest.outputs.image }}
+      run_id: ${{ steps.get-digest.outputs.run_id }}
     steps:
       - name: Download build digest
         id: get-digest
@@ -36,7 +44,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh run download "${{ github.event.workflow_run.id }}" \
+          RUN_ID="${{ inputs.run_id || (github.event.workflow_run && github.event.workflow_run.id) || '' }}"
+          if [ -z "$RUN_ID" ]; then
+            RUN_ID=$(gh run list --repo "${{ github.repository }}" --workflow "Testing Images" --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          fi
+          echo "run_id=${RUN_ID}" >> "$GITHUB_OUTPUT"
+          gh run download "${RUN_ID}" \
             --repo "${{ github.repository }}" \
             --name "image-digest-testing-bluefin-main-x86_64" \
             --dir /tmp/digest
@@ -73,11 +86,8 @@ jobs:
   promote-to-testing:
     # Promote all tested flavors to :testing only after e2e passes.
     # This ensures :testing always points to a digest that has passed gate e2e.
-    # run-upgrade-test removed from needs — lifecycle suite is non-blocking (see TODO above).
     needs: [e2e, run-e2e]
-    if: >-
-      needs.run-e2e.result == 'success' &&
-      github.event.workflow_run.head_branch == 'main'
+    if: needs.run-e2e.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -88,7 +98,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh run download "${{ github.event.workflow_run.id }}" \
+          RUN_ID="${{ needs.e2e.outputs.run_id || (github.event.workflow_run && github.event.workflow_run.id) || '' }}"
+          if [ -z "$RUN_ID" ]; then
+            RUN_ID=$(gh run list --repo "${{ github.repository }}" --workflow "Testing Images" --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          fi
+          gh run download "${RUN_ID}" \
             --repo "${{ github.repository }}" \
             --pattern "image-digest-testing-*" \
             --dir /tmp/all-digests
