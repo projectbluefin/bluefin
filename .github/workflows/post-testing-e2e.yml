@@ -18,6 +18,11 @@ on:
         required: false
         default: ""
         type: string
+      skip_e2e:
+        description: "Skip re-running E2E if already verified by a prior run"
+        required: false
+        default: false
+        type: boolean
 
 permissions: read-all
 
@@ -59,6 +64,7 @@ jobs:
 
   run-e2e:
     needs: [e2e]
+    if: inputs.skip_e2e != true
     permissions:
       packages: write
       contents: read
@@ -87,7 +93,7 @@ jobs:
     # Promote all tested flavors to :testing only after e2e passes.
     # This ensures :testing always points to a digest that has passed gate e2e.
     needs: [e2e, run-e2e]
-    if: needs.run-e2e.result == 'success'
+    if: always() && needs.e2e.result == 'success' && (needs.run-e2e.result == 'success' || inputs.skip_e2e == true)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
