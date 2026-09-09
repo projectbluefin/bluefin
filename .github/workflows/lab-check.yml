@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  checks: write
 
 # The lab sends several lifecycle events (queued -> in_progress -> completed)
 # for one head SHA, and the job below is a read-then-write: it looks up the
@@ -25,36 +26,15 @@ concurrency:
 
 jobs:
   report:
-    name: Update MergeRaptor check
+    name: Update lab check
     if: >-
       github.event.client_payload.repository == github.repository &&
       github.event.client_payload.sha != ''
     runs-on: ubuntu-24.04
     steps:
-      # continue-on-error: when the app installation lacks the requested
-      # permission, create-github-app-token fails with only the annotation
-      # "The permissions requested are not granted to this installation."
-      # Keep the run alive so the next step can surface an actionable message
-      # instead of a bare red X (bluefin#939). The job still fails either way.
-      - name: Get MergeRaptor token
-        id: app-token
-        continue-on-error: true
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
-        with:
-          app-id: ${{ secrets.MERGERAPTOR_APP_ID }}
-          private-key: ${{ secrets.MERGERAPTOR_PRIVATE_KEY }}
-          permission-checks: write
-          permission-contents: read
-
-      - name: Fail with actionable message if token minting was denied
-        if: steps.app-token.outcome == 'failure' || steps.app-token.outputs.token == ''
-        run: |
-          echo "::error::MergeRaptor token mint failed — the app lacks the requested 'checks: write' permission. This cannot be fixed from the repository; an org owner must grant it in the GitHub UI, and it may take TWO steps. Step 1, only if 'checks' is absent from 'gh api /apps/mergeraptor --jq .permissions': Organization settings → Developer settings → GitHub Apps → MergeRaptor → Permissions & events → Repository permissions → Checks: Read and write → Save. Until that is done the installation page has nothing to approve. Step 2: approve the resulting request under Organization settings → GitHub Apps → MergeRaptor → Review request. Verify with: gh api orgs/projectbluefin/installations --jq '.installations[] | select(.app_slug == \"mergeraptor\") | .permissions' — see docs/skills/ci/references/mergeraptor-checks.md."
-          exit 1
-
       - name: Create or update lab check
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.event.client_payload.sha }}
           CHECK_JSON: ${{ toJSON(github.event.client_payload.check) }}
         run: |
@@ -62,7 +42,6 @@ jobs:
 
           PRODUCT="${GITHUB_REPOSITORY#*/}"
           CHECK_NAME="testing-lab / ${PRODUCT}"
-          APP_SLUG="mergeraptor"
 
           if [[ ! "${SHA}" =~ ^[0-9a-f]{40}$ ]]; then
             echo "Invalid commit SHA: ${SHA}" >&2
@@ -102,14 +81,17 @@ jobs:
           # check runs of every name, newest first, so on a busy commit the
           # existing lab check falls off the page and this lookup returns
           # nothing -- which silently turns every update into a duplicate
-          # check run (bluefin#939).
+          # check run (bluefin#939). Matching is by name only: the run is
+          # created with the workflow token, so it is attributed to the
+          # github-actions app, and an app-slug filter would find nothing
+          # and duplicate every update (bluefin#1114).
           CHECK_ID=$(
             gh api --method GET \
               "repos/${GITHUB_REPOSITORY}/commits/${SHA}/check-runs" \
               -f check_name="${CHECK_NAME}" \
               -f per_page=100 \
               --jq '.check_runs
-                | map(select(.name == "'"${CHECK_NAME}"'" and .app.slug == "'"${APP_SLUG}"'"))
+                | map(select(.name == "'"${CHECK_NAME}"'"))
                 | sort_by(.id)
                 | last
                 | .id // empty'
