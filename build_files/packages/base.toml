@@ -71,6 +71,8 @@ packages = [
     "libblockdev-mpath",
     "libcamera-gstreamer",
     "libcamera-tools",
+    "libgda",
+    "libgda-sqlite",
     "libratbag-ratbagd",
     "libva-utils",
     "libxcrypt-compat",

@@ -161,3 +161,13 @@ teardown() {
     run grep -q "python3-gnome-ponytail-daemon" "${DNF5_LOG}"
     [ "$status" -eq 0 ]
 }
+
+@test "libgda and libgda-sqlite are in the package install list" {
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -eq 0 ]
+    run grep -q "libgda" "${DNF5_LOG}"
+    [ "$status" -eq 0 ]
+    run grep -q "libgda-sqlite" "${DNF5_LOG}"
+    [ "$status" -eq 0 ]
+}
+
