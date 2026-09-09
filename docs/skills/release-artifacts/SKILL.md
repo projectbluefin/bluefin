@@ -1,7 +1,7 @@
 ---
 name: release-artifacts
 version: "1.0"
-last_updated: 2026-08-07
+last_updated: 2026-09-09
 id: release-artifacts
 one_line_purpose: Prepare, verify, and troubleshoot image release and promotion.
 entry_point: docs/skills/release-artifacts/SKILL.md
