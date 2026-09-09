@@ -23,7 +23,7 @@ INSTALL_IMAGE="${IMAGE_REF}:stable"
 # still enforces signature policy on the final deployment.
 resolve_stable_digest() {
     local repo="$1" tag="$2" token digest
-    token="$(curl -sSL --fail "https://ghcr.io/token?scope=repository:${repo}:pull" |
+    token="$(ghcurl "https://ghcr.io/token?scope=repository:${repo}:pull" |
         jq -r '.token // empty')" || return 1
     [[ -n "${token}" ]] || return 1
     digest="$(curl -sSL --fail \
