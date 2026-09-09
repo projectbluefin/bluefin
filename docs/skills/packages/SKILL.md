@@ -44,7 +44,10 @@ metadata:
 3. Keep Fedora and COPR package transactions separate.
 4. For images installed with `bootc install`, include `bootupd` explicitly;
    do not rely on the base image to provide it transitively.
-5. Run:
+5. When a default Flatpak replaces an inherited RPM application, remove it
+   from `[fedora]`, list it in `[excluded]`, and preserve any application
+   configuration hook that targets the Flatpak.
+6. Run:
 
 ```bash
 just check
