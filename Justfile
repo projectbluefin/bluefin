@@ -549,9 +549,12 @@ secureboot $image="bluefin" $tag="testing" $flavor="main":
     ${PODMAN} cp "$TMP":/usr/lib/modules/"${kernel_release}"/vmlinuz /tmp/vmlinuz
     ${PODMAN} rm "$TMP"
 
-    # Get the Public Certificates
-    curl --retry 3 -Lo /tmp/kernel-sign.der https://github.com/ublue-os/akmods/raw/main/certs/public_key.der
-    curl --retry 3 -Lo /tmp/akmods.der https://github.com/ublue-os/akmods/raw/main/certs/public_key_2.der
+    # Get the Public Certificates (pinned to akmods commit + SHA-256) — fail closed on mismatch.
+    AKMODS_COMMIT="c30e9467fe158dcf82c5176dec76d4373871ffda"
+    curl --retry 3 -Lo /tmp/kernel-sign.der "https://raw.githubusercontent.com/ublue-os/akmods/${AKMODS_COMMIT}/certs/public_key.der"
+    curl --retry 3 -Lo /tmp/akmods.der "https://raw.githubusercontent.com/ublue-os/akmods/${AKMODS_COMMIT}/certs/public_key_2.der"
+    echo "4e5c68474cb133fd8984d9599762cece9100c3e6cd8a9709aeaabd85dd9e70d1  /tmp/kernel-sign.der" | sha256sum -c -
+    echo "c01ef5e7fb9f6108fc58735f7eeb4dec084764a8aac404831e0ce3f9da63757d  /tmp/akmods.der" | sha256sum -c -
     openssl x509 -in /tmp/kernel-sign.der -out /tmp/kernel-sign.crt
     openssl x509 -in /tmp/akmods.der -out /tmp/akmods.crt
 
