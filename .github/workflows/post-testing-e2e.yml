@@ -22,8 +22,8 @@ on:
 permissions: read-all
 
 concurrency:
-  group: post-testing-e2e-${{ github.event.workflow_run.head_sha || github.sha }}
-  cancel-in-progress: true
+  group: post-testing-e2e-${{ github.event.workflow_run.head_sha || github.run_id }}
+  cancel-in-progress: false
 
 jobs:
   e2e:
