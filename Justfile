@@ -484,6 +484,9 @@ verify-container container="" registry="ghcr.io/ublue-os" key="":
         trap 'rm -f "${COSIGN_INSTALL_PATH}"' EXIT
         curl -fsSL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" \
             -o "${COSIGN_INSTALL_PATH}"
+        # SHA-256 pinned from upstream cosign_checksums.txt for v3.1.1 — fail closed on mismatch.
+        COSIGN_SHA256="ae1ecd212663f3693ad9edf8b1a183900c9a52d3155ba6e354237f9a0f6463fc"
+        echo "${COSIGN_SHA256}  ${COSIGN_INSTALL_PATH}" | sha256sum -c -
         chmod +x "${COSIGN_INSTALL_PATH}"
         ${SUDOIF} install -m 0755 "${COSIGN_INSTALL_PATH}" /usr/local/bin/cosign
         echo "cosign installed: $(cosign version 2>/dev/null | awk '/GitVersion:/{print $2}')"
