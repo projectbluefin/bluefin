@@ -23,7 +23,7 @@ permissions:
 jobs:
   release_window:
     name: Check stable release window
-    runs-on: ubuntu-latest
+    runs-on: ghost-runners
     timeout-minutes: 5
     outputs:
       should_enqueue: ${{ steps.window.outputs.should_enqueue }}

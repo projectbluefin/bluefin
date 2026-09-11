@@ -30,7 +30,7 @@ jobs:
     if: >-
       github.event.client_payload.repository == github.repository &&
       github.event.client_payload.sha != ''
-    runs-on: ubuntu-24.04
+    runs-on: ghost-runners
     steps:
       - name: Create or update lab check
         env:

@@ -13,7 +13,7 @@ permissions: {}
 
 jobs:
   validate-release-notes:
-    runs-on: ubuntu-latest
+    runs-on: ghost-runners
     permissions:
       contents: read
     steps:

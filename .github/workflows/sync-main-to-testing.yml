@@ -28,7 +28,7 @@ jobs:
     name: Delete squash promotion branch
     needs: [sync]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ghost-runners
     timeout-minutes: 5
     permissions:
       contents: write

@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   check-trigger:
-    runs-on: ubuntu-latest
+    runs-on: ghost-runners
     outputs:
       is-promotion: ${{ steps.check.outputs.is-promotion }}
     steps:
@@ -89,7 +89,7 @@ jobs:
   post-release-variants:
     needs: [execute, release-notes]
     if: always() && needs.release-notes.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ghost-runners
     permissions:
       contents: write
       packages: read

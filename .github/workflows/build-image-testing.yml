@@ -24,7 +24,7 @@ jobs:
   detect-changes:
     name: Detect changed paths
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ghost-runners
     permissions:
       contents: read
     outputs:

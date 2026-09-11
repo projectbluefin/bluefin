@@ -9,7 +9,7 @@ permissions: read-all
 
 jobs:
   track:
-    runs-on: ubuntu-24.04
+    runs-on: ghost-runners
     permissions:
       contents: write
       pull-requests: write

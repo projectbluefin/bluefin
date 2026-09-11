@@ -19,7 +19,7 @@ concurrency:
 jobs:
   check-base-branch:
     name: Check PR base branch
-    runs-on: ubuntu-latest
+    runs-on: ghost-runners
     timeout-minutes: 5
     if: github.event_name == 'pull_request'
     steps:
@@ -38,7 +38,7 @@ jobs:
   validate:
     needs: [check-base-branch]
     if: always() && (needs.check-base-branch.result == 'success' || needs.check-base-branch.result == 'skipped')
-    runs-on: ubuntu-latest
+    runs-on: ghost-runners
     timeout-minutes: 10
     env:
       # Repo-local constraint only; keep the shared validate-pr logic in projectbluefin/actions.
@@ -93,7 +93,7 @@ jobs:
     name: Unit tests
     needs: [check-base-branch]
     if: always() && (needs.check-base-branch.result == 'success' || needs.check-base-branch.result == 'skipped')
-    runs-on: ubuntu-latest
+    runs-on: ghost-runners
     timeout-minutes: 25
     permissions:
       contents: read

@@ -17,7 +17,7 @@ permissions:
 jobs:
   cache-audit:
     name: Audit and prune GitHub Actions caches
-    runs-on: ubuntu-latest
+    runs-on: ghost-runners
     steps:
       - name: List and audit caches
         env:
