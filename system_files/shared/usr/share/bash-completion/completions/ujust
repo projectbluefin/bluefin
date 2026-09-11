@@ -1,0 +1,32 @@
+# bash completion for ujust
+
+_ujust() {
+    local cur prev words cword
+    if declare -F _init_completion >/dev/null 2>&1; then
+        _init_completion || return
+    else
+        COMPREPLY=()
+        cur="${COMP_WORDS[COMP_CWORD]}"
+        prev="${COMP_WORDS[COMP_CWORD-1]}"
+        words=("${COMP_WORDS[@]}")
+        cword="${COMP_CWORD}"
+    fi
+
+    local justfile="/usr/share/ublue-os/just/00-entry.just"
+
+    if [[ "${cur}" == -* ]]; then
+        local opts="--changelog --check --choose --clean --clear-shell-args --color --command --command-color --complete-aliases --completions --dry-run --dump --dump-format --edit --evaluate --evaluate-format --explain --fmt --format --global-justfile --groups --help --highlight --init --jobs --justfile --list --list-heading --list-prefix --list-submodules --man --no-aliases --no-deps --no-dotenv --no-highlight --one --quiet --set --shell --shell-arg --shell-command --show --summary --timestamp --unsorted --unstable --usage --variables --verbose --version --working-directory --yes -c -d -e -E -f -F -g -h -l -n -q -s -u -v"
+        COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+        return 0
+    fi
+
+    # Recipe completion: if just is installed and entry justfile exists, fetch recipe list
+    if [[ -f "${justfile}" ]] && command -v just >/dev/null 2>&1; then
+        local recipes
+        recipes=$(just --summary --justfile "${justfile}" 2>/dev/null)
+        COMPREPLY=( $(compgen -W "${recipes}" -- "${cur}") )
+        return 0
+    fi
+}
+
+complete -F _ujust ujust

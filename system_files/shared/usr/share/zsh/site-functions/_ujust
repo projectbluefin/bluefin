@@ -1,0 +1,26 @@
+#compdef ujust
+
+_ujust() {
+    local justfile="/usr/share/ublue-os/just/00-entry.just"
+
+    if (( CURRENT == 2 )); then
+        if [[ -f "$justfile" ]] && (( $+commands[just] )); then
+            local -a recipes
+            recipes=(${(f)"$(_call_program recipes just --summary --justfile "$justfile" 2>/dev/null)"})
+            # just --summary outputs recipe names separated by spaces
+            recipes=($=recipes)
+            if (( $#recipes > 0 )); then
+                _describe -t recipes 'recipe' recipes && return 0
+            fi
+        fi
+    fi
+
+    # Fall back to native just completion if available
+    if (( $+functions[_just] )); then
+        words=(just --justfile "$justfile" "${words[@]:1}")
+        (( CURRENT += 2 ))
+        _just
+    fi
+}
+
+_ujust "$@"

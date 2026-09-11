@@ -14,6 +14,8 @@ setup() {
         "${TEST_ROOT}/usr/libexec" \
         "${TEST_ROOT}/usr/share/ublue-os/just" \
         "${TEST_ROOT}/usr/share/ublue-os/homebrew" \
+        "${TEST_ROOT}/usr/share/bash-completion/completions" \
+        "${TEST_ROOT}/usr/share/zsh/site-functions" \
         "${TEST_ROOT}/usr/share/flatpak/preinstall.d" \
         "${TEST_ROOT}/usr/lib/modprobe.d" \
         "${TEST_ROOT}/usr/share/ublue-os/homebrew/preinstall.d" \
@@ -30,7 +32,9 @@ setup() {
         "${TEST_ROOT}/usr/share/ublue-os/just/apps.just" \
         "${TEST_ROOT}/usr/share/ublue-os/just/default.just" \
         "${TEST_ROOT}/usr/share/ublue-os/just/system.just" \
-        "${TEST_ROOT}/usr/share/ublue-os/just/update.just"
+        "${TEST_ROOT}/usr/share/ublue-os/just/update.just" \
+        "${TEST_ROOT}/usr/share/bash-completion/completions/ujust" \
+        "${TEST_ROOT}/usr/share/zsh/site-functions/_ujust"
     echo 'options cros_charge_control probe_with_fwk_charge_control=1' \
         > "${TEST_ROOT}/usr/lib/modprobe.d/fw-charge-control.conf"
     # brew-preinstall delivery path (default CLI set) — see #965
@@ -266,3 +270,18 @@ EOF
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -ne 0 ]
 }
+
+@test "20-tests: rejects an image missing bash completion for ujust" {
+    rm -f "${TEST_ROOT}/usr/share/bash-completion/completions/ujust"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+}
+
+@test "20-tests: rejects an image missing zsh completion for ujust" {
+    rm -f "${TEST_ROOT}/usr/share/zsh/site-functions/_ujust"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+}
+
