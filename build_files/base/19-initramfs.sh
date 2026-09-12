@@ -19,7 +19,7 @@ fi
 
 echo "Regenerating initramfs for ${QUALIFIED_KERNEL}"
 export DRACUT_NO_XATTR=1
-/usr/bin/dracut --no-hostonly --kver "$QUALIFIED_KERNEL" --reproducible \
+/usr/bin/dracut --no-hostonly --kver "$QUALIFIED_KERNEL" --xz --reproducible \
     -v --add "ostree dmsquash-live dmsquash-live-autooverlay" \
     -f "/lib/modules/$QUALIFIED_KERNEL/initramfs.img"
 chmod 0600 "/lib/modules/$QUALIFIED_KERNEL/initramfs.img"
