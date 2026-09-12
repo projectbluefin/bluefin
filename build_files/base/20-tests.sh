@@ -74,7 +74,6 @@ IMPORTANT_PACKAGES=(
     anaconda-live
     distrobox
     dracut-live
-    firefox
     fish
     flatpak
     fzf

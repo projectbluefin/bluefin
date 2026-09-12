@@ -208,7 +208,6 @@ teardown() {
     for package in \
         anaconda-live \
         dracut-live \
-        firefox \
         grub2-efi-x64-cdboot \
         isomd5sum \
         libblockdev-btrfs \
@@ -224,7 +223,7 @@ teardown() {
 
     run python3 "${READ_PACKAGES}" "${PACKAGES_TOML}" excluded
     [ "$status" -eq 0 ]
-    [[ "$output" != *$'\nfirefox\n'* ]]
+    [[ "$output" == *$'\nfirefox\n'* ]]
 }
 
 @test "Fails when the ISO builder would have no EFI payload to stage" {
