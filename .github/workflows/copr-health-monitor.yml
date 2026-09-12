@@ -29,7 +29,12 @@ jobs:
 
             echo "Checking ${label}..."
 
-            response=$(curl -fsSL --max-time 15 \
+            # COPR can briefly return transport or gateway errors. Retry the
+            # request before reporting the package as unavailable so a single
+            # transient outage does not create a false-positive issue.
+            response=$(curl -fsSL \
+              --retry 3 --retry-all-errors --retry-delay 5 --retry-max-time 60 \
+              --max-time 15 \
               "https://copr.fedorainfracloud.org/api_3/package?ownername=${owner}&projectname=${project}&packagename=${package}&with_latest_succeeded_build=True" \
               2>/dev/null) || {
               echo "::warning::${label}: COPR API unreachable"

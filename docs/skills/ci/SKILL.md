@@ -165,7 +165,7 @@ Do not use for Pure local build or package decisions.
 
 ## Core Process
 
-Read the affected YAML, identify the owning reusable workflow, validate locally.
+Read the affected YAML, identify the owning reusable workflow, preserve bounded retries for transient external API checks, and validate locally.
 
 ## Common Rationalizations
 
