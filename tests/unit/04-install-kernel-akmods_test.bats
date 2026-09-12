@@ -228,6 +228,7 @@ teardown() {
     run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     [ -f "${DRACUT_LOG}" ]
+    grep -q -- "--xz" "${DRACUT_LOG}"
     grep -q -- "--reproducible" "${DRACUT_LOG}"
     grep -q -- "--add ostree dmsquash-live dmsquash-live-autooverlay" "${DRACUT_LOG}"
 }
