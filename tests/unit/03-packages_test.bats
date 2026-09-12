@@ -161,3 +161,33 @@ teardown() {
     run grep -q "python3-gnome-ponytail-daemon" "${DNF5_LOG}"
     [ "$status" -eq 0 ]
 }
+
+@test "Copyous runtime dependencies are in the Fedora package install" {
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -eq 0 ]
+
+    run grep -Eq '(^|[[:space:]])libgda([[:space:]]|$)' "${DNF5_LOG}"
+    [ "$status" -eq 0 ]
+    run grep -Eq '(^|[[:space:]])libgda-sqlite([[:space:]]|$)' "${DNF5_LOG}"
+    [ "$status" -eq 0 ]
+}
+
+@test "inherited Firefox RPM is removed instead of installed" {
+    cat > "${STUB_BIN}/rpm" <<'EOF'
+#!/usr/bin/bash
+if [[ "$1" == "-E" && "$2" == "%fedora" ]]; then
+    echo "${FEDORA_MAJOR_VERSION}"
+elif [[ "$1" == "-qa" ]]; then
+    echo "firefox"
+fi
+EOF
+    chmod +x "${STUB_BIN}/rpm"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -eq 0 ]
+
+    run grep -Eq '^dnf5 -y install .*([[:space:]]|^)firefox([[:space:]]|$)' "${DNF5_LOG}"
+    [ "$status" -ne 0 ]
+    run grep -Eq '^dnf5 -y remove firefox$' "${DNF5_LOG}"
+    [ "$status" -eq 0 ]
+}
