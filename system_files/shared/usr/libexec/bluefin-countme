@@ -1,0 +1,112 @@
+#!/usr/bin/bash
+# First-party countme check-in for Project Bluefin images.
+#
+# Sends one anonymous, rate-limited weekly ping to the Project Bluefin countme
+# aggregate at https://countme.projectbluefin.io/metalink. No machine-id, token,
+# hostname, or other per-device identifier is transmitted — only a coarse
+# installation-age cohort plus image metadata. See ADR 0006.
+#
+# ponytail: the systemd unit wraps this script so the timer and the payload
+# sit side by side in the repo instead of the timer reaching across for a path
+# defined only here.
+
+set -euo pipefail
+
+readonly PING_ENDPOINT="https://countme.projectbluefin.io/metalink"
+readonly OPTOUT_FILE="/etc/projectbluefin/countme/disabled"
+readonly STATE_DIR="/var/lib/bluefin-countme"
+readonly EPOCH_FILE="${STATE_DIR}/epoch"
+readonly LASTRUN_FILE="${STATE_DIR}/lastrun"
+readonly RATE_LIMIT_DAYS=7
+
+# Coarse install-age buckets, Fedora-style (ADR 0006):
+#   1 = first week, 2 = 2-4 weeks, 3 = 5-24 weeks, 4 = over 24 weeks.
+compute_bucket() {
+    local days="$1"
+    if   (( days < 7 ));  then echo 1
+    elif (( days < 28 )); then echo 2
+    elif (( days < 168 )); then echo 3
+    else echo 4
+    fi
+}
+
+# Self-test: the smallest thing that fails if the bucket boundaries drift.
+if [[ "${1:-}" == "--selftest" ]]; then
+    failures=0
+    expect() { # expect <label> <days> <bucket>
+        local got
+        got="$(compute_bucket "$2")"
+        if [[ "$got" != "$3" ]]; then
+            echo "FAIL: bucket[$2] got=$got want=$3 ($1)"
+            failures=$((failures + 1))
+        fi
+    }
+    expect "first-week-low"     0    1
+    expect "first-week-high"    6    1
+    expect "two-weeks"          14   2
+    expect "four-weeks-high"    27   2
+    expect "five-weeks"         35   3
+    expect "24w-high"           167  3
+    expect "over-24w"           200  4
+    expect "old"                5000 4
+    if (( failures > 0 )); then
+        echo "${failures} self-test(s) failed" >&2
+        exit 1
+    fi
+    echo "countme self-test passed"
+    exit 0
+fi
+
+# Opt-out is a single, documented path honored across every Project Bluefin
+# image. Its presence (empty or not) stops the check-in.
+if [[ -e "${OPTOUT_FILE}" ]]; then
+    exit 0
+fi
+
+mkdir -p "${STATE_DIR}"
+
+# Establish the installation epoch once. The cohort is derived from its age, so
+# the value is stable across runs and never leaks a per-device identifier.
+if [[ ! -e "${EPOCH_FILE}" ]]; then
+    date +%s > "${EPOCH_FILE}"
+fi
+readonly install_epoch="$(cat "${EPOCH_FILE}")"
+
+# Client-side 7-day throttle. Skip the run if a check-in is still fresh.
+if [[ -e "${LASTRUN_FILE}" ]]; then
+    last_run="$(cat "${LASTRUN_FILE}")"
+    now="$(date +%s)"
+    if (( now - last_run < RATE_LIMIT_DAYS * 86400 )); then
+        exit 0
+    fi
+fi
+
+days=$(( ( $(date +%s) - install_epoch ) / 86400 ))
+bucket="$(compute_bucket "${days}")"
+
+# Image metadata from the bootc-generated image info; ARCH comes from the
+# running kernel. Fall back to the project name if the info file is absent.
+info_file="/usr/share/ublue-os/image-info.json"
+if [[ -e "${info_file}" ]]; then
+    image_name="$(jq -r '.["image-name"] // "bluefin"' "${info_file}")"
+    image_tag="$(jq -r '.["image-tag"] // ""' "${info_file}")"
+    image_flavor="$(jq -r '.["image-flavor"] // ""' "${info_file}")"
+else
+    image_name="bluefin"
+    image_tag=""
+    image_flavor=""
+fi
+arch="$(uname -m)"
+
+# Default the repo to bluefin so a missing image name still reports under the
+# project rather than an empty key.
+repo="${image_name:-bluefin}"
+query="repo=${repo}&tag=${image_tag}&flavor=${image_flavor}&arch=${arch}&countme=${bucket}"
+
+# Record the run before the network call so a failure mid-request still counts
+# as an attempted check-in and does not force an immediate retry storm.
+date +%s > "${LASTRUN_FILE}"
+
+# Empty GET check-in. Transient network failures are non-fatal: the timer fires
+# weekly and systemd logs the attempt to the journal.
+curl -fsSL --retry 3 --retry-delay 30 --max-time 20 -o /dev/null "${PING_ENDPOINT}?${query}" || true

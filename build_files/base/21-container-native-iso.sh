@@ -208,6 +208,7 @@ glib-compile-schemas /usr/share/glib-2.0/schemas
 
 for unit in \
     rpm-ostree-countme.service \
+    bluefin-countme.timer \
     tailscaled.service \
     bootloader-update.service \
     brew-upgrade.timer \

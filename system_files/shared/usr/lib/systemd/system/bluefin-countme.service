@@ -1,0 +1,16 @@
+[Unit]
+Description=Bluefin first-party countme weekly check-in
+Documentation=https://projectbluefin.io/analytics
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+DynamicUser=yes
+StateDirectory=bluefin-countme
+ExecStart=/usr/libexec/bluefin-countme
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

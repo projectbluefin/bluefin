@@ -45,6 +45,13 @@ test -x /usr/libexec/brew-preinstall
 test -f /usr/lib/systemd/user/brew-preinstall.service
 grep -q '^enable brew-preinstall\.service$' /usr/lib/systemd/user-preset/01-brew-preinstall.preset
 
+# First-party countme: the timer is enabled by the system preset and the
+# payload is the script the service runs. Assert both, or a rename upstream
+# leaves a silently disabled check-in. See ADR 0006.
+grep -q '^enable bluefin-countme\.timer$' /usr/lib/systemd/system-preset/03-bluefin-countme.preset
+test -x /usr/libexec/bluefin-countme
+/usr/libexec/bluefin-countme --selftest
+
 # If this file is not on the image bazaar will automatically be removed from users systems :(
 # See: https://docs.flatpak.org/en/latest/flatpak-command-reference.html#flatpak-preinstall
 test -f /usr/share/flatpak/preinstall.d/bazaar.preinstall
@@ -152,6 +159,7 @@ fi
 
 IMPORTANT_UNITS=(
     rpm-ostree-countme.timer
+    bluefin-countme.timer
     tailscaled.service
     ublue-system-setup.service
     uupd.timer
