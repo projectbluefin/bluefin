@@ -71,6 +71,9 @@ packages = [
     "libblockdev-mpath",
     "libcamera-gstreamer",
     "libcamera-tools",
+    # Required by the copyous GNOME extension (see issue #1210).
+    "libgda",
+    "libgda-sqlite",
     "libratbag-ratbagd",
     "libva-utils",
     "libxcrypt-compat",
