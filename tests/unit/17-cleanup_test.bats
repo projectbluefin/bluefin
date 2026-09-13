@@ -114,6 +114,7 @@ EOF
     export STUB_BIN
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
+    grep -q "enable bluefin-countme.timer" "${STUB_BIN}/systemctl.log"
     grep -q "enable podman-auto-update.timer" "${STUB_BIN}/systemctl.log"
     grep -q "enable ublue-system-setup.service" "${STUB_BIN}/systemctl.log"
     grep -q "disable rpm-ostreed-automatic.timer" "${STUB_BIN}/systemctl.log"
