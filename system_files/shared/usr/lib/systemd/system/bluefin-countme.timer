@@ -1,0 +1,12 @@
+[Unit]
+Description=Bluefin first-party countme weekly check-in
+Documentation=https://projectbluefin.io/analytics
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=7d
+RandomizedDelaySec=12h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
