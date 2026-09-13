@@ -191,3 +191,10 @@ EOF
     run grep -Eq '^dnf5 -y remove firefox$' "${DNF5_LOG}"
     [ "$status" -eq 0 ]
 }
+
+@test "ppp is in the package install list" {
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -eq 0 ]
+    run grep -Eq "(^|[[:space:]])ppp([[:space:]]|$)" "${DNF5_LOG}"
+    [ "$status" -eq 0 ]
+}
