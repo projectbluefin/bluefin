@@ -177,6 +177,26 @@ EOF
     [[ "$output" == *"Missing package: gum"* ]]
 }
 
+@test "20-tests: rejects an image where the first-party countme timer is not enabled" {
+    # bluefin#1216: bluefin-countme.timer is enabled in 17-cleanup.sh from the
+    # projectbluefin/common image. A silent disable (e.g. a renamed unit in
+    # common, or a dropped enable line) must fail the build rather than ship
+    # an image that stops reporting first-party analytics.
+    cat > "${STUB_BIN}/systemctl" <<'EOF'
+#!/usr/bin/bash
+if [[ "$*" == *"bluefin-countme.timer"* ]]; then
+    echo disabled
+    exit 1
+fi
+echo enabled
+EOF
+    chmod +x "${STUB_BIN}/systemctl"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"bluefin-countme.timer is not enabled"* ]]
+}
+
 @test "20-tests: rejects an unwanted package" {
     cat > "${STUB_BIN}/rpm" <<'EOF'
 #!/usr/bin/bash

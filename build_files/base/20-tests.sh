@@ -150,6 +150,7 @@ if [[ "${IMAGE_NAME}" =~ nvidia ]]; then
 fi
 
 IMPORTANT_UNITS=(
+    bluefin-countme.timer
     rpm-ostree-countme.timer
     tailscaled.service
     ublue-system-setup.service
