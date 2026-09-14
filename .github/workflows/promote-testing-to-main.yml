@@ -22,39 +22,7 @@ permissions:
 
 jobs:
   release_window:
-    name: Check stable release window
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      should_enqueue: ${{ steps.window.outputs.should_enqueue }}
-    steps:
-      - name: Determine whether to enqueue the promotion
-        id: window
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-        run: |
-          set -euo pipefail
-
-          case "$EVENT_NAME" in
-            workflow_dispatch)
-              echo "Manual dispatch — allowing the hotfix release escape hatch."
-              echo "should_enqueue=true" >> "$GITHUB_OUTPUT"
-              ;;
-            schedule)
-              weekday=$(date -u +%u)
-              if [[ "$weekday" == "2" ]]; then
-                echo "Tuesday UTC schedule — allowing the weekly stable release."
-                echo "should_enqueue=true" >> "$GITHUB_OUTPUT"
-              else
-                echo "Non-Tuesday schedule — refreshing promotion gates without enqueueing."
-                echo "should_enqueue=false" >> "$GITHUB_OUTPUT"
-              fi
-              ;;
-            *)
-              echo "Push trigger — refreshing the promotion PR without enqueueing."
-              echo "should_enqueue=false" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
+    uses: ./.github/workflows/check-release-window.yml
 
   promote:
     needs: [release_window]
@@ -66,18 +34,8 @@ jobs:
         ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
       run_e2e: false
       # main uses a merge queue ruleset (17070404): gh pr merge --auto is blocked.
-      # use_merge_queue: true calls enqueuePullRequest GraphQL instead.
-      #
-      # This input doubles as the release gate, so read false carefully: it does
-      # not mean "do not merge", it routes the reusable workflow to
-      # `gh pr merge --auto`, which the merge queue ruleset above rejects -- so
-      # nothing merges. That is what holds :stable to Tuesdays (bluefin#1066)
-      # while the daily run still refreshes the PR and re-runs the gate checks.
-      #
-      # Do not "correct" this to a constant true on the grounds that main is
-      # always queue-protected: that statement is true and it would delete the
-      # release window. Expressing this directly needs a merge on/off input in
-      # projectbluefin/actions; until that exists,
+      # use_merge_queue doubles as the release gate: false routes to gh pr merge --auto,
+      # which the ruleset rejects -- holding :stable to Tuesdays (bluefin#1066).
       # tests/test_promote_release_window.py pins the wiring.
       use_merge_queue: ${{ needs.release_window.outputs.should_enqueue == 'true' }}
     secrets: inherit
