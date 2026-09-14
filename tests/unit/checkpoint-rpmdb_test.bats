@@ -86,3 +86,39 @@ print(db.execute("SELECT hnum, hex(blob) FROM Packages").fetchone())
     # The failed run must not have created a stray empty database.
     [ ! -e "${RPMDB_PATH}" ]
 }
+
+@test "checkpoint-rpmdb: materializes a fresh inode instead of rewriting in place" {
+    local inode_before inode_after
+    # First run lands on inode A; a second run must land on a different inode
+    # B, proving the helper always writes a sibling file and atomically swaps
+    # it in rather than rewriting the original inode in place.
+    run "${CHECKPOINT_RPMDB}"
+    [ "$status" -eq 0 ]
+    inode_before=$(stat -c '%i' "${RPMDB_PATH}")
+
+    run "${CHECKPOINT_RPMDB}"
+    [ "$status" -eq 0 ]
+    inode_after=$(stat -c '%i' "${RPMDB_PATH}")
+
+    [ "${inode_before}" != "${inode_after}" ]
+}
+
+@test "checkpoint-rpmdb: fails loudly when the database is corrupt" {
+    # SQLite stores no per-page content checksums by default, so quick_check
+    # only catches structural damage. Truncating the file leaves the header
+    # claiming more pages than exist on disk; the integrity check must reject
+    # it rather than ship a truncated layer to the next stage.
+    python3 - "${RPMDB_PATH}" <<'PYEOF'
+import os
+
+path = sys.argv[1]
+pages = os.path.getsize(path) // 4096
+# Keep (pages - 1) full pages plus a sliver of the next, so the header still
+# references a final page that no longer fully exists on disk.
+os.truncate(path, (pages - 1) * 4096 + 2000)
+PYEOF
+
+    run "${CHECKPOINT_RPMDB}"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"checkpoint-rpmdb:"* ]]
+}
