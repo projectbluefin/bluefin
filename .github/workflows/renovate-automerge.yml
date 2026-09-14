@@ -15,6 +15,16 @@ jobs:
     uses: projectbluefin/actions/.github/workflows/reusable-renovate-automerge.yml@v1
     with:
       head_sha: ${{ github.event.workflow_run.head_sha }}
-    secrets:
-      app_id: ${{ secrets.MERGERAPTOR_APP_ID }}
-      private_key: ${{ secrets.MERGERAPTOR_PRIVATE_KEY }}
+    # Intentionally does NOT delegate app_id / private_key to the reusable
+    # workflow. With no app credentials it falls back to the default
+    # github.token for the PR lookup, the check-rollup gate, and the merge.
+    #
+    # Bluefin's Renovate base branch is `testing`, whose ruleset is in
+    # `evaluate` (not enforced) mode, so `testing` has no review/merge
+    # protection and the built-in token can merge directly. Passing the
+    # MERGERAPTOR app token instead triggers
+    # "GraphQL: Resource not accessible by integration (mergePullRequest)"
+    # (#1260): the app installation is not granted pull-request write on this
+    # repo. Do not re-delegate the app secrets unless `testing` gains review
+    # protection that lists the app as a review-bypass actor — then the app
+    # also needs the merge/pull-request permission granted at the repo level.
