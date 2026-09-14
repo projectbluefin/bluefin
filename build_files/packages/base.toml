@@ -82,6 +82,7 @@ packages = [
     "openrgb-udev-rules",
     "openssh-askpass",
     "pipewire-libs-extra",
+    "ppp",
     "python3-gnome-ponytail-daemon",
     "slitherer",
     "squashfs-tools",
