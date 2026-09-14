@@ -23,6 +23,12 @@ from pathlib import Path
 WORKFLOW = (
     Path(__file__).parents[1] / ".github" / "workflows" / "promote-testing-to-main.yml"
 )
+# The release-window gate was extracted into this reusable workflow (factory-drift
+# promote-loc-drift) so the caller stays under the 50-line ceiling. The gate
+# logic below lives here, so the step-reading tests read from this file.
+REUSABLE = (
+    Path(__file__).parents[1] / ".github" / "workflows" / "reusable-release-window.yml"
+)
 STEP = "      - name: Determine whether to enqueue the promotion\n"
 
 # Stands in for `date`: records the arguments it was called with, and answers a
@@ -51,9 +57,9 @@ ALL_WEEKDAYS = ("1", "2", "3", "4", "5", "6", "7")
 
 def window_script() -> str:
     """Return the shell body of the release-window step."""
-    workflow = WORKFLOW.read_text(encoding="utf-8")
+    workflow = REUSABLE.read_text(encoding="utf-8")
     if STEP not in workflow:
-        raise AssertionError(f"{WORKFLOW.name} has no {STEP.strip()!r} step")
+        raise AssertionError(f"{REUSABLE.name} has no {STEP.strip()!r} step")
     body = workflow.split(STEP, 1)[1].split("        run: |\n", 1)[1]
     lines: list[str] = []
     for line in body.splitlines():
@@ -163,7 +169,10 @@ class ReleaseWindowWiringTests(unittest.TestCase):
         self.assertIn("needs.release_window.outputs.should_enqueue", wiring[0])
 
     def test_release_window_publishes_the_decision(self) -> None:
-        workflow = WORKFLOW.read_text(encoding="utf-8")
+        # The step's output is consumed as jobs.release_window.outputs.should_enqueue
+        # by the caller, but it is published here, in the reusable workflow, where
+        # the step actually runs.
+        workflow = REUSABLE.read_text(encoding="utf-8")
         self.assertIn("should_enqueue: ${{ steps.window.outputs.should_enqueue }}", workflow)
 
 
