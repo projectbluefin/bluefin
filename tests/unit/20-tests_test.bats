@@ -289,4 +289,3 @@ EOF
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -ne 0 ]
 }
-
