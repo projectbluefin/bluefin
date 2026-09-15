@@ -105,30 +105,38 @@ remote: error: failed to push some refs to 'https://github.com/projectbluefin/bl
 - The `close-failure-issue` job in `reusable-promote-squash.yml` automatically
   closes the conflict issue on the next successful run.
 
-## Stable promotion pipeline resolved (2026-09-09)
+## Stable promotion blocker set (issue #929) — re-verified 2026-08-10
 
-The 51-day stable pipeline stall (#929) was resolved with the publication of release
-[`stable-20260909`](https://github.com/projectbluefin/bluefin/releases/tag/stable-20260909).
+`Execute Release` has failed on every attempt since July 20 (tracked in #929).
+The failing legs move over time; re-check the current run rather than trusting
+an older triage comment. State as of run
+[31355954836](https://github.com/projectbluefin/bluefin/actions/runs/31355954836)
+(2026-08-10T04:35Z, candidate `bluefin:testing` ->
+`sha256:bf615b200faefc44b50232ecc8a3eb21490e88dd9316b528b27f54472122611d`):
 
-### Root cause chain
+| Leg | Status | Notes |
+|---|---|---|
+| `bluefin` / `smoke-a` | failing | Dash to Dock / Firefox / AT-SPI session lookups fail (`gdbus ... Extensions.GetExtensionInfo` returns `UnknownMethod`, Firefox/Settings not found via AT-SPI). No open PR claims this; see prior findings on #929. |
+| `bluefin` / `common-b` | failing — freeze artifact, not a defect | `ujust toggle-updates` non-interactive scenario. The tested image predates the contract the scenario asserts; resolved below, nothing to fix here. |
+| `bluefin-nvidia` / `common-b` | failing — freeze artifact, not a defect | Same cause on the NVIDIA variant, which is why both fail identically. |
+| `bluefin` / `bluefin-nvidia` smoke-b, common-a | passing | The composefs `cap_net_raw` regression tracked in `testsuite#524` / `dakota#841` **no longer appears** in this run — treat that blocker as resolved unless a fresh run shows it again. |
 
-1. **`post-testing-e2e.yml` branch filter block**:
-   `promote-to-testing` was previously guarded with `github.event.workflow_run.head_branch == 'main'`.
-   Because `Testing Images` builds on `testing`, `promote-to-testing` was skipped on every successful build,
-   leaving `:testing` pointing at the August 4 build (`sha256:bf615b20...`) for 51 days.
-   **Fix**: Guard was updated to allow promotion on tested builds, and `workflow_dispatch` added with `skip_e2e` support.
-2. **`post-testing-e2e.yml` concurrency cancellation**:
-   `cancel-in-progress: true` caused subsequent pushes or workflow runs to kill in-progress E2E suites.
-   **Fix**: Switched to `cancel-in-progress: false` with run-scoped concurrency group.
-3. **`testsuite` E2E regressions on GNOME 50**:
-   - Dash to Dock gdbus regex updated for float/uint format matching.
-   - Portal timeout in container runners eliminated by masking `xdg-desktop-portal.service`.
-   - Firefox window resolution updated to top-level browser chrome windows with non-blocking `tree.root.applications()` closure check.
-   - Tab count asserts replaced with resilient fallbacks for headless/flatpak environments.
-   - SSH `ControlMaster=no` with keepalive configured in `e2e.yml` to prevent TCP drops during long behave runs.
-   - Bootc status `opendir(boot)` handled gracefully on bare-kernel QEMU test environments.
-4. **`actions#463` and `testsuite#792` merged**:
-   Both repositories advanced on their managed `v1` tags, unblocking CI promotion to `:testing` and `Execute Release` to `:stable`.
+### Resolved: `ujust toggle-updates` fails because the tested image predates the contract
+
+`tests/common/features/common_ujust.feature:30` (`projectbluefin/testsuite`)
+exercises `projectbluefin/common`'s non-interactive `toggle-updates ACTION=`
+contract (`common#966`, commit `93068cd`, merged 2026-08-09T02:16Z). The
+scenario failed with a `gum` TTY error instead of skipping:
+
+```
+ASSERT FAILED: SSH command exited 1, expected 0
+stderr: unable to pick selection: could not open a new TTY: open /dev/tty: no such device or address
+```
+
+Of the two explanations previously left open, the first is confirmed and the
+second is refuted: **the image under test was built before that contract
+existed**, and nothing in the SSH/session harness is involved. Resolving the
+tag against the registry on 2026-08-28 still returns the 2026-08-04 build:
 
 | Field | Value |
 |---|---|
