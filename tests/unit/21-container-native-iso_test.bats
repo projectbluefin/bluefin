@@ -196,6 +196,14 @@ teardown() {
     run grep -F 'favorite-apps' \
         "${TEST_ROOT}/usr/lib/bluefin/livesys-session-extra"
     [ "$status" -eq 0 ]
+    # The live session must not count: the first-party countme timer and
+    # service are disabled for the session only (bluefin#1216).
+    run grep -F 'bluefin-countme.service' \
+        "${TEST_ROOT}/usr/lib/bluefin/livesys-session-extra"
+    [ "$status" -eq 0 ]
+    run grep -F 'bluefin-countme.timer' \
+        "${TEST_ROOT}/usr/lib/bluefin/livesys-session-extra"
+    [ "$status" -eq 0 ]
     run grep -Fx \
         'C /var/lib/livesys/livesys-session-extra 0755 root root - /usr/lib/bluefin/livesys-session-extra' \
         "${TEST_ROOT}/usr/lib/tmpfiles.d/bluefin-iso.conf"
