@@ -54,6 +54,11 @@ COPY --from=brew /system_files /system_files/shared
 FROM ${BASE_IMAGE_REF} AS base-common
 
 ARG AKMODS_FLAVOR="coreos-stable"
+# Digests resolved+cosign-verified by the host Justfile build recipe and passed
+# down so the in-build skopeo pull is bound to the verified payload (TOCTOU fix).
+ARG AKMODS_DIGEST=""
+ARG AKMODS_NVIDIA_DIGEST=""
+ARG AKMODS_ZFS_DIGEST=""
 ARG BASE_IMAGE_NAME="silverblue"
 ARG FEDORA_MAJOR_VERSION="44"
 ARG IMAGE_NAME="bluefin"
@@ -114,6 +119,9 @@ ARG VERSION=""
 FROM base-common AS base
 
 ARG AKMODS_FLAVOR="coreos-stable"
+ARG AKMODS_DIGEST=""
+ARG AKMODS_NVIDIA_DIGEST=""
+ARG AKMODS_ZFS_DIGEST=""
 ARG BASE_IMAGE_NAME="silverblue"
 ARG FEDORA_MAJOR_VERSION="44"
 ARG IMAGE_NAME="bluefin"
