@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import glob
+import hashlib
 import json
 import os
 import shutil
@@ -101,17 +102,52 @@ def extract_payload(image_dir: Path, destination_dir: Path) -> None:
             shutil.move(str(entry), destination_dir / entry.name)
 
 
+# RPM Fusion GPG keys, vendored from rpm-software-management/distribution-gpg-keys
+# (RPM Fusion's canonical key source) and made available at /ctx/keys by the
+# Containerfile. They sign the rpmfusion-free/nonfree repos that v4l2loopback is
+# installed from; gpgcheck=1 + this pinned key closes the unsigned-install finding.
+# Rotation fingerprints (verify the replacement before updating the key + hash):
+#   free:    E9A491A3DE247814E7E067EAE06F8ECDD651FF2E
+#   nonfree: 79BDB88F9BBF73910FD4095B6A2AF96194843C65
+RPMFUSION_KEYS_SRC = Path("/ctx/keys")
+RPMFUSION_KEYS_DEST = Path("/etc/pki/rpm-gpg")
+RPMFUSION_FREE_KEY = RPMFUSION_KEYS_DEST / "RPM-GPG-KEY-rpmfusion-free-fedora"
+RPMFUSION_NONFREE_KEY = RPMFUSION_KEYS_DEST / "RPM-GPG-KEY-rpmfusion-nonfree-fedora"
+# SHA-256 of the vendored keys (see keys/). Free and nonfree share the 2020 rotation.
+RPMFUSION_FREE_KEY_SHA256 = "10fc0a3e1a0307e8088357a31a9c5e4e3d9f9e0b01db2b03b5790d949a47f3b3"
+RPMFUSION_NONFREE_KEY_SHA256 = "7ac65a8dfeced70c8c335862b5f0696d57abac378deda34c4af78cd2220e3de6"
+
+
+def install_rpmfusion_keys() -> None:
+    """Install and fingerprint-pin the RPM Fusion GPG keys used to verify the
+    rpmfusion-free/nonfree repositories that v4l2loopback is installed from."""
+    RPMFUSION_KEYS_DEST.mkdir(parents=True, exist_ok=True)
+    pinned = {
+        RPMFUSION_KEYS_SRC / "RPM-GPG-KEY-rpmfusion-free-fedora": RPMFUSION_FREE_KEY_SHA256,
+        RPMFUSION_KEYS_SRC / "RPM-GPG-KEY-rpmfusion-nonfree-fedora": RPMFUSION_NONFREE_KEY_SHA256,
+    }
+    for src, expected_sha in pinned.items():
+        data = src.read_bytes()
+        if hashlib.sha256(data).hexdigest() != expected_sha:
+            raise ValueError(
+                f"{src}: SHA-256 {hashlib.sha256(data).hexdigest()} does not match pinned "
+                f"{expected_sha} (RPM Fusion key rotation — update the key and hash in this file)"
+            )
+        (RPMFUSION_KEYS_DEST / src.name).write_bytes(data)
+
+
 def write_rpmfusion_repos() -> tuple[Path, Path]:
     free_repo = Path("/etc/yum.repos.d/rpmfusion-free-build.repo")
     nonfree_repo = Path("/etc/yum.repos.d/rpmfusion-nonfree-build.repo")
 
     free_repo.write_text(
-        """[rpmfusion-free]
+        f"""[rpmfusion-free]
 name=RPM Fusion for Fedora $releasever - Free
 baseurl=https://download1.rpmfusion.org/free/fedora/releases/$releasever/Everything/$basearch/os/
 enabled=1
 metadata_expire=3d
-gpgcheck=0
+gpgcheck=1
+gpgkey=file://{RPMFUSION_FREE_KEY}
 skip_if_unavailable=1
 
 [rpmfusion-free-updates]
@@ -119,18 +155,20 @@ name=RPM Fusion for Fedora $releasever - Free - Updates
 baseurl=https://download1.rpmfusion.org/free/fedora/updates/$releasever/$basearch/
 enabled=1
 metadata_expire=3d
-gpgcheck=0
+gpgcheck=1
+gpgkey=file://{RPMFUSION_FREE_KEY}
 skip_if_unavailable=1
 """,
         encoding="utf-8",
     )
     nonfree_repo.write_text(
-        """[rpmfusion-nonfree]
+        f"""[rpmfusion-nonfree]
 name=RPM Fusion for Fedora $releasever - Nonfree
 baseurl=https://download1.rpmfusion.org/nonfree/fedora/releases/$releasever/Everything/$basearch/os/
 enabled=1
 metadata_expire=3d
-gpgcheck=0
+gpgcheck=1
+gpgkey=file://{RPMFUSION_NONFREE_KEY}
 skip_if_unavailable=1
 
 [rpmfusion-nonfree-updates]
@@ -138,7 +176,8 @@ name=RPM Fusion for Fedora $releasever - Nonfree - Updates
 baseurl=https://download1.rpmfusion.org/nonfree/fedora/updates/$releasever/$basearch/
 enabled=1
 metadata_expire=3d
-gpgcheck=0
+gpgcheck=1
+gpgkey=file://{RPMFUSION_NONFREE_KEY}
 skip_if_unavailable=1
 """,
         encoding="utf-8",
@@ -309,6 +348,7 @@ def main() -> int:
     )
     run(["grep", "-F", "-e", "Universal Blue", str(cert_path)])
 
+    install_rpmfusion_keys()
     rpmfusion_free_repo, rpmfusion_nonfree_repo = write_rpmfusion_repos()
     install_v4l2loopback(beta=beta)
     rpmfusion_free_repo.unlink(missing_ok=True)
