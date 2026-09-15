@@ -20,6 +20,10 @@ LICENSE
 
 # Verification keys (used for cosign/policy outside the build)
 keys
+# RPM Fusion GPG public keys are build-time signing keys (not secrets) needed by
+# 04-install-kernel-akmods.py for gpgcheck=1 on v4l2loopback's repos.
+!/keys/RPM-GPG-KEY-rpmfusion-free-fedora
+!/keys/RPM-GPG-KEY-rpmfusion-nonfree-fedora
 
 # Registry metadata
 artifacthub-repo.yml
