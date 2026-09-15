@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import glob
+import hashlib
 import json
 import os
 import shutil
@@ -12,6 +13,14 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+
+# Pinned to a specific ublue-os/akmods commit + SHA-256 digest so the
+# secureboot module-signing cert enrolled as a trust anchor cannot be swapped
+# by a mutable branch HEAD (CWE-829 / CWE-494). Bump both together if akmods
+# rotates its signing key. Mirrors the sha256 pattern in 05-override-install.sh.
+AKMODS_CERT_COMMIT = "56c8acd125778251562e14e2c4182d6eddca5e44"
+AKMODS_CERT_SHA256 = "4e5c68474cb133fd8984d9599762cece9100c3e6cd8a9709aeaabd85dd9e70d1"
 
 
 @dataclass(frozen=True)
@@ -300,14 +309,22 @@ def main() -> int:
     run(
         [
             "ghcurl",
-            "https://github.com/ublue-os/akmods/raw/refs/heads/main/certs/public_key.der",
+            f"https://github.com/ublue-os/akmods/raw/{AKMODS_CERT_COMMIT}/certs/public_key.der",
             "--retry",
             "3",
             "-Lo",
             str(cert_path),
         ]
     )
-    run(["grep", "-F", "-e", "Universal Blue", str(cert_path)])
+    # Verify the downloaded cert against the pinned digest before enrolling it as
+    # a secureboot trust anchor. The previous grep -F "Universal Blue" only checked
+    # for a substring any substituted DER could satisfy.
+    actual_sha256 = hashlib.sha256(cert_path.read_bytes()).hexdigest()
+    if actual_sha256 != AKMODS_CERT_SHA256:
+        raise ValueError(
+            f"akmods signing cert SHA-256 mismatch: "
+            f"expected {AKMODS_CERT_SHA256}, got {actual_sha256}"
+        )
 
     rpmfusion_free_repo, rpmfusion_nonfree_repo = write_rpmfusion_repos()
     install_v4l2loopback(beta=beta)
