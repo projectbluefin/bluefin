@@ -7,10 +7,39 @@
 | Workflow did not trigger | Event, branch, and path filters in the YAML |
 | Promotion is blocked | Exact digest, required check, and merge-group state |
 | Promotion conflict (GH006) | Check if promotion PR is in merge queue; wait for queue cycle |
+| `testing-lab / <product>` fails in 0s on a lab node | Argo pod logs on that node; cordon/drain the node (see below) |
 | Shared action behaves incorrectly | Reusable workflow source and its callers |
 | Tests update but E2E setup stays stale | Compare the reusable workflow `uses` ref with its test checkout ref |
 
 Always inspect the failed run logs before changing a workflow.
+
+## `testing-lab / <product>` fails in 0s on every PR — a lab node, not the image
+
+The internal Argo lab (see `lab-check.yml`) runs a per-PR `testing-lab / bluefin`
+check via a `pr-pipeline` DAG. When an individual `test-lane` (for example
+`test-lane(0:smoke)` / `run-container-tests-*`) pod is scheduled onto a faulted
+node and dies before the suite runs, the check fails with the same phase topology
+on every open PR — even digest-only and bot-authored promotion PRs. That
+invariance across unrelated PR content is the tell: the image and testsuite are
+not implicated; the lab node is.
+
+Signature to look for:
+
+- The check-run summary shows phase tables only — `4 Failed / 1 Omitted /
+  5 Skipped` — and the failing `test-lane` ran for **0 seconds** (the suite never
+  actually executed).
+- The identical topology appears on every open PR, including a promotion PR that
+  only bumps digests. A real image or testsuite regression would vary by PR.
+
+Triage steps:
+
+1. Open the Argo UI (internal lab) and inspect the `run-container-tests` pod
+   logs/events on the named node (workflow prefix `blu-*`).
+2. If that node is faulted, cordon/drain it or remove it from the lab pool, then
+   re-run one PR's `testing-lab` check to confirm.
+3. Do not open a bluefin PR to "fix" this — there is no repository-side change;
+   the summary only mirrors what the lab reports. If the pod failure message is
+   not surfacing in the check-run summary, that is a lab-side reporting fix.
 
 ## A reusable testsuite workflow has two independent refs
 
