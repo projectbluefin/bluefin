@@ -7,9 +7,8 @@ on:
   workflow_run:
     workflows: ["Testing Images"]
     types: [completed]
-    # Include main so the workflow file update reaches the default-branch evaluator.
-    # The promote-to-testing job is guarded to main-only to prevent double-promoting.
-    # See common docs/skills/e2e-ci.md — Requirement 1.
+    # workflow_run definitions are loaded from the default branch. Listen to
+    # both build branches, then qualify only testing for promotion below.
     branches: [main, testing]
 
 permissions: read-all
@@ -65,13 +64,13 @@ jobs:
       suites: lifecycle
 
   promote-to-testing:
-    # Promote all tested flavors to :testing only after e2e passes.
-    # This ensures :testing always points to a digest that has passed gate e2e.
+    # Move :testing only after the exact testing-branch build passes every E2E
+    # gate. main builds must not replace the candidate under qualification.
     needs: [e2e, run-e2e, run-upgrade-test]
     if: >-
       needs.run-e2e.result == 'success' &&
       needs.run-upgrade-test.result == 'success' &&
-      github.event.workflow_run.head_branch == 'main'
+      github.event.workflow_run.head_branch == 'testing'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -113,3 +112,36 @@ jobs:
           done < <(find /tmp/all-digests -name "*.txt" -print0)
 
           echo "✅ Promoted ${PROMOTED} flavor(s) to :testing"
+
+  record-e2e-status:
+    name: Record testing commit E2E status
+    needs: [e2e, run-e2e, run-upgrade-test, promote-to-testing]
+    if: always() && github.event.workflow_run.head_branch == 'testing'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      statuses: write
+    steps:
+      - name: Publish commit-bound E2E result
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          E2E_RESULT: ${{ needs.run-e2e.result }}
+          UPGRADE_RESULT: ${{ needs.run-upgrade-test.result }}
+          PROMOTION_RESULT: ${{ needs.promote-to-testing.result }}
+        run: |
+          set -euo pipefail
+
+          state=failure
+          description="E2E qualification failed"
+          if [[ "$E2E_RESULT" == success && "$UPGRADE_RESULT" == success && "$PROMOTION_RESULT" == success ]]; then
+            state=success
+            description="E2E passed and tested digests promoted to :testing"
+          fi
+
+          gh api --method POST "repos/${REPO}/statuses/${SHA}" \
+            -f state="$state" \
+            -f context='e2e/post-testing' \
+            -f description="$description" \
+            -f target_url="${{ github.server_url }}/${REPO}/actions/runs/${{ github.run_id }}"
