@@ -37,13 +37,24 @@ metadata:
 
 `.github/workflows/promote-testing-to-main.yml` keeps its push and daily
 schedule triggers so the testing-to-main promotion PR and its gates stay fresh.
-Only a Tuesday UTC scheduled run enables the merge-queue enqueue step. A
-`workflow_dispatch` run remains an explicit hotfix escape hatch; push events
-and non-Tuesday scheduled runs refresh the PR without releasing stable.
+Only a Tuesday UTC scheduled run enables `enqueue_promotion`; a
+`workflow_dispatch` run remains an explicit hotfix escape hatch. Push events
+and non-Tuesday schedules refresh and verify the PR without enrolling it.
 
-The release window is enforced before the reusable promotion workflow receives
-`use_merge_queue`; do not make that input unconditional or remove the daily
-heartbeat when changing the caller.
+The caller always selects the `main` merge queue with `use_merge_queue: true`.
+Do not overload that transport choice as the release-window switch. The
+reusable workflow's enqueue job must depend on release-gate success, and the
+caller must keep `run_e2e: true`, a non-empty `e2e_image`, and
+`e2e_status_context: e2e/post-testing`. `post-testing-e2e.yml` publishes that
+status on the exact `testing` SHA only after its image passes smoke, common, and
+lifecycle coverage and those tested digests replace `:testing`.
+
+The live `main`/`stable` release ruleset does not require approving reviews.
+Automation is constrained instead by the required `validate` status, squash-only
+merge policy, non-fast-forward and deletion protection, and the merge queue.
+Adding a review requirement without a bot-capable bypass silently turns Tuesday
+automation back into a manual release.
+
 
 ```bash
 gh run list --repo projectbluefin/bluefin --limit 20
@@ -59,7 +70,8 @@ then confirm that digest actually passed.
 
 ```bash
 skopeo inspect docker://ghcr.io/projectbluefin/bluefin:testing --format '{{.Digest}}'
-gh run list --repo projectbluefin/bluefin --workflow post-testing-e2e.yml --limit 20
+gh api repos/projectbluefin/bluefin/commits/$(git rev-parse projectbluefin/testing)/status \
+  --jq '.statuses[] | select(.context == "e2e/post-testing")'
 ```
 
 Without `skopeo`, the GHCR package API resolves the same mapping and also shows
@@ -89,13 +101,14 @@ user-visible and belongs to a human.
 Release consumes `:testing` as its **input**: the release job resolves the
 digest behind that tag rather than re-running end-to-end validation. The
 `post-testing-e2e` gate is therefore the primary producer-side gate, and a
-failure there must stop `:testing` from advancing. The current
-`execute-release.yml` caller also sets `run_release_gate: true`, so the
-reusable release gate re-tests the exact resolved digest before promoting it to
-`:stable`. When auditing an older promotion, inspect that run's job list to
-confirm the release gate existed at the time; do not assume a current workflow
-definition applied retroactively. A gate step that reports `skipped` must never
-be accepted as a pass — treat only an explicit success as validation.
+failure there must stop `:testing` from advancing. The producer publishes an
+`e2e/post-testing` commit status on the exact `testing` SHA after the tag moves;
+the Tuesday promotion gate requires that status before enqueueing the promotion
+PR. `execute-release.yml` does not run a duplicate E2E suite; it promotes only
+after the E2E-qualified promotion lands on `main` and re-verifies the signed
+digests. When auditing an older promotion, inspect that run's job list and
+inputs rather than assuming the current gate applied retroactively. A gate step
+that reports `skipped` is not a pass.
 
 Only `:stable` is a promotion target. `git grep -n target_tag .github/workflows`
 returns `execute-release.yml` alone, so `:latest` has no writer in this

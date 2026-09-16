@@ -32,10 +32,17 @@ jobs:
         [{"image":"bluefin"},{"image":"bluefin-nvidia"}]
       cosign_identity_regexp: >-
         ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
-      run_e2e: false
-      # main uses a merge queue ruleset (17070404): gh pr merge --auto is blocked.
-      # use_merge_queue doubles as the release gate: false routes to gh pr merge --auto,
-      # which the ruleset rejects -- holding :stable to Tuesdays (bluefin#1066).
-      # tests/test_promote_release_window.py pins the wiring.
-      use_merge_queue: ${{ needs.release_window.outputs.should_enqueue == 'true' }}
+      # Release qualification is the producer-published status on the exact
+      # testing-branch commit. post-testing-e2e writes it only after testing
+      # that commit's image and promoting those digests to :testing.
+      run_e2e: true
+      e2e_suites: smoke,common
+      e2e_image: ghcr.io/projectbluefin/bluefin:testing
+      e2e_status_context: e2e/post-testing
+      # main always uses its merge queue. Cadence is an independent decision:
+      # push and non-Tuesday runs refresh the PR, while Tuesday UTC and manual
+      # runs enroll the verified PR automatically.
+      use_merge_queue: true
+      enqueue_promotion: ${{ needs.release_window.outputs.should_enqueue == 'true' }}
+      request_reviewer: false
     secrets: inherit

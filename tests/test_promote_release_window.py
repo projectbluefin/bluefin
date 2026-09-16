@@ -26,6 +26,9 @@ WORKFLOW = (
 GATE_WORKFLOW = (
     Path(__file__).parents[1] / ".github" / "workflows" / "check-release-window.yml"
 )
+POST_TESTING_WORKFLOW = (
+    Path(__file__).parents[1] / ".github" / "workflows" / "post-testing-e2e.yml"
+)
 STEP = "      - name: Determine whether to enqueue the promotion\n"
 
 # Stands in for `date`: records the arguments it was called with, and answers a
@@ -152,18 +155,24 @@ class ReleaseWindowTests(unittest.TestCase):
 class ReleaseWindowWiringTests(unittest.TestCase):
     """The gate is only a gate while the promote job actually consults it."""
 
-    def test_merge_enrolment_is_driven_by_the_release_window(self) -> None:
-        # `use_merge_queue` is what decides whether the promotion PR is enqueued
-        # for merge. Pinned to a constant -- in either direction -- the weekday
-        # check above becomes decoration, so assert the two stay wired together.
+    def test_release_window_controls_queue_enrolment(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
         wiring = [
             line
             for line in workflow.splitlines()
-            if line.strip().startswith("use_merge_queue:")
+            if line.strip().startswith("enqueue_promotion:")
         ]
         self.assertEqual(len(wiring), 1, workflow)
         self.assertIn("needs.release_window.outputs.should_enqueue", wiring[0])
+
+    def test_release_uses_merge_queue_after_e2e_without_reviewers(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("use_merge_queue: true", workflow)
+        self.assertIn("run_e2e: true", workflow)
+        self.assertIn("e2e_suites: smoke,common", workflow)
+        self.assertIn("e2e_image: ghcr.io/projectbluefin/bluefin:testing", workflow)
+        self.assertIn("e2e_status_context: e2e/post-testing", workflow)
+        self.assertIn("request_reviewer: false", workflow)
 
     def test_caller_invokes_release_window_workflow(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
@@ -173,6 +182,21 @@ class ReleaseWindowWiringTests(unittest.TestCase):
         workflow = GATE_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("should_enqueue: ${{ steps.window.outputs.should_enqueue }}", workflow)
         self.assertIn("value: ${{ jobs.release_window.outputs.should_enqueue }}", workflow)
+
+
+class E2EQualificationWiringTests(unittest.TestCase):
+    """The source commit and mutable tag must represent the same tested image."""
+
+    def test_testing_build_promotes_tag_and_publishes_commit_status(self) -> None:
+        workflow = POST_TESTING_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("github.event.workflow_run.head_branch == 'testing'", workflow)
+        self.assertIn("SHA: ${{ github.event.workflow_run.head_sha }}", workflow)
+        self.assertIn("context='e2e/post-testing'", workflow)
+        self.assertIn("needs: [e2e, run-e2e, run-upgrade-test, promote-to-testing]", workflow)
+
+    def test_main_build_cannot_replace_testing_candidate(self) -> None:
+        workflow = POST_TESTING_WORKFLOW.read_text(encoding="utf-8")
+        self.assertNotIn("github.event.workflow_run.head_branch == 'main'", workflow)
 
 
 if __name__ == "__main__":
