@@ -59,7 +59,7 @@ dnf5 -y install \
     -x PackageKit* \
     "${FEDORA_PACKAGES[@]}" \
     tailscale \
-    ffmpeg{,-libs} libavcodec @multimedia gstreamer1-plugins-{bad-free,bad-free-libs,good,base} lame{,-libs} libfdk-aac libjxl ffmpegthumbnailer
+    ffmpeg{,-libs} libavcodec @multimedia gstreamer1-plugins-{bad-free,bad-free-libs,good,base} gstreamer1-plugin-gtk4 lame{,-libs} libfdk-aac libjxl ffmpegthumbnailer
 
 # From ublue-os/packages
 copr_install_isolated "ublue-os/packages" \
