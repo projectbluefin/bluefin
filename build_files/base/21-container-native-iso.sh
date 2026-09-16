@@ -206,7 +206,12 @@ SCHEMA
 
 glib-compile-schemas /usr/share/glib-2.0/schemas
 
+# The live session is not a deployment: first-party countme reporting only
+# counts installed systems, so stop both the timer and the one-shot service
+# for the session. See projectbluefin/bluefin#1216.
 for unit in \
+    bluefin-countme.service \
+    bluefin-countme.timer \
     rpm-ostree-countme.service \
     tailscaled.service \
     bootloader-update.service \

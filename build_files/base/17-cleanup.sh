@@ -13,6 +13,12 @@ systemctl enable dconf-update.service
 systemctl enable flatpak-nuke-fedora.service
 systemctl enable input-remapper.service
 systemctl enable rpm-ostree-countme.service
+# First-party countme reporting to countme.projectbluefin.io (ADR 0006):
+# the timer, service and client ship in the projectbluefin/common image and
+# ping weekly alongside the Fedora upstream countme. Users opt out with
+# /etc/projectbluefin/countme/disabled.
+# See: https://github.com/projectbluefin/bluefin/issues/1216
+systemctl enable bluefin-countme.timer
 # Smoke E2E verifies that the delivered image starts the Tailscale daemon.
 systemctl enable tailscaled.service
 systemctl enable ublue-system-setup.service
