@@ -10,40 +10,67 @@ on:
     # workflow_run definitions are loaded from the default branch. Listen to
     # both build branches, then qualify only testing for promotion below.
     branches: [main, testing]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful testing-branch Testing Images run ID to qualify
+        required: true
+        type: string
 
 permissions: read-all
 
 concurrency:
-  group: post-testing-e2e-${{ github.event.workflow_run.head_sha }}
+  group: post-testing-e2e-${{ inputs.run_id || github.event.workflow_run.head_sha }}
   cancel-in-progress: true
 
 jobs:
   e2e:
-    # Only run for push events (not merge_group or workflow_dispatch)
-    # and only when the build succeeded.
-    if: |
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push'
+    # Automated runs require a successful push build. Recovery dispatches bind
+    # explicitly to a run ID and validate the same contract before downloading.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
       image: ${{ steps.get-digest.outputs.image }}
       nvidia_image: ${{ steps.get-digest.outputs.nvidia_image }}
+      run_id: ${{ steps.get-digest.outputs.run_id }}
+      source_branch: ${{ steps.get-digest.outputs.source_branch }}
+      source_sha: ${{ steps.get-digest.outputs.source_sha }}
     steps:
       - name: Download build digests
         id: get-digest
         env:
           GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
         run: |
           set -euo pipefail
-          gh run download "${{ github.event.workflow_run.id }}" \
+
+          metadata=$(gh api "repos/${{ github.repository }}/actions/runs/${RUN_ID}")
+          conclusion=$(jq -r '.conclusion // empty' <<<"$metadata")
+          event=$(jq -r '.event // empty' <<<"$metadata")
+          source_branch=$(jq -r '.head_branch // empty' <<<"$metadata")
+          source_sha=$(jq -r '.head_sha // empty' <<<"$metadata")
+          if [[ "$conclusion" != success || "$event" != push || "$source_branch" != testing || -z "$source_sha" ]]; then
+            echo "::error::Run ${RUN_ID} must be a successful testing-branch push build"
+            exit 1
+          fi
+
+          gh run download "$RUN_ID" \
             --repo "${{ github.repository }}" \
             --pattern "image-digest-testing-bluefin-*" \
             --dir /tmp/digests
           DIGEST=$(grep "=" /tmp/digests/image-digest-testing-bluefin-main-x86_64/main-bluefin-x86_64.txt | head -1 | cut -d= -f2-)
           NVIDIA_DIGEST=$(grep "=" /tmp/digests/image-digest-testing-bluefin-nvidia-x86_64/nvidia-bluefin-x86_64.txt | head -1 | cut -d= -f2-)
-          echo "image=ghcr.io/${{ github.repository_owner }}/bluefin@${DIGEST}" >> "$GITHUB_OUTPUT"
-          echo "nvidia_image=ghcr.io/${{ github.repository_owner }}/bluefin-nvidia@${NVIDIA_DIGEST}" >> "$GITHUB_OUTPUT"
+          {
+            echo "image=ghcr.io/${{ github.repository_owner }}/bluefin@${DIGEST}"
+            echo "nvidia_image=ghcr.io/${{ github.repository_owner }}/bluefin-nvidia@${NVIDIA_DIGEST}"
+            echo "run_id=${RUN_ID}"
+            echo "source_branch=${source_branch}"
+            echo "source_sha=${source_sha}"
+          } >> "$GITHUB_OUTPUT"
           echo "Testing image: ghcr.io/${{ github.repository_owner }}/bluefin@${DIGEST}"
           echo "Testing NVIDIA image: ghcr.io/${{ github.repository_owner }}/bluefin-nvidia@${NVIDIA_DIGEST}"
 
@@ -75,7 +102,7 @@ jobs:
     if: >-
       needs.run-e2e.result == 'success' &&
       needs.run-e2e-nvidia.result == 'success' &&
-      github.event.workflow_run.head_branch == 'testing'
+      needs.e2e.outputs.source_branch == 'testing'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -86,7 +113,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh run download "${{ github.event.workflow_run.id }}" \
+          gh run download "${{ needs.e2e.outputs.run_id }}" \
             --repo "${{ github.repository }}" \
             --pattern "image-digest-testing-*" \
             --dir /tmp/all-digests
@@ -121,7 +148,7 @@ jobs:
   record-e2e-status:
     name: Record testing commit E2E status
     needs: [e2e, run-e2e, run-e2e-nvidia, promote-to-testing]
-    if: always() && github.event.workflow_run.head_branch == 'testing'
+    if: always() && needs.e2e.outputs.source_branch == 'testing'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -131,7 +158,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          SHA: ${{ github.event.workflow_run.head_sha }}
+          SHA: ${{ needs.e2e.outputs.source_sha }}
           E2E_RESULT: ${{ needs.run-e2e.result }}
           NVIDIA_E2E_RESULT: ${{ needs.run-e2e-nvidia.result }}
           PROMOTION_RESULT: ${{ needs.promote-to-testing.result }}
