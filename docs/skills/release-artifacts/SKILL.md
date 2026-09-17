@@ -36,16 +36,17 @@ metadata:
 ## Weekly stable promotion window
 
 `.github/workflows/promote-testing-to-main.yml` refreshes its promotion PR on
-every `testing` push, daily schedule, and successful Post-Testing E2E
-completion. Every `testing` push builds candidates, including documentation-
-only changes, so the exact branch HEAD can always earn release evidence.
-Every automatic event that occurs on Tuesday UTC enables
-`enqueue_promotion`; a `workflow_dispatch` run remains the explicit hotfix
+every `testing` push and successful Post-Testing E2E completion. Every testing
+push builds candidates, including documentation-only changes, so the exact
+branch HEAD can always earn release evidence.
+
+Successful E2E completions on Tuesday UTC enable `enqueue_promotion`; an hourly
+Tuesday schedule retries the same decision if GitHub replaced a pending run
+behind an in-progress refresh. Pushes remain refresh-only because their E2E
+status cannot exist yet. A `workflow_dispatch` run remains the explicit hotfix
 escape hatch. All triggers share one mutation lock for the generated promotion
-branch. Because GitHub may replace an older pending run in that group, a Tuesday
-push carries the same enqueue decision as a schedule or E2E completion. On
-other weekdays, automatic events refresh the PR without running the release
-gate, posting `validate`, or enrolling it.
+branch. On other weekdays, automatic events refresh the PR without running the
+release gate, posting `validate`, or enrolling it.
 
 The caller always selects the `main` merge queue with `use_merge_queue: true`.
 Do not overload that transport choice as the release-window switch. The
