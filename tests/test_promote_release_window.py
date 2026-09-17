@@ -32,6 +32,9 @@ POST_TESTING_WORKFLOW = (
 EXECUTE_WORKFLOW = (
     Path(__file__).parents[1] / ".github" / "workflows" / "execute-release.yml"
 )
+BUILD_WORKFLOW = (
+    Path(__file__).parents[1] / ".github" / "workflows" / "build-image-testing.yml"
+)
 EXECUTE_STEP = "      - id: check\n"
 STEP = "      - name: Determine whether to enqueue the promotion\n"
 
@@ -134,6 +137,12 @@ class ReleaseWindowTests(unittest.TestCase):
                 decision, _ = self.run_window("schedule", weekday)
                 self.assertEqual(decision, "true" if weekday == TUESDAY else "false")
 
+    def test_successful_e2e_completion_enqueues_only_on_tuesday(self) -> None:
+        for weekday in ALL_WEEKDAYS:
+            with self.subTest(weekday=weekday):
+                decision, _ = self.run_window("workflow_run", weekday)
+                self.assertEqual(decision, "true" if weekday == TUESDAY else "false")
+
     def test_manual_dispatch_is_the_hotfix_escape_hatch(self) -> None:
         # workflow_dispatch is the documented out-of-band release path, so it
         # must not be subject to the weekday gate.
@@ -233,15 +242,25 @@ class ReleaseWindowWiringTests(unittest.TestCase):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("uses: ./.github/workflows/check-release-window.yml", workflow)
 
+    def test_e2e_completion_retriggers_promotion(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn('workflows: ["Post-Testing E2E"]', workflow)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'", workflow)
+
+    def test_every_testing_push_builds_release_candidates(self) -> None:
+        workflow = BUILD_WORKFLOW.read_text(encoding="utf-8")
+        self.assertNotIn("paths-ignore:", workflow)
+
     def test_release_window_publishes_the_decision(self) -> None:
         workflow = GATE_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("should_enqueue: ${{ steps.window.outputs.should_enqueue }}", workflow)
         self.assertIn("value: ${{ jobs.release_window.outputs.should_enqueue }}", workflow)
 
-    def test_execute_release_does_not_repeat_promotion_e2e(self) -> None:
+    def test_execute_release_consumes_producer_evidence_once(self) -> None:
         workflow = EXECUTE_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("run_release_gate: false", workflow)
-
+        self.assertIn("source_branch: testing", workflow)
+        self.assertNotIn("gate_suites:", workflow)
 
 class E2EQualificationWiringTests(unittest.TestCase):
     """The source commit and mutable tag must represent the same tested image."""
@@ -269,9 +288,11 @@ class E2EQualificationWiringTests(unittest.TestCase):
         self.assertIn("SHA: ${{ needs.e2e.outputs.source_sha }}", workflow)
 
 
-    def test_main_build_cannot_replace_testing_candidate(self) -> None:
+    def test_main_build_cannot_start_candidate_qualification(self) -> None:
         workflow = POST_TESTING_WORKFLOW.read_text(encoding="utf-8")
-        self.assertNotIn("github.event.workflow_run.head_branch == 'main'", workflow)
+        self.assertIn("branches: [testing]", workflow)
+        self.assertNotIn("branches: [main, testing]", workflow)
+        self.assertIn("cancel-in-progress: false", workflow)
 
 
 if __name__ == "__main__":
