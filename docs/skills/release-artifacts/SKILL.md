@@ -40,8 +40,10 @@ every `testing` push, daily schedule, and successful Post-Testing E2E
 completion. Every `testing` push builds candidates, including documentation-
 only changes, so the exact branch HEAD can always earn release evidence.
 Tuesday UTC schedules and E2E completions enable `enqueue_promotion`; a
-`workflow_dispatch` run remains the explicit hotfix escape hatch. Other events
-refresh the PR without running the release gate or enrolling it.
+`workflow_dispatch` run remains the explicit hotfix escape hatch. Push refreshes
+use a separate concurrency group, so they cannot replace a pending Tuesday
+release-window run. Other events refresh the PR without running the release
+gate, posting `validate`, or enrolling it.
 
 The caller always selects the `main` merge queue with `use_merge_queue: true`.
 Do not overload that transport choice as the release-window switch. The
@@ -58,10 +60,12 @@ The workflow resolves and verifies that run as a `testing`-branch push, tests
 the digests from its artifacts, promotes those same digests, and attaches the
 status to the run's source SHA. It never falls back to an unrelated latest run.
 
-`execute-release.yml` passes `source_branch: testing`. The reusable release
-workflow compares the release commit tree with current `testing` before it
-resolves mutable source tags. If testing advances between promotion and
-release, execution fails closed instead of promoting an unqualified digest.
+On automatic push releases, `execute-release.yml` passes
+`source_branch: testing`. The reusable release workflow compares the release
+commit tree with current `testing` before it resolves mutable source tags. If
+testing advances between promotion and release, execution fails closed instead
+of promoting an unqualified digest. Manual recovery omits `source_branch` after
+the operator selects the intended already-verified source.
 
 The live `main`/`stable` release ruleset does not require approving reviews.
 Automation is constrained instead by the required `validate` status, squash-only
