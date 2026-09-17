@@ -7,6 +7,9 @@ on:
   schedule:
     - cron: '0 4 * * *'
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Post-Testing E2E"]
+    types: [completed]
 
 concurrency:
   group: promote-testing-to-main
@@ -26,6 +29,7 @@ jobs:
 
   promote:
     needs: [release_window]
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
@@ -39,9 +43,9 @@ jobs:
       e2e_suites: smoke,common
       e2e_image: ghcr.io/projectbluefin/bluefin:testing
       e2e_status_context: e2e/post-testing
-      # main always uses its merge queue. Cadence is an independent decision:
-      # push and non-Tuesday runs refresh the PR, while Tuesday UTC and manual
-      # runs enroll the verified PR automatically.
+      # main always uses its merge queue. Pushes and non-Tuesday completions
+      # refresh the PR; Tuesday UTC E2E completion and manual runs verify and
+      # enroll it automatically.
       use_merge_queue: true
       enqueue_promotion: ${{ needs.release_window.outputs.should_enqueue == 'true' }}
       request_reviewer: false

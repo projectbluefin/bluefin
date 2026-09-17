@@ -29,13 +29,13 @@ jobs:
               echo "Manual dispatch — allowing the hotfix release escape hatch."
               echo "should_enqueue=true" >> "$GITHUB_OUTPUT"
               ;;
-            schedule)
+            schedule|workflow_run)
               weekday=$(date -u +%u)
               if [[ "$weekday" == "2" ]]; then
-                echo "Tuesday UTC schedule — allowing the weekly stable release."
+                echo "Tuesday UTC event — allowing the weekly stable release."
                 echo "should_enqueue=true" >> "$GITHUB_OUTPUT"
               else
-                echo "Non-Tuesday schedule — refreshing promotion gates without enqueueing."
+                echo "Non-Tuesday event — refreshing the promotion PR without enqueueing."
                 echo "should_enqueue=false" >> "$GITHUB_OUTPUT"
               fi
               ;;
