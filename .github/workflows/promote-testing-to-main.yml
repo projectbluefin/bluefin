@@ -12,7 +12,14 @@ on:
     types: [completed]
 
 concurrency:
-  group: promote-testing-to-main
+  # Push refreshes cannot replace a pending release-window run. Tuesday
+  # schedule/E2E completions replace only one another, and all enqueue.
+  group: >-
+    promote-testing-to-main-${{
+      github.event_name == 'push' && 'refresh' ||
+      github.event_name == 'workflow_dispatch' && github.run_id ||
+      'release-window'
+    }}
   cancel-in-progress: false
 
 permissions:
