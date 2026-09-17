@@ -148,7 +148,7 @@ jobs:
   record-e2e-status:
     name: Record testing commit E2E status
     needs: [e2e, run-e2e, run-e2e-nvidia, promote-to-testing]
-    if: always() && needs.e2e.outputs.source_branch == 'testing'
+    if: always() && (github.event_name == 'workflow_run' || needs.e2e.outputs.source_branch == 'testing')
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -158,7 +158,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          SHA: ${{ needs.e2e.outputs.source_sha }}
+          SHA: ${{ needs.e2e.outputs.source_sha || github.event.workflow_run.head_sha }}
           E2E_RESULT: ${{ needs.run-e2e.result }}
           NVIDIA_E2E_RESULT: ${{ needs.run-e2e-nvidia.result }}
           PROMOTION_RESULT: ${{ needs.promote-to-testing.result }}
