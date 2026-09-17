@@ -28,8 +28,9 @@ jobs:
     timeout-minutes: 10
     outputs:
       image: ${{ steps.get-digest.outputs.image }}
+      nvidia_image: ${{ steps.get-digest.outputs.nvidia_image }}
     steps:
-      - name: Download build digest
+      - name: Download build digests
         id: get-digest
         env:
           GH_TOKEN: ${{ github.token }}
@@ -37,11 +38,14 @@ jobs:
           set -euo pipefail
           gh run download "${{ github.event.workflow_run.id }}" \
             --repo "${{ github.repository }}" \
-            --name "image-digest-testing-bluefin-main-x86_64" \
-            --dir /tmp/digest
-          DIGEST=$(grep "=" /tmp/digest/main-bluefin-x86_64.txt | head -1 | cut -d= -f2-)
+            --pattern "image-digest-testing-bluefin-*" \
+            --dir /tmp/digests
+          DIGEST=$(grep "=" /tmp/digests/image-digest-testing-bluefin-main-x86_64/main-bluefin-x86_64.txt | head -1 | cut -d= -f2-)
+          NVIDIA_DIGEST=$(grep "=" /tmp/digests/image-digest-testing-bluefin-nvidia-x86_64/nvidia-bluefin-x86_64.txt | head -1 | cut -d= -f2-)
           echo "image=ghcr.io/${{ github.repository_owner }}/bluefin@${DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "nvidia_image=ghcr.io/${{ github.repository_owner }}/bluefin-nvidia@${NVIDIA_DIGEST}" >> "$GITHUB_OUTPUT"
           echo "Testing image: ghcr.io/${{ github.repository_owner }}/bluefin@${DIGEST}"
+          echo "Testing NVIDIA image: ghcr.io/${{ github.repository_owner }}/bluefin-nvidia@${NVIDIA_DIGEST}"
 
   run-e2e:
     needs: [e2e]
@@ -51,6 +55,16 @@ jobs:
     uses: ./.github/workflows/run-testsuite.yml
     with:
       image: ${{ needs.e2e.outputs.image }}
+      suites: smoke,common
+
+  run-e2e-nvidia:
+    needs: [e2e]
+    permissions:
+      packages: write
+      contents: read
+    uses: ./.github/workflows/run-testsuite.yml
+    with:
+      image: ${{ needs.e2e.outputs.nvidia_image }}
       suites: smoke,common
 
   run-upgrade-test:
@@ -66,9 +80,10 @@ jobs:
   promote-to-testing:
     # Move :testing only after the exact testing-branch build passes every E2E
     # gate. main builds must not replace the candidate under qualification.
-    needs: [e2e, run-e2e, run-upgrade-test]
+    needs: [e2e, run-e2e, run-e2e-nvidia, run-upgrade-test]
     if: >-
       needs.run-e2e.result == 'success' &&
+      needs.run-e2e-nvidia.result == 'success' &&
       needs.run-upgrade-test.result == 'success' &&
       github.event.workflow_run.head_branch == 'testing'
     runs-on: ubuntu-latest
@@ -115,7 +130,7 @@ jobs:
 
   record-e2e-status:
     name: Record testing commit E2E status
-    needs: [e2e, run-e2e, run-upgrade-test, promote-to-testing]
+    needs: [e2e, run-e2e, run-e2e-nvidia, run-upgrade-test, promote-to-testing]
     if: always() && github.event.workflow_run.head_branch == 'testing'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -128,6 +143,7 @@ jobs:
           REPO: ${{ github.repository }}
           SHA: ${{ github.event.workflow_run.head_sha }}
           E2E_RESULT: ${{ needs.run-e2e.result }}
+          NVIDIA_E2E_RESULT: ${{ needs.run-e2e-nvidia.result }}
           UPGRADE_RESULT: ${{ needs.run-upgrade-test.result }}
           PROMOTION_RESULT: ${{ needs.promote-to-testing.result }}
         run: |
@@ -135,7 +151,7 @@ jobs:
 
           state=failure
           description="E2E qualification failed"
-          if [[ "$E2E_RESULT" == success && "$UPGRADE_RESULT" == success && "$PROMOTION_RESULT" == success ]]; then
+          if [[ "$E2E_RESULT" == success && "$NVIDIA_E2E_RESULT" == success && "$UPGRADE_RESULT" == success && "$PROMOTION_RESULT" == success ]]; then
             state=success
             description="E2E passed and tested digests promoted to :testing"
           fi
