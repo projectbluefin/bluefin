@@ -35,11 +35,13 @@ metadata:
 
 ## Weekly stable promotion window
 
-`.github/workflows/promote-testing-to-main.yml` keeps its push and daily
-schedule triggers so the testing-to-main promotion PR and its gates stay fresh.
-Only a Tuesday UTC scheduled run enables `enqueue_promotion`; a
-`workflow_dispatch` run remains an explicit hotfix escape hatch. Push events
-and non-Tuesday schedules refresh and verify the PR without enrolling it.
+`.github/workflows/promote-testing-to-main.yml` refreshes its promotion PR on
+every `testing` push, daily schedule, and successful Post-Testing E2E
+completion. Every `testing` push builds candidates, including documentation-
+only changes, so the exact branch HEAD can always earn release evidence.
+Tuesday UTC schedules and E2E completions enable `enqueue_promotion`; a
+`workflow_dispatch` run remains the explicit hotfix escape hatch. Other events
+refresh the PR without running the release gate or enrolling it.
 
 The caller always selects the `main` merge queue with `use_merge_queue: true`.
 Do not overload that transport choice as the release-window switch. The
@@ -55,6 +57,11 @@ Recovery dispatches require an explicit successful `Testing Images` run ID.
 The workflow resolves and verifies that run as a `testing`-branch push, tests
 the digests from its artifacts, promotes those same digests, and attaches the
 status to the run's source SHA. It never falls back to an unrelated latest run.
+
+`execute-release.yml` passes `source_branch: testing`. The reusable release
+workflow compares the release commit tree with current `testing` before it
+resolves mutable source tags. If testing advances between promotion and
+release, execution fails closed instead of promoting an unqualified digest.
 
 The live `main`/`stable` release ruleset does not require approving reviews.
 Automation is constrained instead by the required `validate` status, squash-only
