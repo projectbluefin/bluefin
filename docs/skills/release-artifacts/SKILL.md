@@ -51,6 +51,11 @@ status on the exact `testing` SHA only after both `bluefin` and
 `:testing`. The lifecycle suite is not a release gate: it currently fails its
 own migration preconditions before exercising an upgrade.
 
+Recovery dispatches require an explicit successful `Testing Images` run ID.
+The workflow resolves and verifies that run as a `testing`-branch push, tests
+the digests from its artifacts, promotes those same digests, and attaches the
+status to the run's source SHA. It never falls back to an unrelated latest run.
+
 The live `main`/`stable` release ruleset does not require approving reviews.
 Automation is constrained instead by the required `validate` status, squash-only
 merge policy, non-fast-forward and deletion protection, and the merge queue.

@@ -51,6 +51,7 @@ if any(argument.startswith("+%") for argument in arguments):
     print(os.environ["GH_STUB_WEEKDAY"])
     sys.exit(0)
 
+
 sys.exit(subprocess.run(["/usr/bin/date", *arguments], check=False).returncode)
 '''
 
@@ -247,8 +248,8 @@ class E2EQualificationWiringTests(unittest.TestCase):
 
     def test_testing_build_promotes_both_tested_variants_and_publishes_status(self) -> None:
         workflow = POST_TESTING_WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("github.event.workflow_run.head_branch == 'testing'", workflow)
-        self.assertIn("SHA: ${{ github.event.workflow_run.head_sha }}", workflow)
+        self.assertIn("needs.e2e.outputs.source_branch == 'testing'", workflow)
+        self.assertIn("SHA: ${{ needs.e2e.outputs.source_sha }}", workflow)
         self.assertIn("context='e2e/post-testing'", workflow)
         self.assertIn("nvidia_image: ${{ steps.get-digest.outputs.nvidia_image }}", workflow)
         self.assertIn("image: ${{ needs.e2e.outputs.nvidia_image }}", workflow)
@@ -257,6 +258,16 @@ class E2EQualificationWiringTests(unittest.TestCase):
             workflow,
         )
         self.assertNotIn("run-upgrade-test", workflow)
+
+    def test_recovery_dispatch_requires_and_validates_build_run_id(self) -> None:
+        workflow = POST_TESTING_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertIn("RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}", workflow)
+        self.assertIn("$source_branch\" != testing", workflow)
+        self.assertIn("$conclusion\" != success", workflow)
+        self.assertIn("$event\" != push", workflow)
+        self.assertIn("SHA: ${{ needs.e2e.outputs.source_sha }}", workflow)
+
 
     def test_main_build_cannot_replace_testing_candidate(self) -> None:
         workflow = POST_TESTING_WORKFLOW.read_text(encoding="utf-8")
