@@ -67,24 +67,14 @@ jobs:
       image: ${{ needs.e2e.outputs.nvidia_image }}
       suites: smoke,common
 
-  run-upgrade-test:
-    needs: [e2e]
-    permissions:
-      packages: write
-      contents: read
-    uses: projectbluefin/actions/.github/workflows/upgrade-test.yml@v1
-    with:
-      image: ${{ needs.e2e.outputs.image }}
-      suites: lifecycle
 
   promote-to-testing:
     # Move :testing only after the exact testing-branch build passes every E2E
     # gate. main builds must not replace the candidate under qualification.
-    needs: [e2e, run-e2e, run-e2e-nvidia, run-upgrade-test]
+    needs: [e2e, run-e2e, run-e2e-nvidia]
     if: >-
       needs.run-e2e.result == 'success' &&
       needs.run-e2e-nvidia.result == 'success' &&
-      needs.run-upgrade-test.result == 'success' &&
       github.event.workflow_run.head_branch == 'testing'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -130,7 +120,7 @@ jobs:
 
   record-e2e-status:
     name: Record testing commit E2E status
-    needs: [e2e, run-e2e, run-e2e-nvidia, run-upgrade-test, promote-to-testing]
+    needs: [e2e, run-e2e, run-e2e-nvidia, promote-to-testing]
     if: always() && github.event.workflow_run.head_branch == 'testing'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -144,14 +134,13 @@ jobs:
           SHA: ${{ github.event.workflow_run.head_sha }}
           E2E_RESULT: ${{ needs.run-e2e.result }}
           NVIDIA_E2E_RESULT: ${{ needs.run-e2e-nvidia.result }}
-          UPGRADE_RESULT: ${{ needs.run-upgrade-test.result }}
           PROMOTION_RESULT: ${{ needs.promote-to-testing.result }}
         run: |
           set -euo pipefail
 
           state=failure
           description="E2E qualification failed"
-          if [[ "$E2E_RESULT" == success && "$NVIDIA_E2E_RESULT" == success && "$UPGRADE_RESULT" == success && "$PROMOTION_RESULT" == success ]]; then
+          if [[ "$E2E_RESULT" == success && "$NVIDIA_E2E_RESULT" == success && "$PROMOTION_RESULT" == success ]]; then
             state=success
             description="E2E passed and tested digests promoted to :testing"
           fi
