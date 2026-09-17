@@ -29,6 +29,10 @@ GATE_WORKFLOW = (
 POST_TESTING_WORKFLOW = (
     Path(__file__).parents[1] / ".github" / "workflows" / "post-testing-e2e.yml"
 )
+EXECUTE_WORKFLOW = (
+    Path(__file__).parents[1] / ".github" / "workflows" / "execute-release.yml"
+)
+EXECUTE_STEP = "      - id: check\n"
 STEP = "      - name: Determine whether to enqueue the promotion\n"
 
 # Stands in for `date`: records the arguments it was called with, and answers a
@@ -64,6 +68,17 @@ def window_script() -> str:
     lines: list[str] = []
     for line in body.splitlines():
         # The step ends at the first non-blank line that leaves the run block.
+        if line.strip() and not line.startswith(" " * 10):
+            break
+        lines.append(line)
+    return textwrap.dedent("\n".join(lines))
+
+def execute_trigger_script() -> str:
+    """Return the shipped execute-release trigger shell body."""
+    workflow = EXECUTE_WORKFLOW.read_text(encoding="utf-8")
+    body = workflow.split(EXECUTE_STEP, 1)[1].split("        run: |\n", 1)[1]
+    lines: list[str] = []
+    for line in body.splitlines():
         if line.strip() and not line.startswith(" " * 10):
             break
         lines.append(line)
@@ -150,6 +165,45 @@ class ReleaseWindowTests(unittest.TestCase):
         # refresh, not a release.
         decision, _ = self.run_window("repository_dispatch", TUESDAY)
         self.assertEqual(decision, "false")
+
+
+class ExecuteReleaseTriggerTests(unittest.TestCase):
+    def run_trigger(self, event: str, commit_message: str) -> str:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            output = Path(temporary_directory) / "github-output"
+            output.touch()
+            environment = dict(os.environ)
+            environment.update(
+                COMMIT_MSG=commit_message,
+                EVENT=event,
+                GITHUB_OUTPUT=str(output),
+            )
+            result = subprocess.run(
+                ["bash", "-c", execute_trigger_script()],
+                env=environment,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            return output.read_text(encoding="utf-8").strip()
+
+    def test_generated_promotion_commit_executes_release(self) -> None:
+        output = self.run_trigger(
+            "push", "ci(promote): bluefin testing → main 2026-09-17 (#1233)"
+        )
+        self.assertEqual(output, "is-promotion=true")
+
+    def test_legacy_promotion_commit_executes_release(self) -> None:
+        output = self.run_trigger("push", "chore: promote testing to main")
+        self.assertEqual(output, "is-promotion=true")
+
+    def test_ordinary_main_push_does_not_execute_release(self) -> None:
+        output = self.run_trigger("push", "fix: unrelated main change")
+        self.assertEqual(output, "is-promotion=false")
+
+    def test_manual_dispatch_remains_release_escape_hatch(self) -> None:
+        output = self.run_trigger("workflow_dispatch", "")
+        self.assertEqual(output, "is-promotion=true")
 
 
 class ReleaseWindowWiringTests(unittest.TestCase):
