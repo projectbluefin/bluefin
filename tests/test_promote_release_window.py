@@ -253,9 +253,10 @@ class E2EQualificationWiringTests(unittest.TestCase):
         self.assertIn("nvidia_image: ${{ steps.get-digest.outputs.nvidia_image }}", workflow)
         self.assertIn("image: ${{ needs.e2e.outputs.nvidia_image }}", workflow)
         self.assertIn(
-            "needs: [e2e, run-e2e, run-e2e-nvidia, run-upgrade-test, promote-to-testing]",
+            "needs: [e2e, run-e2e, run-e2e-nvidia, promote-to-testing]",
             workflow,
         )
+        self.assertNotIn("run-upgrade-test", workflow)
 
     def test_main_build_cannot_replace_testing_candidate(self) -> None:
         workflow = POST_TESTING_WORKFLOW.read_text(encoding="utf-8")
