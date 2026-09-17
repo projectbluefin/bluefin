@@ -5,15 +5,15 @@ on:
     branches:
       - testing
   schedule:
-    - cron: '0 4 * * *'
+    - cron: '0 * * * 2'
   workflow_dispatch:
   workflow_run:
     workflows: ["Post-Testing E2E"]
     types: [completed]
 
 concurrency:
-  # GitHub replaces an older pending run even when cancel-in-progress is false.
-  # Every automatic Tuesday event therefore carries the same enqueue decision.
+  # All triggers share the mutation lock. Hourly Tuesday schedules retry any
+  # release-window run replaced while pending behind an in-progress refresh.
   group: promote-testing-to-main
   cancel-in-progress: false
 
