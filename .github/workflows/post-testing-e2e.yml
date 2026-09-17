@@ -7,9 +7,9 @@ on:
   workflow_run:
     workflows: ["Testing Images"]
     types: [completed]
-    # workflow_run definitions are loaded from the default branch. Listen to
-    # both build branches, then qualify only testing for promotion below.
-    branches: [main, testing]
+    # workflow_run definitions are loaded from the default branch. Only
+    # testing-branch image builds produce release candidates.
+    branches: [testing]
   workflow_dispatch:
     inputs:
       run_id:
@@ -21,7 +21,7 @@ permissions: read-all
 
 concurrency:
   group: post-testing-e2e-${{ inputs.run_id || github.event.workflow_run.head_sha }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   e2e:
