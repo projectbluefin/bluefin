@@ -7,7 +7,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 BUILD_SCRIPT="${REPO_ROOT}/build_files/shared/build.sh"
 
 setup() {
-    TEST_ROOT="${SCRIPT_DIR}/.bats-sandbox/build.${BATS_TEST_NUMBER:-0}.$$"
+    TEST_ROOT="${BATS_TEST_TMPDIR:-${TMPDIR:-/tmp}/bluefin-build-test.${BATS_TEST_NUMBER:-0}.$$}"
     STUB_BIN="${TEST_ROOT}/stub-bin"
     STAGE_LOG="${TEST_ROOT}/stage.log"
     mkdir -p "${STUB_BIN}"
@@ -73,9 +73,17 @@ EOF
         chmod +x "${stage_path}"
     done
 
-    # Prepare patched build.sh pointing /ctx to TEST_ROOT/ctx and /tmp to TEST_ROOT/tmp
+    # Prepare patched build.sh pointing /ctx to TEST_ROOT/ctx and /tmp to TEST_ROOT/tmp.
+    # Replace /tmp with a sentinel first so TEST_ROOT paths under /tmp are not rewritten.
     PATCHED_SCRIPT="${TEST_ROOT}/build-patched.sh"
-    sed -e "s|/ctx|${TEST_ROOT}/ctx|g"         -e "s|/tmp|${TEST_ROOT}/tmp|g"         "${BUILD_SCRIPT}" > "${PATCHED_SCRIPT}"
+    SED_TEST_ROOT=${TEST_ROOT//\\/\\\\}
+    SED_TEST_ROOT=${SED_TEST_ROOT//&/\\&}
+    SED_TEST_ROOT=${SED_TEST_ROOT//|/\\|}
+    TMP_SENTINEL="__BLUEFIN_BUILD_TEST_TMP__"
+    sed -e "s|/tmp|${TMP_SENTINEL}|g" \
+        -e "s|/ctx|${SED_TEST_ROOT}/ctx|g" \
+        -e "s|${TMP_SENTINEL}|${SED_TEST_ROOT}/tmp|g" \
+        "${BUILD_SCRIPT}" > "${PATCHED_SCRIPT}"
     chmod +x "${PATCHED_SCRIPT}"
 }
 
@@ -107,7 +115,7 @@ teardown() {
 @test "build.sh: fails immediately if a stage fails" {
     export FAIL_STAGE="base/05-override-install.sh"
     run bash "${PATCHED_SCRIPT}"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 1 ]
 
     # Subsequent stages should not have run
     run cat "${STAGE_LOG}"
