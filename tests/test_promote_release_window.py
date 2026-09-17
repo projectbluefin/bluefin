@@ -245,12 +245,17 @@ class ReleaseWindowWiringTests(unittest.TestCase):
 class E2EQualificationWiringTests(unittest.TestCase):
     """The source commit and mutable tag must represent the same tested image."""
 
-    def test_testing_build_promotes_tag_and_publishes_commit_status(self) -> None:
+    def test_testing_build_promotes_both_tested_variants_and_publishes_status(self) -> None:
         workflow = POST_TESTING_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("github.event.workflow_run.head_branch == 'testing'", workflow)
         self.assertIn("SHA: ${{ github.event.workflow_run.head_sha }}", workflow)
         self.assertIn("context='e2e/post-testing'", workflow)
-        self.assertIn("needs: [e2e, run-e2e, run-upgrade-test, promote-to-testing]", workflow)
+        self.assertIn("nvidia_image: ${{ steps.get-digest.outputs.nvidia_image }}", workflow)
+        self.assertIn("image: ${{ needs.e2e.outputs.nvidia_image }}", workflow)
+        self.assertIn(
+            "needs: [e2e, run-e2e, run-e2e-nvidia, run-upgrade-test, promote-to-testing]",
+            workflow,
+        )
 
     def test_main_build_cannot_replace_testing_candidate(self) -> None:
         workflow = POST_TESTING_WORKFLOW.read_text(encoding="utf-8")

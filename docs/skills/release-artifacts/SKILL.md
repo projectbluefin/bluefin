@@ -46,8 +46,9 @@ Do not overload that transport choice as the release-window switch. The
 reusable workflow's enqueue job must depend on release-gate success, and the
 caller must keep `run_e2e: true`, a non-empty `e2e_image`, and
 `e2e_status_context: e2e/post-testing`. `post-testing-e2e.yml` publishes that
-status on the exact `testing` SHA only after its image passes smoke, common, and
-lifecycle coverage and those tested digests replace `:testing`.
+status on the exact `testing` SHA only after both `bluefin` and
+`bluefin-nvidia` pass smoke/common coverage, `bluefin` passes lifecycle
+coverage, and those tested digests replace `:testing`.
 
 The live `main`/`stable` release ruleset does not require approving reviews.
 Automation is constrained instead by the required `validate` status, squash-only
