@@ -237,6 +237,10 @@ class ReleaseWindowWiringTests(unittest.TestCase):
         self.assertIn("should_enqueue: ${{ steps.window.outputs.should_enqueue }}", workflow)
         self.assertIn("value: ${{ jobs.release_window.outputs.should_enqueue }}", workflow)
 
+    def test_execute_release_does_not_repeat_promotion_e2e(self) -> None:
+        workflow = EXECUTE_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("run_release_gate: false", workflow)
+
 
 class E2EQualificationWiringTests(unittest.TestCase):
     """The source commit and mutable tag must represent the same tested image."""
