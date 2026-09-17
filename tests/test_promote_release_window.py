@@ -151,13 +151,13 @@ class ReleaseWindowTests(unittest.TestCase):
                 decision, _ = self.run_window("workflow_dispatch", weekday)
                 self.assertEqual(decision, "true")
 
-    def test_push_to_testing_never_releases(self) -> None:
-        # Pushes keep the promotion PR fresh; they must never cut a release,
-        # not even on a Tuesday.
-        for weekday in (TUESDAY, "5"):
+    def test_push_to_testing_enqueues_only_on_tuesday(self) -> None:
+        # A push may replace a pending scheduled/E2E-completion run in GitHub's
+        # concurrency queue, so every Tuesday event must preserve the release.
+        for weekday in ALL_WEEKDAYS:
             with self.subTest(weekday=weekday):
                 decision, _ = self.run_window("push", weekday)
-                self.assertEqual(decision, "false")
+                self.assertEqual(decision, "true" if weekday == TUESDAY else "false")
 
     def test_release_day_is_read_as_an_iso_weekday_in_utc(self) -> None:
         # `date -u +%u` is load-bearing twice over. Without -u the release day
@@ -262,11 +262,11 @@ class ReleaseWindowWiringTests(unittest.TestCase):
         self.assertIn("github.event_name != 'workflow_dispatch' && 'testing' || ''", workflow)
         self.assertNotIn("gate_suites:", workflow)
 
-    def test_push_refresh_cannot_replace_pending_release_window(self) -> None:
+    def test_all_promotion_triggers_share_one_mutation_lock(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("github.event_name == 'push' && 'refresh'", workflow)
-        self.assertIn("'release-window'", workflow)
-        self.assertIn("github.event_name == 'workflow_dispatch' && github.run_id", workflow)
+        self.assertIn("group: promote-testing-to-main", workflow)
+        self.assertNotIn("'refresh'", workflow)
+        self.assertNotIn("github.run_id", workflow)
 
 class E2EQualificationWiringTests(unittest.TestCase):
     """The source commit and mutable tag must represent the same tested image."""
