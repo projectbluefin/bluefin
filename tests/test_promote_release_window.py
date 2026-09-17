@@ -284,6 +284,7 @@ class E2EQualificationWiringTests(unittest.TestCase):
         )
         self.assertNotIn("run-upgrade-test", workflow)
         self.assertIn("github.event_name == 'workflow_run'", workflow)
+        self.assertIn("github.event.workflow_run.event == 'push'", workflow)
 
     def test_recovery_dispatch_requires_and_validates_build_run_id(self) -> None:
         workflow = POST_TESTING_WORKFLOW.read_text(encoding="utf-8")
