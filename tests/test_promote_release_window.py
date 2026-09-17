@@ -259,8 +259,14 @@ class ReleaseWindowWiringTests(unittest.TestCase):
     def test_execute_release_consumes_producer_evidence_once(self) -> None:
         workflow = EXECUTE_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("run_release_gate: false", workflow)
-        self.assertIn("source_branch: testing", workflow)
+        self.assertIn("github.event_name != 'workflow_dispatch' && 'testing' || ''", workflow)
         self.assertNotIn("gate_suites:", workflow)
+
+    def test_push_refresh_cannot_replace_pending_release_window(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("github.event_name == 'push' && 'refresh'", workflow)
+        self.assertIn("'release-window'", workflow)
+        self.assertIn("github.event_name == 'workflow_dispatch' && github.run_id", workflow)
 
 class E2EQualificationWiringTests(unittest.TestCase):
     """The source commit and mutable tag must represent the same tested image."""
