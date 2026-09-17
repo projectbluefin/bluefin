@@ -29,13 +29,21 @@ ln -s "/usr/share/fonts/google-noto-sans-cjk-fonts" "/usr/share/fonts/noto-cjk"
 
 # use CoreOS' generator for emergency/rescue boot
 # see detail: https://github.com/ublue-os/main/issues/653
+# Pinned to commit SHA + SHA-256 digest to prevent unverified root-at-boot execution (CWE-829 / CWE-494)
+COREOS_SULOGIN_COMMIT="682c839aabbc01564f1605bb41687a7511180031"
+COREOS_SULOGIN_SHA256="eb9222214c4647f1ed430f379dca13c3ba945a6aa7950ce6b2d5be3e0a337da1"
 mkdir -p /usr/lib/systemd/system-generators
-ghcurl "https://raw.githubusercontent.com/coreos/fedora-coreos-config/refs/heads/stable/overlay.d/05core/usr/lib/systemd/system-generators/coreos-sulogin-force-generator" --retry 3 -Lo /usr/lib/systemd/system-generators/coreos-sulogin-force-generator
+ghcurl "https://raw.githubusercontent.com/coreos/fedora-coreos-config/${COREOS_SULOGIN_COMMIT}/overlay.d/05core/usr/lib/systemd/system-generators/coreos-sulogin-force-generator" --retry 3 -Lo /usr/lib/systemd/system-generators/coreos-sulogin-force-generator
+echo "${COREOS_SULOGIN_SHA256}  /usr/lib/systemd/system-generators/coreos-sulogin-force-generator" | sha256sum -c -
 chmod +x /usr/lib/systemd/system-generators/coreos-sulogin-force-generator
 
 # Configure firewalld with Fedora Workstation defaults
 # https://src.fedoraproject.org/rpms/firewalld/blob/rawhide/f/firewalld.spec
-ghcurl "https://src.fedoraproject.org/rpms/firewalld/raw/rawhide/f/FedoraWorkstation.xml" --retry 3 -Lo /usr/lib/firewalld/zones/FedoraWorkstation.xml
+# Pinned to commit SHA + SHA-256 digest for deterministic and tamper-resistant firewall configuration
+FIREWALLD_COMMIT="4c18519ae432381e9cb18e105f0f15c46537e81c"
+FIREWALLD_ZONE_SHA256="ceb2a036759ae52b623e2d50f2d6056e698ff6ce0763cfd76ef3f6a259b1a14e"
+ghcurl "https://src.fedoraproject.org/rpms/firewalld/raw/${FIREWALLD_COMMIT}/f/FedoraWorkstation.xml" --retry 3 -Lo /usr/lib/firewalld/zones/FedoraWorkstation.xml
+echo "${FIREWALLD_ZONE_SHA256}  /usr/lib/firewalld/zones/FedoraWorkstation.xml" | sha256sum -c -
 grep -F -e '<port protocol="udp" port="1025-65535"/>' /usr/lib/firewalld/zones/FedoraWorkstation.xml
 sed -i 's|^DefaultZone=.*|DefaultZone=FedoraWorkstation|g' /etc/firewalld/firewalld.conf
 sed -i 's|^IPv6_rpfilter=.*|IPv6_rpfilter=loose|g' /etc/firewalld/firewalld.conf

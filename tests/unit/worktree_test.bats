@@ -259,6 +259,52 @@ set_pr_state() {
     [ -d "${REPO}/.worktrees/fix-thing" ]
 }
 
+@test "worktree done: refuses to remove a worktree with unpushed commits" {
+    wt new fix/unpushed
+    git -C "${REPO}/.worktrees/fix-unpushed" commit --quiet --no-verify --allow-empty -m "feat: unpushed"
+
+    wt done fix/unpushed
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"unpushed commit(s)"* ]]
+    [ -d "${REPO}/.worktrees/fix-unpushed" ]
+    run git -C "${REPO}" rev-parse --verify --quiet "refs/heads/fix/unpushed"
+    [ "$status" -eq 0 ]
+}
+
+@test "worktree done: removes a worktree with unpushed commits when --force is used" {
+    wt new fix/unpushed-force
+    git -C "${REPO}/.worktrees/fix-unpushed-force" commit --quiet --no-verify --allow-empty -m "feat: unpushed"
+
+    wt done --force fix/unpushed-force
+    [ "$status" -eq 0 ]
+    [ ! -d "${REPO}/.worktrees/fix-unpushed-force" ]
+    run git -C "${REPO}" rev-parse --verify --quiet "refs/heads/fix/unpushed-force"
+    [ "$status" -ne 0 ]
+}
+
+@test "worktree done: removes a worktree with unpushed commits when SKIP_UNPUSHED_GUARD=1" {
+    wt new fix/unpushed-skip
+    git -C "${REPO}/.worktrees/fix-unpushed-skip" commit --quiet --no-verify --allow-empty -m "feat: unpushed"
+
+    run bash -c "cd '${REPO}' && SKIP_UNPUSHED_GUARD=1 bash '${WORKTREE_SH}' done fix/unpushed-skip 2>&1"
+    [ "$status" -eq 0 ]
+    [ ! -d "${REPO}/.worktrees/fix-unpushed-skip" ]
+    run git -C "${REPO}" rev-parse --verify --quiet "refs/heads/fix/unpushed-skip"
+    [ "$status" -ne 0 ]
+}
+
+@test "worktree done: succeeds when commits have been pushed" {
+    wt new fix/pushed
+    git -C "${REPO}/.worktrees/fix-pushed" commit --quiet --no-verify --allow-empty -m "feat: pushed"
+    git -C "${REPO}/.worktrees/fix-pushed" push --quiet projectbluefin fix/pushed
+
+    wt done fix/pushed
+    [ "$status" -eq 0 ]
+    [ ! -d "${REPO}/.worktrees/fix-pushed" ]
+    run git -C "${REPO}" rev-parse --verify --quiet "refs/heads/fix/pushed"
+    [ "$status" -ne 0 ]
+}
+
 @test "worktree done: accepts the un-slugified branch name" {
     wt new feat/deep/nested
 
@@ -337,6 +383,47 @@ set_pr_state() {
     wt prune
     [ "$status" -eq 0 ]
     [ -d "${TEST_ROOT}/outside" ]
+}
+
+@test "worktree prune: skips a closed worktree with unpushed commits" {
+    wt new fix/closed-unpushed
+    set_pr_state fix/closed-unpushed CLOSED
+    git -C "${REPO}/.worktrees/fix-closed-unpushed" commit --quiet --no-verify --allow-empty -m "feat: closed unpushed"
+
+    wt prune
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"SKIP"* ]]
+    [[ "$output" == *"unpushed commits"* ]]
+    [ -d "${REPO}/.worktrees/fix-closed-unpushed" ]
+    run git -C "${REPO}" rev-parse --verify --quiet "refs/heads/fix/closed-unpushed"
+    [ "$status" -eq 0 ]
+}
+
+@test "worktree prune: prunes a closed worktree with unpushed commits when SKIP_UNPUSHED_GUARD=1" {
+    wt new fix/closed-unpushed-skip
+    set_pr_state fix/closed-unpushed-skip CLOSED
+    git -C "${REPO}/.worktrees/fix-closed-unpushed-skip" commit --quiet --no-verify --allow-empty -m "feat: closed unpushed"
+
+    run bash -c "cd '${REPO}' && SKIP_UNPUSHED_GUARD=1 bash '${WORKTREE_SH}' prune 2>&1"
+    [ "$status" -eq 0 ]
+    [ ! -d "${REPO}/.worktrees/fix-closed-unpushed-skip" ]
+    # Because branch -d is used on CLOSED, the unmerged branch itself is preserved safely:
+    run git -C "${REPO}" rev-parse --verify --quiet "refs/heads/fix/closed-unpushed-skip"
+    [ "$status" -eq 0 ]
+}
+
+@test "worktree prune: removes a closed worktree and preserves unmerged branch via branch -d" {
+    wt new fix/closed-pushed
+    set_pr_state fix/closed-pushed CLOSED
+    git -C "${REPO}/.worktrees/fix-closed-pushed" commit --quiet --no-verify --allow-empty -m "feat: closed pushed"
+    git -C "${REPO}/.worktrees/fix-closed-pushed" push --quiet projectbluefin fix/closed-pushed
+
+    wt prune
+    [ "$status" -eq 0 ]
+    [ ! -d "${REPO}/.worktrees/fix-closed-pushed" ]
+    # The branch was unmerged into testing, so branch -d safely keeps it:
+    run git -C "${REPO}" rev-parse --verify --quiet "refs/heads/fix/closed-pushed"
+    [ "$status" -eq 0 ]
 }
 
 @test "worktree prune: processes several worktrees in one pass" {

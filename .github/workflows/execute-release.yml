@@ -20,7 +20,7 @@ jobs:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
           EVENT: ${{ github.event_name }}
         run: |
-          if [ "$EVENT" = "workflow_dispatch" ] || echo "$COMMIT_MSG" | grep -qE "^(chore: promote testing to main|ci\(promote\):)"; then
+          if [ "$EVENT" = "workflow_dispatch" ] || echo "$COMMIT_MSG" | grep -qE "^chore: promote testing to main"; then
             echo "is-promotion=true" >> "$GITHUB_OUTPUT"
           else
             echo "is-promotion=false" >> "$GITHUB_OUTPUT"
@@ -45,7 +45,7 @@ jobs:
         ]
       cosign_identity_regexp: ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
       fast_forward_sha: ${{ github.event.workflow_run.head_sha || github.sha }}
-      run_release_gate: false
+      run_release_gate: true
       gate_suites: smoke,common
     secrets: inherit
 

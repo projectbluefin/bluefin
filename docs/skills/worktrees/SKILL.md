@@ -105,6 +105,7 @@ whether a branch is finished. `worktree.sh` asks the forge via `gh` instead.
 | `worktree already exists` | Stale directory from earlier work | `worktree.sh done <branch>`, or `git worktree prune` if the directory is already gone |
 | Untracked `.worktrees/` in `git status` | Hook and ignore rules predate this setup | Confirm `.worktrees/` is in `.gitignore` |
 | Uncommitted work blocks `done` | Real changes in the worktree | Commit them, or `git worktree remove <path> --force` to discard |
+| Unpushed commits block `done` / `prune` | Branch has commits not pushed to remote | Push them, use `worktree.sh done --force <branch>`, or override with `SKIP_UNPUSHED_GUARD=1` |
 | A repo script reports zero files | It filters `.worktrees` out by path and is running inside one | Run it from the main checkout, or fix the filter to be checkout-relative |
 | `gh pr merge --delete-branch` fails locally after merging | The branch is still checked out in a worktree | The remote merge succeeded; finish with `worktree.sh done <branch>` |
 
