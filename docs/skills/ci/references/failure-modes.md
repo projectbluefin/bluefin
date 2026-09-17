@@ -9,6 +9,7 @@
 | Promotion conflict (GH006) | Check if promotion PR is in merge queue; wait for queue cycle |
 | Shared action behaves incorrectly | Reusable workflow source and its callers |
 | Tests update but E2E setup stays stale | Compare the reusable workflow `uses` ref with its test checkout ref |
+| A merged fix is missing from the tree | `git show main:<path>` — a promotion squash reverts commits made directly on `main` |
 
 Always inspect the failed run logs before changing a workflow.
 
@@ -105,23 +106,61 @@ remote: error: failed to push some refs to 'https://github.com/projectbluefin/bl
 - The `close-failure-issue` job in `reusable-promote-squash.yml` automatically
   closes the conflict issue on the next successful run.
 
-## Stable promotion blocker set (issue #929) — re-verified 2026-08-10
+## Stable promotion: resolved 2026-09-17 (issue #929)
 
-`Execute Release` has failed on every attempt since July 20 (tracked in #929).
-The failing legs move over time; re-check the current run rather than trusting
-an older triage comment. State as of run
-[31355954836](https://github.com/projectbluefin/bluefin/actions/runs/31355954836)
-(2026-08-10T04:35Z, candidate `bluefin:testing` ->
-`sha256:bf615b200faefc44b50232ecc8a3eb21490e88dd9316b528b27f54472122611d`):
+`Execute Release` failed on every attempt between 2026-07-20 and 2026-09-09,
+and `:stable` did not advance for 51 days (#929). **It is green again.** Read
+the #929 and #989 material in this file as history, and re-verify against a
+current run before reopening any of it as a live blocker.
 
-| Leg | Status | Notes |
-|---|---|---|
-| `bluefin` / `smoke-a` | failing | Dash to Dock / Firefox / AT-SPI session lookups fail (`gdbus ... Extensions.GetExtensionInfo` returns `UnknownMethod`, Firefox/Settings not found via AT-SPI). No open PR claims this; see prior findings on #929. |
-| `bluefin` / `common-b` | failing — freeze artifact, not a defect | `ujust toggle-updates` non-interactive scenario. The tested image predates the contract the scenario asserts; resolved below, nothing to fix here. |
-| `bluefin-nvidia` / `common-b` | failing — freeze artifact, not a defect | Same cause on the NVIDIA variant, which is why both fail identically. |
-| `bluefin` / `bluefin-nvidia` smoke-b, common-a | passing | The composefs `cap_net_raw` regression tracked in `testsuite#524` / `dakota#841` **no longer appears** in this run — treat that blocker as resolved unless a fresh run shows it again. |
+State verified 2026-09-17:
 
-### Resolved: `ujust toggle-updates` fails because the tested image predates the contract
+| Signal | Value |
+|---|---|
+| Latest stable release | [`stable-20260917`](https://github.com/projectbluefin/bluefin/releases/tag/stable-20260917) (2026-09-17T01:58Z); `stable-20260909` was the first release after the stall |
+| `Execute Release` | run [35168428126](https://github.com/projectbluefin/bluefin/actions/runs/35168428126) — `Promote release: success`, `Create stable image release: success` |
+| `Post-Testing E2E` | run [35209377229](https://github.com/projectbluefin/bluefin/actions/runs/35209377229) (2026-09-17T10:13Z) — every `run-e2e` leg green on both variants, `promote-to-testing: success` |
+| `bluefin:testing` | `sha256:460d3a74…` — was pinned at `sha256:bf615b20…`, a 2026-08-04 build, for the length of the stall |
+| `bluefin:stable` | `sha256:a50af2d6…` |
+
+### What actually unblocked it
+
+1. **Concurrency was cancelling the E2E suite.** `post-testing-e2e.yml` used
+   `cancel-in-progress: true` on a head-SHA group, so a run landing while a
+   ~40-minute suite was in flight killed it — and a cancelled `run-e2e` leaves
+   `promote-to-testing` skipped in exactly the same way a failing one does.
+   It now uses `cancel-in-progress: false` on a run-scoped group.
+2. **A lost run could not be re-qualified.** The workflow only started from a
+   `workflow_run` completion, so there was no way to re-test the same digest.
+   It now also accepts `workflow_dispatch` with an explicit `run_id`, and
+   re-checks that the run was a successful `testing`-branch push build before
+   trusting it.
+3. **`projectbluefin/testsuite#792`** (merged 2026-09-09, carried by the
+   managed `v1` tag) fixed the E2E failures themselves: Firefox top-level
+   window resolution, the `toggle-updates` probe, and storage-service
+   lifecycle. That is where the Firefox AT-SPI thread at the end of this file
+   ends.
+4. **`projectbluefin/actions#463`** (merged 2026-09-09) stopped
+   `reusable-promote-squash.yml` from force-pushing a promotion branch that is
+   already queued — the `GH006` noise documented above.
+
+Both workflow changes live on `testing` as `#1284` (digest-bound E2E recovery
+dispatch) and `#1286` (run-scoped concurrency), not as the 2026-09-09 commits
+that first introduced them — see the next section for why that distinction
+matters.
+
+Correcting the record: an earlier write-up (`5729176`, since reverted)
+attributed the freeze to a `head_branch == 'main'` guard on
+`promote-to-testing`. No such guard existed.
+Before the fix that job was gated only on `needs.run-e2e.result == 'success'`;
+the cancellation path in (1) is what kept it skipped.
+
+The `skip_e2e` input added alongside those fixes is **not** in the tree today
+and should not be re-added — it promoted a digest to `:testing` without a green
+commit-bound E2E run. The current guard requires `run-e2e`, `run-e2e-nvidia`,
+and `needs.e2e.outputs.source_branch == 'testing'`.
+
+### History: `ujust toggle-updates` failed because the tested image predated the contract
 
 `tests/common/features/common_ujust.feature:30` (`projectbluefin/testsuite`)
 exercises `projectbluefin/common`'s non-interactive `toggle-updates ACTION=`
@@ -160,8 +199,10 @@ TTY and leaves `SELECTED_OPTION` empty, and the next line is
 which exits `0`. The gate meant to skip images lacking ACTION support passes on
 exactly those images, so the scenario runs and fails. An exit-status probe
 cannot detect this contract; it has to observe the behaviour (that `enable`
-actually changes timer state) or inspect the recipe body. That is the only part
-of this thread that is still a bug — report it to `projectbluefin/testsuite`.
+actually changes timer state) or inspect the recipe body. That probe was the
+one real defect in this thread, and `projectbluefin/testsuite#792` fixed it on
+2026-09-09. Keep the analysis as the worked example of why an exit-status probe
+is not a capability check.
 
 **Consequence: `common-b` is not an independent blocker.** It is an artifact of
 the freeze and needs no change in `bluefin`. This repo's `common` pin in
@@ -170,6 +211,43 @@ the freeze and needs no change in `bluefin`. This repo's `common` pin in
 built image satisfies the scenario. The leg goes green on its own once a fresh
 image is promoted. Do not chase it as a product regression, and do not count it
 when deciding what still has to be fixed to unfreeze `:testing`.
+
+## A commit made directly on `main` is erased by the next promotion squash
+
+`main` is not a branch work lands on. `promote-testing-to-main.yml` calls
+`reusable-promote-squash.yml`, which rebuilds `auto/promote-testing-to-main`
+from `testing` and squash-merges it, so every promotion replaces `main`'s tree
+with `testing`'s tree. Anything committed straight to `main` and never
+back-ported to `testing` survives only until the next promotion runs.
+
+This is not hypothetical. Four commits landed directly on `main` on
+2026-09-09 — `063b38c`, `9db601e`, `44e315d` (the `post-testing-e2e.yml` fixes
+described under #929 above) and `5729176` (a write-up of how the stall ended).
+The 2026-09-17 promotion, `bb63fd1`, reverted all four. The workflow fixes had
+independently been re-landed through `testing` by the release-hardening series
+(`#1284`, `#1286`), so the pipeline kept working; the write-up had not been, so
+the only record of how the stall ended disappeared without a failing check
+anywhere — which is why this file served an obsolete 2026-08-10 blocker table
+for another eight days.
+
+**The commit stays in `main`'s history.** `git log` finds it and
+`git merge-base --is-ancestor` reports it as reachable; only its content is
+gone. Check what the branch serves, not what it can reach:
+
+```bash
+# Misleading: the commit is reachable from main whether or not its change survived
+git log --oneline main -- path/to/file
+
+# Authoritative: what does main actually contain right now?
+git show main:path/to/file | grep 'the change you expect'
+
+# Confirm a specific promotion reverted it — the squash shows up as a diff
+git show <promotion-squash-sha> -- path/to/file
+```
+
+`AGENTS.md`'s "All pull requests target `testing`. Never open a content PR
+against `main`" is this rule. The squash is why it has no exceptions, including
+for documentation and for a hotfix that is urgent enough to feel like one.
 
 ## `:testing` can silently freeze for weeks, invalidating every downstream triage (#929)
 
@@ -497,3 +575,21 @@ nothing to change here — the fix remains scoped to
 path so the AT-SPI env actually reaches the process that gets a window,
 per the 2026-08-27 analysis). Re-verify against the next `post-testing-e2e`
 run once a testsuite PR addressing that gap merges.
+
+### Update 2026-09-17 — resolved; `smoke-a` and Firefox are green on both variants
+
+`projectbluefin/testsuite#792` (merged 2026-09-09) closed the launch-target gap
+analyzed above by resolving Firefox to a top-level browser chrome window rather
+than the first node exposing any populated subtree. Post-Testing E2E run
+[35209377229](https://github.com/projectbluefin/bluefin/actions/runs/35209377229)
+(2026-09-17T10:13Z) resolves
+`projectbluefin/testsuite/.github/workflows/e2e.yml@v1` to `41b8fc6` and
+reports every leg green on both `bluefin` and `bluefin-nvidia` — `smoke-a`,
+`smoke-b`, `common-a`, `common-b`, and the dedicated `smoke-firefox` leg that
+now carries these scenarios — with `promote-to-testing: success`. `:testing` is
+advancing again and `:stable` follows it (see the #929 section near the top of
+this file).
+
+Keep the analysis above as the worked example of separating a testsuite harness
+defect from an image defect: nothing in `bluefin` changed to fix this, and every
+proposed bluefin-side workaround would have promoted an unverified digest.
