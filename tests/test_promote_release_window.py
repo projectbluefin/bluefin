@@ -151,13 +151,13 @@ class ReleaseWindowTests(unittest.TestCase):
                 decision, _ = self.run_window("workflow_dispatch", weekday)
                 self.assertEqual(decision, "true")
 
-    def test_push_to_testing_enqueues_only_on_tuesday(self) -> None:
-        # A push may replace a pending scheduled/E2E-completion run in GitHub's
-        # concurrency queue, so every Tuesday event must preserve the release.
+    def test_push_to_testing_never_enqueues(self) -> None:
+        # Pushes refresh immediately, but E2E completion or the next hourly
+        # Tuesday schedule performs the gate after evidence can exist.
         for weekday in ALL_WEEKDAYS:
             with self.subTest(weekday=weekday):
                 decision, _ = self.run_window("push", weekday)
-                self.assertEqual(decision, "true" if weekday == TUESDAY else "false")
+                self.assertEqual(decision, "false")
 
     def test_release_day_is_read_as_an_iso_weekday_in_utc(self) -> None:
         # `date -u +%u` is load-bearing twice over. Without -u the release day
@@ -265,8 +265,8 @@ class ReleaseWindowWiringTests(unittest.TestCase):
     def test_all_promotion_triggers_share_one_mutation_lock(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("group: promote-testing-to-main", workflow)
-        self.assertNotIn("'refresh'", workflow)
         self.assertNotIn("github.run_id", workflow)
+        self.assertIn("cron: '0 * * * 2'", workflow)
 
 class E2EQualificationWiringTests(unittest.TestCase):
     """The source commit and mutable tag must represent the same tested image."""
