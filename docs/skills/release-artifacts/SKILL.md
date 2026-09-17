@@ -39,10 +39,12 @@ metadata:
 every `testing` push, daily schedule, and successful Post-Testing E2E
 completion. Every `testing` push builds candidates, including documentation-
 only changes, so the exact branch HEAD can always earn release evidence.
-Tuesday UTC schedules and E2E completions enable `enqueue_promotion`; a
-`workflow_dispatch` run remains the explicit hotfix escape hatch. Push refreshes
-use a separate concurrency group, so they cannot replace a pending Tuesday
-release-window run. Other events refresh the PR without running the release
+Every automatic event that occurs on Tuesday UTC enables
+`enqueue_promotion`; a `workflow_dispatch` run remains the explicit hotfix
+escape hatch. All triggers share one mutation lock for the generated promotion
+branch. Because GitHub may replace an older pending run in that group, a Tuesday
+push carries the same enqueue decision as a schedule or E2E completion. On
+other weekdays, automatic events refresh the PR without running the release
 gate, posting `validate`, or enrolling it.
 
 The caller always selects the `main` merge queue with `use_merge_queue: true`.
