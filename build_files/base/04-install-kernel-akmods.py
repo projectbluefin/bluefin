@@ -19,6 +19,22 @@ class PullSpec:
     name: str
     image: str
     target_dir: Path
+    digest: str | None = None
+
+
+def pull_source(spec: PullSpec) -> str:
+    # Bind the pull to the digest the host cosign-verified. A retag between host
+    # verification and this in-build skopeo copy (TOCTOU) must not be able to
+    # substitute a malicious payload, so when a digest is present we drop the
+    # mutable tag and address the image by @sha256:.
+    if spec.digest:
+        return f"docker://{spec.image.rsplit(':', 1)[0]}@sha256:{spec.digest}"
+    return f"docker://{spec.image}"
+
+
+def digest_env(name: str) -> str | None:
+    value = os.environ.get(name, "").strip()
+    return value or None
 
 
 def run(cmd: list[str], env: dict[str, str] | None = None, capture_output: bool = False) -> subprocess.CompletedProcess[str]:
@@ -40,7 +56,7 @@ async def pull_spec(spec: PullSpec, retries: int, delay_seconds: int) -> None:
         "copy",
         "--retry-times",
         "3",
-        f"docker://{spec.image}",
+        pull_source(spec),
         f"dir:{spec.target_dir}",
     ]
     spec.target_dir.mkdir(parents=True, exist_ok=True)
@@ -265,11 +281,22 @@ def main() -> int:
 
     fedora = fedora_version()
     tag = f"{akmods_flavor}-{fedora}-{kernel}"
-    pull_specs = [PullSpec("akmods", f"ghcr.io/ublue-os/akmods:{tag}", Path("/tmp/akmods"))]
+
+    akmods_digest = digest_env("AKMODS_DIGEST")
+    nvidia_digest = digest_env("AKMODS_NVIDIA_DIGEST")
+    zfs_digest = digest_env("AKMODS_ZFS_DIGEST")
+
+    # The host resolves and cosign-verifies each payload at digest, then passes the
+    # digest in as a build arg. Fail closed in CI: without the digest there is no
+    # integrity binding between what was verified and what gets installed as root.
+    if os.environ.get("CI") and not akmods_digest:
+        raise SystemExit("AKMODS_DIGEST is required in CI: akmods payloads are verified+consumed at digest")
+
+    pull_specs = [PullSpec("akmods", f"ghcr.io/ublue-os/akmods:{tag}", Path("/tmp/akmods"), akmods_digest)]
     if "nvidia" in image_name:
-        pull_specs.append(PullSpec("nvidia", f"ghcr.io/ublue-os/akmods-nvidia-open:{tag}", Path("/tmp/akmods-rpms")))
+        pull_specs.append(PullSpec("nvidia", f"ghcr.io/ublue-os/akmods-nvidia-open:{tag}", Path("/tmp/akmods-rpms"), nvidia_digest))
     if "coreos" in akmods_flavor:
-        pull_specs.append(PullSpec("zfs", f"ghcr.io/ublue-os/akmods-zfs:{tag}", Path("/tmp/akmods-zfs")))
+        pull_specs.append(PullSpec("zfs", f"ghcr.io/ublue-os/akmods-zfs:{tag}", Path("/tmp/akmods-zfs"), zfs_digest))
 
     retries = int(os.environ.get("AKMODS_PULL_RETRIES", "2"))
     delay_seconds = int(os.environ.get("AKMODS_PULL_RETRY_DELAY_SECONDS", "2"))
@@ -327,6 +354,11 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if os.environ.get("AKMODS_SELFCHECK") == "1":
+        assert pull_source(PullSpec("akmods", "ghcr.io/ublue-os/akmods:tag", Path("/tmp/x"), "abc123")) == "docker://ghcr.io/ublue-os/akmods@sha256:abc123"
+        assert pull_source(PullSpec("nvidia", "ghcr.io/ublue-os/akmods-nvidia-open:tag", Path("/tmp/x"), None)) == "docker://ghcr.io/ublue-os/akmods-nvidia-open:tag"
+        print("akmods digest-pull self-check passed")
+        raise SystemExit(0)
     try:
         raise SystemExit(main())
     except Exception as exc:
