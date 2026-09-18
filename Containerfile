@@ -19,6 +19,9 @@ FROM ${BREW_IMAGE}@${BREW_IMAGE_SHA} AS brew
 FROM scratch AS ctx-build
 COPY /build_files /build_files
 COPY /image-versions.yml /image-versions.yml
+# RPM Fusion GPG keys for 04-install-kernel-akmods.py (gpgcheck=1 on v4l2loopback's repos).
+COPY /keys/RPM-GPG-KEY-rpmfusion-free-fedora /keys/RPM-GPG-KEY-rpmfusion-free-fedora
+COPY /keys/RPM-GPG-KEY-rpmfusion-nonfree-fedora /keys/RPM-GPG-KEY-rpmfusion-nonfree-fedora
 
 # ISO context. Same reasoning as `ctx-build`: the ISO RUN reads exactly two
 # files, so giving it its own scratch stage keeps an edit to
@@ -74,6 +77,7 @@ RUN --mount=type=cache,dst=/var/cache/libdnf5 \
     --mount=type=cache,dst=/var/cache/rpm-ostree \
     --mount=type=bind,from=ctx-build,source=/build_files,target=/ctx/build_files \
     --mount=type=bind,from=ctx-build,source=/image-versions.yml,target=/ctx/image-versions.yml \
+    --mount=type=bind,from=ctx-build,source=/keys,target=/ctx/keys \
     --mount=type=secret,id=GITHUB_TOKEN \
     --mount=type=tmpfs,dst=/boot \
     bash -euo pipefail -c ' \

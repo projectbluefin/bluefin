@@ -19,6 +19,8 @@ copies = {
 expected = {
     "/build_files",
     "/image-versions.yml",
+    "/keys/RPM-GPG-KEY-rpmfusion-free-fedora",
+    "/keys/RPM-GPG-KEY-rpmfusion-nonfree-fedora",
 }
 if copies != expected:
     print(f"unexpected ctx-build inputs: {sorted(copies ^ expected)}", file=sys.stderr)
