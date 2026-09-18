@@ -2,6 +2,10 @@ name: PR Validation — testsuite
 
 on:
   pull_request:
+    # 'edited' is required: retargeting a PR's base branch fires 'edited', not
+    # 'synchronize'. Without it, check-base-branch never re-evaluates and a
+    # correctly-retargeted PR stays red with every downstream job skipped.
+    types: [opened, edited, synchronize, reopened]
     # Also trigger on `main` so check-base-branch can reject mis-targeted PRs;
     # with a testing-only trigger a main-targeted PR silently gets zero checks.
     branches:
@@ -31,7 +35,7 @@ jobs:
           if [[ "$BASE_REF" == "main" && "$HEAD_REF" != "testing" && "$HEAD_REF" != "auto/promote-testing-to-main" ]]; then
             echo "ERROR: PRs must target 'testing', not 'main'."
             echo "The testing→main promotion is handled automatically by promote-testing-to-main.yml."
-            echo "Re-open this PR with base 'testing'."
+            echo "Retarget this PR to base 'testing'."
             exit 1
           fi
 
