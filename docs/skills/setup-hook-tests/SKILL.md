@@ -1,7 +1,7 @@
 ---
 name: setup-hook-tests
-version: "1.0"
-last_updated: 2026-08-06
+version: "1.1"
+last_updated: 2026-09-18
 id: setup-hook-tests
 one_line_purpose: Add or extend Bats coverage for setup-hook scripts.
 entry_point: docs/skills/setup-hook-tests/SKILL.md
@@ -31,6 +31,11 @@ metadata:
 3. Patch absolute system paths before running the hook.
 4. Stub commands through a test-local `stub-bin` directory.
 5. Assert the concrete side effect, not only exit status.
+6. For one-time migration hooks, cover retry safety: make the mutation fail
+   once, assert the completion marker was not written, then re-run with a
+   working stub and assert the migration actually happened (bluefin#1126 —
+   `version-script` records completion before the hook body runs, so hooks
+   track their own marker).
 
 Run:
 
@@ -45,6 +50,7 @@ pre-commit run --all-files
 - A real `/usr` helper or absolute binary is still called.
 - A test asserts only that the script exits zero.
 - A second test file is created for an existing hook.
+- A one-time migration hook has no failed-attempt-then-retry test.
 
 ## When to Use
 
