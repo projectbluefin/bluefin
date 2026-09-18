@@ -32,8 +32,13 @@ setup() {
         "${TEST_ROOT}/usr/share/ublue-os/just/apps.just" \
         "${TEST_ROOT}/usr/share/ublue-os/just/default.just" \
         "${TEST_ROOT}/usr/share/ublue-os/just/system.just" \
-        "${TEST_ROOT}/usr/share/ublue-os/just/update.just" \
-        "${TEST_ROOT}/usr/share/bash-completion/completions/ujust" \
+        "${TEST_ROOT}/usr/share/ublue-os/just/update.just"
+    # #1171: the completion guard in 20-tests.sh asserts the shipped completion
+    # registers a real binding, so an empty file would fail the happy-path test.
+    # Copy the actual bluefin completions so the sandbox stays in sync with them.
+    cp "${SCRIPT_DIR}/../../system_files/shared/usr/share/bash-completion/completions/ujust" \
+        "${TEST_ROOT}/usr/share/bash-completion/completions/ujust"
+    cp "${SCRIPT_DIR}/../../system_files/shared/usr/share/zsh/site-functions/_ujust" \
         "${TEST_ROOT}/usr/share/zsh/site-functions/_ujust"
     echo 'options cros_charge_control probe_with_fwk_charge_control=1' \
         > "${TEST_ROOT}/usr/lib/modprobe.d/fw-charge-control.conf"
@@ -285,6 +290,16 @@ EOF
 
 @test "20-tests: rejects an image missing zsh completion for ujust" {
     rm -f "${TEST_ROOT}/usr/share/zsh/site-functions/_ujust"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
+}
+
+@test "20-tests: rejects a broken dynamic ujust completion loader" {
+    # #1171: common's `just --completions` emits `eval "$(JUST_COMPLETE=bash ujust)"`,
+    # a file that exists but registers no completion binding -- autocomplete is dead
+    # yet the existence check passes. The guard above must fail the build on that shim.
+    printf 'eval "$(JUST_COMPLETE=bash ujust)"\n' > "${TEST_ROOT}/usr/share/bash-completion/completions/ujust"
 
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -ne 0 ]

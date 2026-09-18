@@ -23,6 +23,14 @@ for i in bin/ujust share/ublue-os/just/{00-entry.just,apps.just,default.just,sys
    stat /usr/"$i"
 done
 
+# #1171: the existence check above passes for common's broken dynamic completion
+# loader too -- it is a file, after all, but its content is the self-referential
+# `eval "$(JUST_COMPLETE=bash ujust)"` shim that registers no completion binding.
+# Assert the shipped completion actually defines one so a dead shim can't pass
+# the build and ship silently.
+grep -q 'complete -F _ujust ujust' /usr/share/bash-completion/completions/ujust
+grep -q '#compdef ujust' /usr/share/zsh/site-functions/_ujust
+
 test -f /usr/share/ublue-os/homebrew/fonts.Brewfile
 
 # The default CLI set (fzf, starship, htop, ...) is not baked into the image —
