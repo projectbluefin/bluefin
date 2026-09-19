@@ -152,7 +152,7 @@ jobs:
       always() &&
       ((github.event_name == 'workflow_run' && github.event.workflow_run.event == 'push') ||
        needs.e2e.outputs.source_branch == 'testing')
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions:
       statuses: write
