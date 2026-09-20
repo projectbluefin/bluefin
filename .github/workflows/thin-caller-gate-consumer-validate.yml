@@ -12,4 +12,4 @@ on:
 
 jobs:
   thin-caller-gate:
-    uses: Danathar/actions/.github/workflows/reusable-thin-caller-gate.yml@04b333cd45c1497f5ab3d928b501bdb5895a1b58
+    uses: Danathar/actions/.github/workflows/reusable-thin-caller-gate.yml@6b586f4e837b799266e3c706da6baeea67b87962
