@@ -3,7 +3,8 @@ name: thin-caller-gate-consumer-validate
 # Consumer-validation-only workflow for projectbluefin/actions#546. Not part
 # of bluefin's real CI contract -- exercises the reusable-thin-caller-gate.yml
 # job-level call end to end against this branch. Pinned to the actions PR
-# branch SHA (not @v1, since the reusable does not exist at @v1 yet).
+# branch commit via the explicit actions_repository/actions_ref inputs (the
+# reusable does not exist at @v1 yet).
 # Remove once the actions PR merges and @v1 is advanced.
 
 on:
@@ -12,4 +13,7 @@ on:
 
 jobs:
   thin-caller-gate:
-    uses: Danathar/actions/.github/workflows/reusable-thin-caller-gate.yml@6b586f4e837b799266e3c706da6baeea67b87962
+    uses: Danathar/actions/.github/workflows/reusable-thin-caller-gate.yml@b3891327209f3ebbff3e0c49ec5620b4626700d4
+    with:
+      actions_repository: Danathar/actions
+      actions_ref: b3891327209f3ebbff3e0c49ec5620b4626700d4
