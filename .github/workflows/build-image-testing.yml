@@ -57,6 +57,10 @@ jobs:
           || '["main", "nvidia"]'
         }}
       stream_name: testing
+      # The reusable workflow skips rechunking and SBOM on the testing stream
+      # by default (Syft can OOM runners on large images). It now supports a
+      # rechunk: 'true' opt-in for consumers that want it; bluefin deliberately
+      # keeps the default skip.
       # Gate the mutable :testing pointer behind post-testing-e2e.yml's
       # promote-to-testing job. This build must publish version alias tags only.
       publish_stream_tag: "false"
