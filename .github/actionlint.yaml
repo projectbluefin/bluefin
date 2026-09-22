@@ -1,0 +1,14 @@
+# Configuration for actionlint
+#
+# actionlint's bundled runner-label table does not yet include the ubuntu-26.04
+# images that Renovate is moving workflows onto, so the pre-commit hook rejects
+# every ubuntu-26.04 bump even though the runners exist and are already in use
+# elsewhere in the org (projectbluefin/common builds on ubuntu-26.04 on main).
+# List them here until upstream actionlint catches up.
+#
+# This mirrors projectbluefin/common, projectbluefin/contribute and
+# projectbluefin/review, which all carry the same allowlist.
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04
+    - ubuntu-26.04-arm
