@@ -24,6 +24,14 @@ setup() {
     mkdir -p "${TEST_ROOT}/usr/lib/modules-load.d"
     mkdir -p "${TEST_ROOT}/usr/share/vulkan/icd.d"
     mkdir -p "${TEST_ROOT}/usr/lib64"
+    # RPM Fusion GPG key install reads /ctx/keys and writes /etc/pki/rpm-gpg;
+    # neither was redirected below, so install_rpmfusion_keys() hit the real
+    # filesystem and every happy-path case failed. Sandbox both + vendor the
+    # real keys so the SHA-256 pins have something true to verify.
+    mkdir -p "${TEST_ROOT}/ctx/keys" "${TEST_ROOT}/etc/pki/rpm-gpg"
+    cp "${SCRIPT_DIR}/../../keys/RPM-GPG-KEY-rpmfusion-free-fedora" \
+       "${SCRIPT_DIR}/../../keys/RPM-GPG-KEY-rpmfusion-nonfree-fedora" \
+       "${TEST_ROOT}/ctx/keys/"
 
     # Fake kernel RPMs (kernel-rpms dir is pre-populated in the container build;
     # in tests we just need the globs to expand to something)
@@ -193,6 +201,8 @@ EOF
         -e "s|/usr/lib/modules-load.d/|${TEST_ROOT}/usr/lib/modules-load.d/|g" \
         -e "s|/usr/share/vulkan/icd.d/|${TEST_ROOT}/usr/share/vulkan/icd.d/|g" \
         -e "s|/usr/lib64/libnvidia-ml\.so|${TEST_ROOT}/usr/lib64/libnvidia-ml.so|g" \
+        -e "s|/ctx/keys|${TEST_ROOT}/ctx/keys|g" \
+        -e "s|/etc/pki/rpm-gpg|${TEST_ROOT}/etc/pki/rpm-gpg|g" \
         "${SCRIPT}" > "${PATCHED_SCRIPT}"
     chmod +x "${PATCHED_SCRIPT}"
 
@@ -370,4 +380,23 @@ FAILEOF
     run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     [ ! -f "${TEST_ROOT}/usr/lib/bootc/kargs.d/00-nvidia.toml" ]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RPM Fusion key pinning (the contract this PR closes)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@test "04-kernel-akmods: installs the vendored rpmfusion keys into the sandbox" {
+    run python3 "${PATCHED_SCRIPT}"
+    [ "$status" -eq 0 ]
+    [ -f "${TEST_ROOT}/etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-free-fedora" ]
+    [ -f "${TEST_ROOT}/etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-nonfree-fedora" ]
+}
+
+@test "04-kernel-akmods: rejects a tampered rpmfusion key (SHA-256 pin)" {
+    # Corrupt the free key in the sandbox before running; the SHA-256 pin must
+    # make install_rpmfusion_keys() raise and the script exit non-zero.
+    echo "tampered" > "${TEST_ROOT}/ctx/keys/RPM-GPG-KEY-rpmfusion-free-fedora"
+    run python3 "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
 }
