@@ -497,3 +497,23 @@ nothing to change here — the fix remains scoped to
 path so the AT-SPI env actually reaches the process that gets a window,
 per the 2026-08-27 analysis). Re-verify against the next `post-testing-e2e`
 run once a testsuite PR addressing that gap merges.
+
+### Update 2026-09-17 — `firefox.feature` blocker resolved upstream; `promote-to-testing` is green again
+
+The deterministic `firefox.feature` AT-SPI blocker (issue #989, this whole
+section) is **resolved** by `projectbluefin/testsuite#853` ("fix(e2e):
+stabilize Firefox accessibility workflow", merged 2026-09-16). It isolated
+Firefox into a dedicated `smoke-firefox` shard and replaced the brittle
+browser-internal interactions (address-bar `entry`, tab-list role lookups,
+Ctrl+Q teardown) with an observable launch-and-no-coredump smoke contract, so
+the smoke legs no longer depend on Firefox's internal AT-SPI subtree being
+fully populated in headless QEMU.
+
+`Post-Testing E2E` runs on 2026-09-17 (e.g.
+[35209377229](https://github.com/projectbluefin/bluefin/actions/runs/35209377229))
+are green: every `run-e2e` leg reports `0 failed` and
+`promote-to-testing: success`, so `:testing` advances again. No bluefin
+change was required — the diagnosis that this was a testsuite-owned test-qa
+defect, not an image regression, held. If the Firefox leg regresses in
+future, re-enter the triage at the 2026-08-27 entry above rather than
+treating `smoke-firefox` as an image finding.
