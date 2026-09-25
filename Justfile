@@ -174,13 +174,47 @@ build $image="bluefin" $tag="testing" $flavor="main" rechunk="0" ghcr="0" pipeli
         kernel_release="${kernel_pin}"
     fi
 
-    # Verify Containers with Cosign
-    {{ just }} verify-container "akmods:${akmods_flavor}-${fedora_version}-${kernel_release}"
+    # Resolve akmods payload digests and verify at digest (TOCTOU fix).
+    # The mutable tag above is only used to derive kernel_release; the payload the
+    # container installs is bound by digest, so a retag between this cosign check
+    # and the in-build skopeo copy cannot swap in an unsigned kernel/module/script.
+    # Mirrors the base-image digest pin above.
+    resolve_akmods_digest() {
+        skopeo inspect --retry-times 3 "docker://${1}" | jq -r '.Digest // empty'
+    }
+    AKMODS_DIGEST=""
+    AKMODS_ZFS_DIGEST=""
+    AKMODS_NVIDIA_DIGEST=""
+    if akmods_digest=$(resolve_akmods_digest "ghcr.io/ublue-os/akmods:${akmods_flavor}-${fedora_version}-${kernel_release}"); then
+        if [[ -n "${akmods_digest:-}" ]]; then
+            AKMODS_DIGEST="${akmods_digest}"
+            {{ just }} verify-container "akmods:${akmods_flavor}-${fedora_version}-${kernel_release}@${AKMODS_DIGEST}"
+        else
+            echo "ERROR: Could not resolve akmods digest. Refusing to build without a pinned, verified akmods payload."
+            exit 1
+        fi
+    fi
     if [[ "${akmods_flavor}" =~ coreos ]]; then
-        {{ just }} verify-container "akmods-zfs:${akmods_flavor}-${fedora_version}-${kernel_release}"
+        if akmods_zfs_digest=$(resolve_akmods_digest "ghcr.io/ublue-os/akmods-zfs:${akmods_flavor}-${fedora_version}-${kernel_release}"); then
+            if [[ -n "${akmods_zfs_digest:-}" ]]; then
+                AKMODS_ZFS_DIGEST="${akmods_zfs_digest}"
+                {{ just }} verify-container "akmods-zfs:${akmods_flavor}-${fedora_version}-${kernel_release}@${AKMODS_ZFS_DIGEST}"
+            else
+                echo "ERROR: Could not resolve akmods-zfs digest. Refusing to build without a pinned, verified akmods-zfs payload."
+                exit 1
+            fi
+        fi
     fi
     if [[ "${flavor}" =~ nvidia ]]; then
-        {{ just }} verify-container "akmods-nvidia-open:${akmods_flavor}-${fedora_version}-${kernel_release}"
+        if akmods_nvidia_digest=$(resolve_akmods_digest "ghcr.io/ublue-os/akmods-nvidia-open:${akmods_flavor}-${fedora_version}-${kernel_release}"); then
+            if [[ -n "${akmods_nvidia_digest:-}" ]]; then
+                AKMODS_NVIDIA_DIGEST="${akmods_nvidia_digest}"
+                {{ just }} verify-container "akmods-nvidia-open:${akmods_flavor}-${fedora_version}-${kernel_release}@${AKMODS_NVIDIA_DIGEST}"
+            else
+                echo "ERROR: Could not resolve akmods-nvidia-open digest. Refusing to build without a pinned, verified akmods-nvidia-open payload."
+                exit 1
+            fi
+        fi
     fi
 
     # Get Version
@@ -205,6 +239,17 @@ build $image="bluefin" $tag="testing" $flavor="main" rechunk="0" ghcr="0" pipeli
     # Build Arguments
     BUILD_ARGS=()
     BUILD_ARGS+=("--build-arg" "AKMODS_FLAVOR=${akmods_flavor}")
+    # Bound the verified akmods payloads to the exact digest the host cosign-verified.
+    # Only forwarded when resolved so local tag-only builds still work.
+    if [[ -n "${AKMODS_DIGEST:-}" ]]; then
+        BUILD_ARGS+=("--build-arg" "AKMODS_DIGEST=${AKMODS_DIGEST}")
+    fi
+    if [[ -n "${AKMODS_NVIDIA_DIGEST:-}" ]]; then
+        BUILD_ARGS+=("--build-arg" "AKMODS_NVIDIA_DIGEST=${AKMODS_NVIDIA_DIGEST}")
+    fi
+    if [[ -n "${AKMODS_ZFS_DIGEST:-}" ]]; then
+        BUILD_ARGS+=("--build-arg" "AKMODS_ZFS_DIGEST=${AKMODS_ZFS_DIGEST}")
+    fi
     BUILD_ARGS+=("--build-arg" "BASE_IMAGE_REF=${base_image_ref}")
     BUILD_ARGS+=("--build-arg" "COMMON_IMAGE=${common_image}")
     BUILD_ARGS+=("--build-arg" "COMMON_IMAGE_SHA=${common_image_sha}")
