@@ -240,6 +240,7 @@ def generate_initramfs(kernel: str) -> None:
             "--no-hostonly",
             "--kver",
             kernel,
+            "--xz",
             "--reproducible",
             "--tmpdir",
             "/boot",
