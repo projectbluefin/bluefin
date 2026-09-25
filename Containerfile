@@ -45,9 +45,19 @@ COPY /build_files/base/00-image-info.sh /build_files/base/00-image-info.sh
 COPY /build_files/base/17-cleanup.sh /build_files/base/17-cleanup.sh
 COPY /build_files/base/19-initramfs.sh /build_files/base/19-initramfs.sh
 COPY /build_files/base/20-tests.sh /build_files/base/20-tests.sh
+
+# #1171: `projectbluefin/common` overlays a broken dynamic completion loader over
+# system_files/shared. Its `just --completions` output is the self-referential
+# `eval "$(JUST_COMPLETE=bash ujust)"` shim, which registers no completion binding,
+# so `ujust <TAB>` completes nothing. Preserve bluefin's self-contained bash and
+# zsh completions before that overlay and restore them after, so they win.
+COPY system_files/shared/usr/share/bash-completion/completions/ujust /__keep/ujust/bash-completion
+COPY system_files/shared/usr/share/zsh/site-functions/_ujust /__keep/ujust/zsh-completion
 COPY --from=common /system_files/shared /system_files/shared
 COPY --from=common /system_files/bluefin /system_files/shared
 COPY --from=brew /system_files /system_files/shared
+COPY /__keep/ujust/bash-completion /system_files/shared/usr/share/bash-completion/completions/ujust
+COPY /__keep/ujust/zsh-completion /system_files/shared/usr/share/zsh/site-functions/_ujust
 
 ## bluefin image section
 # hadolint ignore=DL3006
