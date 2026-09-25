@@ -82,3 +82,64 @@ EOF
     [ "${#ENABLED_REPOS[@]}" -eq 0 ]
     [[ "${output}" == *"Disabled: malformed.repo"* ]]
 }
+
+# ── updates-testing beta-path tests ──────────────────────────────────────────
+# validate-repos.sh has a special branch: when UBLUE_IMAGE_TAG=beta, an enabled
+# fedora-updates-testing.repo is permitted.  The inverse (non-beta) must fail.
+# These tests exercise the full script with a fake REPOS_DIR so the beta branch
+# is covered in CI.
+
+_make_updates_testing_repo() {
+    local repos_dir="$1" enabled="$2"
+    mkdir -p "${repos_dir}"
+    cat > "${repos_dir}/fedora-updates-testing.repo" <<EOF
+[updates-testing]
+name=Fedora Updates Testing
+enabled=${enabled}
+EOF
+}
+
+@test "updates-testing enabled on beta build is allowed (no failure)" {
+    local repos_dir="${TEST_ROOT}/etc/yum.repos.d"
+    _make_updates_testing_repo "${repos_dir}" 1
+
+    run env REPOS_DIR="${repos_dir}" UBLUE_IMAGE_TAG=beta \
+        bash "${VALIDATE_REPOS_LIB}" 2>&1
+    [ "${status}" -eq 0 ]
+    [[ "${output}" == *"updates-testing is enabled (allowed for beta builds)"* ]]
+}
+
+@test "updates-testing enabled on stable build fails validation" {
+    local repos_dir="${TEST_ROOT}/etc/yum.repos.d"
+    _make_updates_testing_repo "${repos_dir}" 1
+
+    run env REPOS_DIR="${repos_dir}" UBLUE_IMAGE_TAG=stable \
+        bash "${VALIDATE_REPOS_LIB}" 2>&1
+    [ "${status}" -ne 0 ]
+    [[ "${output}" == *"ENABLED: fedora-updates-testing.repo"* ]]
+    [[ "${output}" == *"VALIDATION FAILED"* ]]
+}
+
+@test "updates-testing disabled passes on both beta and stable" {
+    local repos_dir="${TEST_ROOT}/etc/yum.repos.d"
+    _make_updates_testing_repo "${repos_dir}" 0
+
+    run env REPOS_DIR="${repos_dir}" UBLUE_IMAGE_TAG=beta \
+        bash "${VALIDATE_REPOS_LIB}" 2>&1
+    [ "${status}" -eq 0 ]
+    [[ "${output}" == *"Disabled: fedora-updates-testing.repo"* ]]
+
+    run env REPOS_DIR="${repos_dir}" UBLUE_IMAGE_TAG=stable \
+        bash "${VALIDATE_REPOS_LIB}" 2>&1
+    [ "${status}" -eq 0 ]
+    [[ "${output}" == *"Disabled: fedora-updates-testing.repo"* ]]
+}
+
+@test "updates-testing enabled with no UBLUE_IMAGE_TAG (defaults stable) fails" {
+    local repos_dir="${TEST_ROOT}/etc/yum.repos.d"
+    _make_updates_testing_repo "${repos_dir}" 1
+
+    run env REPOS_DIR="${repos_dir}" bash "${VALIDATE_REPOS_LIB}" 2>&1
+    [ "${status}" -ne 0 ]
+    [[ "${output}" == *"ENABLED: fedora-updates-testing.repo"* ]]
+}

@@ -12,8 +12,6 @@ on:
     types: [completed]
 
 concurrency:
-  # All triggers share the mutation lock. Hourly Tuesday schedules retry any
-  # release-window run replaced while pending behind an in-progress refresh.
   group: promote-testing-to-main
   cancel-in-progress: false
 
@@ -38,16 +36,13 @@ jobs:
         [{"image":"bluefin"},{"image":"bluefin-nvidia"}]
       cosign_identity_regexp: >-
         ^https://github\.com/projectbluefin/(bluefin|actions)/\.github/workflows/
-      # Release qualification is the producer-published status on the exact
-      # testing-branch commit. post-testing-e2e writes it only after testing
-      # that commit's image and promoting those digests to :testing.
+      # post-testing-e2e publishes the e2e status after verifying the exact
+      # testing-branch commit and promoting its digests to :testing.
       run_e2e: true
       e2e_suites: smoke,common
       e2e_image: ghcr.io/projectbluefin/bluefin:testing
       e2e_status_context: e2e/post-testing
-      # main always uses its merge queue. Pushes and non-Tuesday completions
-      # refresh the PR; Tuesday UTC E2E completion and manual runs verify and
-      # enroll it automatically.
+      # main always uses its merge queue; enqueue_promotion gates the release.
       use_merge_queue: true
       enqueue_promotion: ${{ needs.release_window.outputs.should_enqueue == 'true' }}
       request_reviewer: false
