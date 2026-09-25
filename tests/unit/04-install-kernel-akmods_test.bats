@@ -24,6 +24,11 @@ setup() {
     mkdir -p "${TEST_ROOT}/usr/lib/modules-load.d"
     mkdir -p "${TEST_ROOT}/usr/share/vulkan/icd.d"
     mkdir -p "${TEST_ROOT}/usr/lib64"
+    mkdir -p "${TEST_ROOT}/fixtures"
+
+    # The pinned akmods signing cert, fetched by the script and verified against
+    # AKMODS_CERT_SHA256. The ghcurl stub serves this fixture for happy runs.
+    cp "${SCRIPT_DIR}/fixtures/akmods-public_key.der" "${TEST_ROOT}/fixtures/akmods-public_key.der"
 
     # Fake kernel RPMs (kernel-rpms dir is pre-populated in the container build;
     # in tests we just need the globs to expand to something)
@@ -114,19 +119,23 @@ STUBEOF
     chmod +x "${STUB_BIN}/tar"
 
     # ── ghcurl stub ──────────────────────────────────────────────────────────
-    # Writes "Universal Blue certificate" to the -Lo <path> destination so
-    # the downstream grep check passes.
+    # Serves the pinned cert fixture at the -Lo destination so the downstream
+    # SHA-256 check passes. When ${TEST_ROOT}/ghcurl-corrupt-mode exists, writes a
+    # tampered cert instead, to exercise the digest-mismatch failure path.
     cat > "${STUB_BIN}/ghcurl" <<'EOF'
 #!/usr/bin/bash
 lo_next=0
 for arg in "$@"; do
-    if [[ "${lo_next}" == "1" ]]; then
-        mkdir -p "$(dirname "${arg}")"
-        printf 'Universal Blue certificate\n' > "${arg}"
-        lo_next=0
-    fi
+    if [[ "${lo_next}" == "1" ]]; then dest="${arg}"; lo_next=0; fi
     if [[ "${arg}" == "-Lo" ]]; then lo_next=1; fi
 done
+[[ -z "${dest:-}" ]] && exit 0
+mkdir -p "$(dirname "${dest}")"
+if [[ -f "${TEST_ROOT}/ghcurl-corrupt-mode" ]]; then
+    printf 'attacker-controlled fake cert\n' > "${dest}"
+else
+    cp "${TEST_ROOT}/fixtures/akmods-public_key.der" "${dest}"
+fi
 exit 0
 EOF
     chmod +x "${STUB_BIN}/ghcurl"
@@ -370,4 +379,22 @@ FAILEOF
     run python3 "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
     [ ! -f "${TEST_ROOT}/usr/lib/bootc/kargs.d/00-nvidia.toml" ]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# akmods signing cert pinning (CWE-829 / CWE-494)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@test "04-kernel-akmods: accepts cert whose SHA-256 matches the pinned digest" {
+    run python3 "${PATCHED_SCRIPT}"
+    [ "$status" -eq 0 ]
+    [ -f "${TEST_ROOT}/etc/pki/akmods/certs/akmods-ublue.der" ]
+}
+
+@test "04-kernel-akmods: rejects cert whose SHA-256 does not match the pinned digest" {
+    # A swapped/attacker-controlled cert must fail the integrity check before it
+    # is enrolled as a secureboot trust anchor.
+    touch "${TEST_ROOT}/ghcurl-corrupt-mode"
+    run python3 "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
 }
