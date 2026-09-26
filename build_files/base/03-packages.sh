@@ -31,6 +31,12 @@ fi
 # Set higher priority
 dnf5 config-manager setopt fedora-multimedia.priority=90
 
+# Drop Fedora subpackages that pin an override to Fedora's exact build;
+# see [multimedia_replaced] in base.toml.
+# shellcheck disable=SC2034  # passed by name to remove_excluded_packages
+readarray -t MULTIMEDIA_REPLACED < <($READ_PKGS "$PKGS_TOML" multimedia_replaced)
+remove_excluded_packages MULTIMEDIA_REPLACED
+
 # use override to replace mesa and others with less crippled versions
 readarray -t OVERRIDES < <($READ_PKGS "$PKGS_TOML" multimedia_overrides)
 dnf5 distro-sync --skip-unavailable -y --repo='fedora-multimedia' "${OVERRIDES[@]}"

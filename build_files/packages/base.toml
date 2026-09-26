@@ -2,12 +2,24 @@
 # Read by build_files/base/03-packages.sh via build_files/shared/read-packages.
 #
 # Sections:
+#   [multimedia_replaced]    Fedora packages removed before the fedora-multimedia sync
 #   [multimedia_overrides]   packages synced from fedora-multimedia repo
 #   [fedora]                 base Fedora packages, all versions
 #   [fedora_v42]             additions for Fedora 42 only
 #   [fedora_v43]             additions for Fedora 43 only
 #   [fedora_v44]             additions for Fedora 44 only
 #   [excluded]               packages removed from the base image
+
+[multimedia_replaced]
+# Fedora subpackages whose files negativo17 already ships inside a [multimedia_overrides]
+# package. Each one requires Fedora's exact build of that package, so while it is
+# installed the fedora-multimedia distro-sync skips the swap and still exits 0.
+# 03-packages.sh removes them right before that sync.
+# libheif-ffmpeg: split out of Fedora's libheif in 1.23.4-5; negativo17's libheif
+# ships libheif-ffmpegdec.so itself.
+packages = [
+    "libheif-ffmpeg",
+]
 
 [multimedia_overrides]
 # Replace mesa and friends with less-crippled versions from negativo17/fedora-multimedia.

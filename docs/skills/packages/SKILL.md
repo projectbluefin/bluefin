@@ -1,7 +1,7 @@
 ---
 name: packages
 version: "1.0"
-last_updated: 2026-08-06
+last_updated: 2026-09-26
 id: packages
 one_line_purpose: Add, remove, or classify RPM, Flatpak, COPR, and Homebrew inputs.
 entry_point: docs/skills/packages/SKILL.md
@@ -47,7 +47,12 @@ metadata:
 5. When a default Flatpak replaces an inherited RPM application, remove it
    from `[fedora]`, list it in `[excluded]`, and preserve any application
    configuration hook that targets the Flatpak.
-6. Run:
+6. When `20-tests.sh` reports `<pkg> not from negativo`, look for a Fedora
+   subpackage that requires Fedora's exact build of that package. The
+   `fedora-multimedia` distro-sync skips the swap and still exits 0. If
+   negativo17 ships that subpackage's files inside its own package, list the
+   subpackage in `[multimedia_replaced]` so it is removed before the sync.
+7. Run:
 
 ```bash
 just check
