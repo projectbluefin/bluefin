@@ -124,6 +124,36 @@ teardown() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# fedora-multimedia swap: replaced Fedora subpackages are removed first
+# ─────────────────────────────────────────────────────────────────────────────
+
+@test "Fedora libheif-ffmpeg is removed before the fedora-multimedia distro-sync" {
+    # Fedora's libheif-ffmpeg requires Fedora's exact libheif build. While it is
+    # installed, the distro-sync skips negativo17's libheif and still exits 0.
+    cat > "${STUB_BIN}/rpm" <<'EOF'
+#!/usr/bin/bash
+if [[ "$1" == "-E" && "$2" == "%fedora" ]]; then
+    echo "${FEDORA_MAJOR_VERSION}"
+elif [[ "$1" == "-qa" ]]; then
+    for arg in "$@"; do
+        [[ "$arg" == "libheif-ffmpeg" ]] && echo "libheif-ffmpeg"
+    done
+fi
+exit 0
+EOF
+    chmod +x "${STUB_BIN}/rpm"
+
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -eq 0 ]
+
+    remove_line="$(grep -n '^dnf5 -y remove libheif-ffmpeg$' "${DNF5_LOG}" | cut -d: -f1)"
+    sync_line="$(grep -n "^dnf5 distro-sync .*--repo=fedora-multimedia .*libheif" "${DNF5_LOG}" | cut -d: -f1)"
+    [ -n "$remove_line" ]
+    [ -n "$sync_line" ]
+    [ "$remove_line" -lt "$sync_line" ]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # COPR install is invoked for ublue-os/packages
 # ─────────────────────────────────────────────────────────────────────────────
 
